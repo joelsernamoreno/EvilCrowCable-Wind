@@ -1,7 +1,7 @@
 Delay 1000
 RunWin powershell Start-Process powershell -Verb runAs
 Delay 5000
-PressRelease KEY_ARROW_LEFT
+PressRelease KEY_LEFT_ARROW
 Delay 2000
 PressRelease KEY_ENTER
 Delay 5000
