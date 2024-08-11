@@ -1,0 +1,10 @@
+Delay 1000
+RunCmdAdmin
+Delay 3000
+PrintLine echo. >> C:\Windows\System32\drivers\etc\hosts
+Delay 2000
+PrintLine echo 10.0.0.1 url.com >> C:\Windows\System32\drivers\etc\hosts
+Delay 2000
+PrintLine echo 10.0.0.1 www.url.com >> C:\Windows\System32\drivers\etc\hosts
+Delay 2000
+PrintLine exit

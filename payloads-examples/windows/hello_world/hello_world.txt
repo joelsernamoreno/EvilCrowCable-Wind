@@ -1,0 +1,4 @@
+Delay 1000
+RunWin notepad
+Delay 2000
+PrintLine Hello World

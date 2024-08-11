@@ -1,0 +1,10 @@
+Delay 1000
+RunWin cmd
+Delay 3000
+PrintLine wmic bios get serialnumber>>information.txt
+Delay 3000
+PrintLine wmic computersystem get model>>information.txt
+Delay 7000
+PrintLine wmic product get name>>information.txt
+Delay 3000
+PrintLine notepad information.txt

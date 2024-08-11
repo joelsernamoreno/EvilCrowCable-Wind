@@ -1,0 +1,3 @@
+Delay 1000
+RunWin cmd
+PrintLine shutdown /s /t 00
