@@ -150,8 +150,6 @@ You can change the keyboard layout in real time from the web panel.
 
 **Note:** If you cannot access the web panel, use the IP address assigned to Evil Crow Cable Wind.
 
-4. Go!
-
 ## Home
 
 The Home page shows interesting information about the device hardware.
