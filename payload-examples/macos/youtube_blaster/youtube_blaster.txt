@@ -1,6 +1,0 @@
-Delay 1000
-RunMac terminal
-Delay 3000
-PrintLine osascript -e 'set volume 7'
-Delay 2000
-PrintLine open https://www.youtube.com/watch?v=dQw4w9WgXcQ
