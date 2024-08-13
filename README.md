@@ -53,7 +53,7 @@ We recommend using this device for testing, learning and fun :D
 
 # Introduction
 
-Evil Crow Cable Wind is a BadUSB device based on two ESP32-S3 modules (It only allows charging of the mobile phone).
+Evil Crow Cable Wind is a BadUSB device based on two ESP32-S3 (It only allows charging of the mobile phone).
 
 Evil Crow Cable Wind can be controlled with a web panel over Wi-Fi, the device is configured in STATION mode. You will need to set up a Wi-Fi access point with your mobile phone or another device, Evil Crow Cable Wind will automatically connect to it.
 
