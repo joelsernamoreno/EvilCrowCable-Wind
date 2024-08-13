@@ -1,0 +1,18 @@
+Delay 1000
+RunWin notepad
+Delay 3000
+PrintLine I will learn to lock my computer.
+Delay 2000
+PrintLine I will learn to lock my computer.
+Delay 2000
+PrintLine I will learn to lock my computer.
+Delay 2000
+PrintLine I will learn to lock my computer.
+Delay 2000
+PrintLine I will learn to lock my computer.
+Delay 2000
+PrintLine I will learn to lock my computer.
+Delay 2000
+PrintLine I will learn to lock my computer.
+Delay 2000
+PrintLine Thank you.

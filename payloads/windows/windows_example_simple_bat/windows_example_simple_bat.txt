@@ -1,0 +1,16 @@
+Delay 1000
+RunWin cmd
+Delay 3000
+PrintLine echo @echo off>>example.bat
+Delay 2000
+PrintLine echo color 2a>>example.bat
+Delay 2000
+PrintLine echo mode con cols=50 lines=10>>example.bat
+Delay 2000
+PrintLine echo title Hello>>example.bat
+Delay 2000
+PrintLine echo echo Hello World>>example.bat
+Delay 2000
+PrintLine echo pause>>example.bat
+Delay 2000
+PrintLine example.bat

