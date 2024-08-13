@@ -1,8 +1,0 @@
-Delay 1000
-RunMac photo booth
-Delay 3000
-PressRelease KEY_ENTER
-Delay 3000
-RunMac terminal
-Delay 3000
-PrintLine say You look ugly!
