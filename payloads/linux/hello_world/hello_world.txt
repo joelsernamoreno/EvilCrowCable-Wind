@@ -1,4 +1,4 @@
 Delay 1000
-RunUnix gedit
+CtrlAltT
 Delay 2000
 PrintLine Hello World

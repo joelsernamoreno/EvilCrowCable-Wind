@@ -1,5 +1,5 @@
 Delay 1000
-RunUnix gnome-terminal
+RunLauncher gnome-terminal
 Delay 3000
 PrintLinen pwd
 Delay 2000

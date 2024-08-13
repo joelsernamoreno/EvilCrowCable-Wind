@@ -8,7 +8,7 @@
 
 ## [keeping tracks clear]
 Delay 5000
-RunUnix gnome-terminal
+CtrlAltT
 Delay 3000
 PrintLine unset HISTFILE && HISTSIZE=0 && rm -f $HISTFILE && unset HISTFILE
 Delay 500

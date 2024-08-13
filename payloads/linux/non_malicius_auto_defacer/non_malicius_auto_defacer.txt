@@ -1,5 +1,5 @@
 Delay 1000
-RunUnix gnome-terminal
+CtrlAltT
 Delay 3000
 PrintLine cd /var/www
 Delay 2000

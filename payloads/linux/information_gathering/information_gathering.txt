@@ -1,5 +1,5 @@
 Delay 1000
-RunUnix gnome-terminal
+CtrlAltT
 Delay 3000
 PrintLine echo "Logged in user: " $USER > info_gathering.txt
 Delay 2000
