@@ -1,0 +1,6 @@
+Delay 1000
+RunWin cmd
+Delay 3000
+PrintLine wmic path softwarelicensingservice get OA3xOriginalProductKey>>productkey.txt
+Delay 2000
+PrintLine notepad productkey.txt

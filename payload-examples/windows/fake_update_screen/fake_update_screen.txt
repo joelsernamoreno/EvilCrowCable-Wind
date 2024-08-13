@@ -1,0 +1,4 @@
+Delay 5000
+RunWin iexplore -k http://fakeupdate.net/win10u/index.html
+Delay 5000
+PressRelease KEY_F11

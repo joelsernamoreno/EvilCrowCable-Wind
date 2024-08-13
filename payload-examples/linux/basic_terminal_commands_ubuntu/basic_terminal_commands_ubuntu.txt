@@ -1,0 +1,8 @@
+Delay 1000
+RunUnix gnome-terminal
+Delay 3000
+PrintLinen pwd
+Delay 2000
+PrintLine id
+Delay 2000
+PrintLine cat /etc/passwd

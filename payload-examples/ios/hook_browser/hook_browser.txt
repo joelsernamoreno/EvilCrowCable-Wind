@@ -1,0 +1,33 @@
+Delay 1000
+Press KEY_LEFT_GUI
+Print h
+Delay 100
+Release
+Delay 1000
+Press KEY_LEFT_GUI
+Press KEY_SPACE
+Delay 100
+Release
+Delay 1000
+PressRelease KEY_BACKSPACE
+Delay 1000
+PrintLine Safari
+Delay 2000
+Press KEY_LEFT_GUI
+Print t
+Delay 100
+Release
+Delay 1000
+Press KEY_LEFT_GUI
+Print l
+Delay 100
+Release
+Delay 1000
+PrintLine "HOOK LINK"
+Delay 3000
+Press KEY_LEFT_GUI
+Print t
+Delay 100
+Release
+Delay 1000
+PrintLine www.youtube.com
