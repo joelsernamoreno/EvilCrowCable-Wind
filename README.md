@@ -76,11 +76,11 @@ You can change the keyboard layout in real time from the web panel.
 
 **NOTE:** 
 
-* **Not all layouts have been tested. If you find any incorrect keys, you can change them and submit a PR to the Evil Crow Cable Wind repository**
+* **Not all layouts have been tested. If you find any incorrect keys, you can change them and submit a PR to the Evil Crow Cable Wind repository.**
 
-* **All devices have been flashed with basic firmware Evil Crow Cable Wind before shipping**.
+* **All devices have been flashed with basic firmware Evil Crow Cable Wind before shipping.**
 
-* **Please do not request new features in this code. You can develop code for Evil Crow Cable Wind and submit a PR with your new features**
+* **Please do not request new features in this code. You can develop code for Evil Crow Cable Wind and submit a PR with your new features.**
 
 # Firmware
 
@@ -145,10 +145,10 @@ You can change the keyboard layout in real time from the web panel.
 1. Set up a Wi-Fi AP with your mobile phone:
 	* SSID: Evil Crow Cable Wind
 	* Password: 123456789
-2. Disconnect and re-connect the device to the computer (Connect the end of SIDE-A firmware)
+2. Disconnect and re-connect the device to the computer (Connect the end of SIDE-A firmware).
 3. Open a browser and access the web panel: http://cable-wind.local/
 
-**Note:** If you cannot access the web panel, use the IP address assigned to Evil Crow Cable Wind
+**Note:** If you cannot access the web panel, use the IP address assigned to Evil Crow Cable Wind.
 
 4. Go!
 
@@ -160,9 +160,9 @@ The Home page shows interesting information about the device hardware.
 
 The Live Payload page allows you to run payloads on a computer or mobile phone. The execution of the payloads is directional:
 
-	* You can use the "Run Payload" option to run the payload on the first end of the cable (USB-A or USB-C)
-	* You can use the "Run Mobile" option to run the payload on the other end of the cable (USB-C)
-	* You can use the "Save Payload" option to save the payload in memory
+* You can use the "Run Payload" option to run the payload on the first end of the cable (USB-A or USB-C).
+* You can use the "Run Mobile" option to run the payload on the other end of the cable (USB-C).
+* You can use the "Save Payload" option to save the payload in memory.
 
 ## Upload Payload
 
@@ -174,7 +174,7 @@ The Upload Payload page allows you to upload and store payloads in memory.
 
 The Live Payload page allows you to run or delete payloads stored in memory.
 
-**Note:** From this menu you will not be able to run payloads on the two ends of the cable. This option only works from Live Payload
+**Note:** From this menu you will not be able to run payloads on the two ends of the cable. This option only works from Live Payload.
 
 ## Config
 
@@ -182,9 +182,9 @@ The Config page allows you to change the Keyboard Layout in real time or the Wi-
 
 **Note:**
 
-Wi-Fi configuration changes are stored
+Wi-Fi configuration changes are stored.
 
-Keyboard Layout changes are not stored. Configure your layout each time you use Evil Crow Cable Wind 
+Keyboard Layout changes are not stored. Configure your layout each time you use Evil Crow Cable Wind.
 
 # Add a new Keyboard Layout
 
@@ -192,11 +192,11 @@ If you want to add a new keyboard layout:
 
 1. Go to the Arduino libraries directory and create your layout in USB/src/layouts/
 
-**Note:** Use the other layouts for reference
+**Note:** Use the other layouts for reference.
 
 ![Add Layout](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/add-layout.png)
 
-2. Modify USB/src/USBHIDKeyboard.h and include your new layout
+2. Modify USB/src/USBHIDKeyboard.h and include your new layout.
 
 ![Include Layout](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/include-layout.png)
 
@@ -204,11 +204,11 @@ If you want to add a new keyboard layout:
 
 ![Firmware Layout](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/firmware-layout.png)
 
-4. Modify config.h in SIDE-A.ino to change to your new layout from the web panel
+4. Modify config.h in SIDE-A.ino to change to your new layout from the web panel.
 
 ![Web Layout](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/web-layout.png)
 
-5. Flash SIDE-A.ino and SIDE-B.ino firmwares again
+5. Flash SIDE-A.ino and SIDE-B.ino firmwares again.
 
 # Sintax
 
@@ -217,8 +217,8 @@ If you want to add a new keyboard layout:
 To develop Evil Crow Cable Wind payloads, you need to know the syntax of the interpreter. All the commands allowed in the interpreter are listed here:
 
 * RunWin COMMAND: Runs a command or a program on the victim's computer (example: RunWin cmd)
-* RunPowershellAdmin: Run a powershell console as administrator
-* RunCmdAdmin: Run a powershell cmd as administrator
+* RunPowershellAdmin: Run powershell as administrator
+* RunCmdAdmin: Run cmd as administrator
 * ShellWin IP: Read the "Remote Shell" section for more information
 * RunLauncher COMMAND: Runs a command or a program on the victim's computer (example: RunLauncher libreoffice)
 * CtrlAltT: Run a terminal on the victim's computer
@@ -292,7 +292,7 @@ To develop Evil Crow Cable Wind payloads, you need to know the syntax of the int
 
 # Remote Shell
 
-Evil Crow Cable Wind allows you to execute commands remotely on a computer without a network connection
+Evil Crow Cable Wind allows you to execute commands remotely on a computer without a network connection.
 
 Evil Crow Cable Wind uses port 4444 for communication. If you want to change this, modify SIDE-A.ino:
 
