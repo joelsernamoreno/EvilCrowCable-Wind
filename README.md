@@ -17,13 +17,13 @@ You can invite me to a coffee to further develop low-cost hacking devices. If yo
 
 **Available from April Brother (shipping from China):** 
 
-* USB-C to USB-C: Coming soon
 * USB-A to USB-C: Coming soon
+* USB-C to USB-C: Coming soon
 
 **Available from KSEC Worldwide (shipping from the United Kingdom):**
 
-* USB-C to USB-C: Coming soon
 * USB-A to USB-C: Coming soon
+* USB-C to USB-C: Coming soon
 
 **Summary:**
 
@@ -78,7 +78,7 @@ You can change the keyboard layout in real time from the web panel.
 
 * **Not all layouts have been tested. If you find any incorrect keys, you can change them and submit a PR to the Evil Crow Cable Wind repository.**
 
-* **All devices have been flashed with basic firmware Evil Crow Cable Wind before shipping.**
+* **All devices have been flashed with basic firmware before shipping.**
 
 * **Please do not request new features in this code. You can develop code for Evil Crow Cable Wind and submit a PR with your new features.**
 
@@ -95,7 +95,7 @@ You can change the keyboard layout in real time from the web panel.
 7. Install "esp32 by Espressif Systems 3.0.3" in Arduino IDE
 8. Flash SIDE-A.ino firmware:
 	* Connect one end of the cable (USB-A or USB-C) with a magnet to the computer
-	* Open SIDE-A.ino firmware in Arduino IDE
+	* Open EvilCrowCable-Wind/firmware/SIDE-A.ino firmware in Arduino IDE
 	* Select Tools:
 		- Board - "ESP32S3 Dev Module"
     	  	- USB CDC On Boot - "Disabled"
@@ -118,7 +118,7 @@ You can change the keyboard layout in real time from the web panel.
     	* Flash SIDE-A.ino firmware
 9. Flash SIDE-B.ino firmware:
 	* Connect the second end of the cable (USB-C) with a magnet to the computer
-	* Open SIDE-B.ino firmware in Arduino IDE
+	* Open EvilCrowCable-Wind/firmware/SIDE-B.ino firmware in Arduino IDE
 	* Select Tools:
 		- Board - "ESP32S3 Dev Module"
     	  	- USB CDC On Boot - "Disabled"
@@ -152,11 +152,11 @@ You can change the keyboard layout in real time from the web panel.
 
 ## Home
 
-The Home page shows interesting information about the device hardware.
+The Home page shows interesting information about the device.
 
 ## Live Payload
 
-The Live Payload page allows you to run payloads on a computer or mobile phone. The execution of the payloads is directional:
+The Live Payload page allows you to run payloads on a computer or mobile phone. The execution of the payloads is bidirectional:
 
 * You can use the "Run Payload" option to run the payload on the first end of the cable (USB-A or USB-C).
 * You can use the "Run Mobile" option to run the payload on the other end of the cable (USB-C).
@@ -221,14 +221,14 @@ To develop Evil Crow Cable Wind payloads, you need to know the syntax of the int
 * RunLauncher COMMAND: Runs a command or a program on the victim's computer (example: RunLauncher libreoffice)
 * CtrlAltT: Run a terminal on the victim's computer
 * ShellNix IP: Read the "Remote Shell" section for more information
-* RunMac COMMAND: Runs a command or a program on the victim's Mac computer (example: RunMac terminal)
+* RunMac COMMAND: Runs a command or a program on the victim's computer (example: RunMac terminal)
 * GuiR: Press WINDOWS+R on the victim's computer
 * AltF2: Press ALT+F2 on the victim's computer
 * GuiSpace: Press WINDOWS+SPACE on the victim's computer
 * Print TEXT: Prints a text on the victim's computer (example: Print Hello World!)
 * PrintLine TEXT: Prints a text and presses the ENTER key on the victim's computer (example: PrintLine Hello World!).
 * Delay MILLISECONDS: Pauses before continuing payload execution (example: Delay 5000)
-* Press KEY: Press a key or modifier on the victim's computer (example: PressKey KEY_ENTER).
+* Press KEY: Press a key or modifier on the victim's computer (example: Press KEY_ENTER).
 * PressRelease KEY: Press and Release a key or modifier on the victim's computer (example: PressRelease KEY_ENTER)
 * Release: Release all pressed keys
 
@@ -310,5 +310,5 @@ Evil Crow Cable Wind uses port 4444 for communication. If you want to change thi
 	
 3. Click on 'Run Payload' (**Note:** 'Run Mobile' does not work with this attack)
 
-**Demo:** [Demo Video Remote Shell](https://www.youtube.com/watch?v=FmkIHYdOxS4)
+**Demo:** [Remote Shell](https://www.youtube.com/watch?v=FmkIHYdOxS4)
 
