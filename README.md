@@ -37,6 +37,7 @@ You can invite me to a coffee to further develop low-cost hacking devices. If yo
 	* Upload Payload
 	* List Payloads
 	* Config
+	* HTTP Update
 4. Add a new Keyboard Layout
 5. Sintax
 	* Payload Syntax
@@ -183,6 +184,39 @@ The Config page allows you to change the Keyboard Layout in real time or the Wi-
 Wi-Fi configuration changes are stored.
 
 Keyboard Layout changes are not stored. Configure your layout each time you use Evil Crow Cable Wind.
+
+## HTTP Update
+
+You can update the firmware without a magnet:
+
+1. Open SIDE-A.ino in the Arduino IDE
+2. Configure the options as described in the 'Installation' section
+3. Click on sketch -> Export Compiled Binary
+4. Open SIDE-B.ino in the Arduino IDE
+5. Configure the options as described in the 'Installation' section
+6. Click on sketch -> Export Compiled Binary
+
+This will create the binaries:
+
+* EvilCrowCable-Wind/firmware/SIDE-A/build/esp32.esp32.esp32s3/
+* EvilCrowCable-Wind/firmware/SIDE-B/build/esp32.esp32.esp32s3/
+
+![Binaries](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/binaries1.png)
+
+![Binaries](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/binaries2.png)
+
+7. Set up a Wi-Fi access point for Evil Crow Cable Wind and your computer
+8. Connect Evil Crow Cable Wind to the Wi-Fi AP and your computer
+9. Connect your computer to the Wi-Fi AP
+10. Open a terminal in EvilCrowCable-Wind/firmware/SIDE-A/build/esp32.esp32.esp32s3/
+11. Flash the binary SIDE-A.ino.bin with the following command: curl -F "image=@SIDE-A.ino.bin" cable-wind.local/update
+
+![Update](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/update1.png)
+
+12. Open a terminal in EvilCrowCable-Wind/firmware/SIDE-B/build/esp32.esp32.esp32s3/
+13. Flash the binary SIDE-B.ino.bin with the following command: curl -F "image=@SIDE-B.ino.bin" cablewind-client.local/update
+
+![Update](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/update2.png)
 
 # Add a new Keyboard Layout
 
