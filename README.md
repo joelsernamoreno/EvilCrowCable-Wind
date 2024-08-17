@@ -52,6 +52,8 @@ We are not responsible for the incorrect use of Evil Crow Cable Wind.
 
 We recommend using this device for testing, learning and fun :D
 
+Evil Crow Cable Wind © 2024 by Joel Serna Moreno is licensed under CC BY-NC-SA 4.0. To view a copy of this license, visit https://creativecommons.org/licenses/by-nc-sa/4.0/
+
 # Introduction
 
 Evil Crow Cable Wind is a BadUSB device based on two ESP32-S3 (It only allows charging of the mobile phone).
