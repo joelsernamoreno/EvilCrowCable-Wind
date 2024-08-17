@@ -182,9 +182,8 @@ The Config page allows you to change the Keyboard Layout in real time or the Wi-
 
 **Note:**
 
-Wi-Fi configuration changes are stored.
-
-Keyboard Layout changes are not stored. Configure your layout each time you use Evil Crow Cable Wind.
+* Wi-Fi configuration changes are stored.
+* Keyboard Layout changes are not stored. Configure your layout each time you use Evil Crow Cable Wind.
 
 ## HTTP Update
 
