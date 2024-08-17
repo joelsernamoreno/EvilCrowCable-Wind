@@ -93,8 +93,9 @@ You can change the keyboard layout in real time from the web panel.
 4. Download Evil Crow Cable Wind repository: git clone https://github.com/joelsernamoreno/EvilCrowCable-Wind.git
 5. Copy and unzip the USB library included in this repository (EvilCrowCable-Wind/modified-libraries/) to your Arduino library directory
 6. Open Arduino IDE
-7. Install "esp32 by Espressif Systems 3.0.3" in Arduino IDE
-8. Flash SIDE-A.ino firmware:
+7. Go to File - Preferences. Locate the field "Additional Board Manager URLs:" Add "https://espressif.github.io/arduino-esp32/package_esp32_index.json" without quotes. Click "Ok"
+8. Select Tools - Board - Boards Manager. Search for "esp32". Install "esp32 by Espressif system version 3.0.4"
+9. Flash SIDE-A.ino firmware:
 	* Connect one end of the cable (USB-A or USB-C) with a magnet to the computer
 	* Open EvilCrowCable-Wind/firmware/SIDE-A.ino firmware in Arduino IDE
 	* Select Tools:
@@ -117,7 +118,7 @@ You can change the keyboard layout in real time from the web panel.
     		- USB Mode - "Hardware CDC and JTAG"
     		- Zigbee Mode - "Disabled"
     	* Flash SIDE-A.ino firmware
-9. Flash SIDE-B.ino firmware:
+10. Flash SIDE-B.ino firmware:
 	* Connect the second end of the cable (USB-C) with a magnet to the computer
 	* Open EvilCrowCable-Wind/firmware/SIDE-B.ino firmware in Arduino IDE
 	* Select Tools:
