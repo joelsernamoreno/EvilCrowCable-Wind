@@ -180,12 +180,55 @@ The Live Payload page allows you to run or delete payloads stored in memory.
 
 ## Config
 
-The Config page allows you to change the Keyboard Layout in real time or the Wi-Fi configuration.
+The Config page allows you to change the Keyboard Layout, Wi-Fi configuration or USB configuration.
 
-**Note:**
+![Config](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/config.png)
 
-* Wi-Fi configuration changes are stored.
-* Keyboard Layout changes are not stored. Configure your layout each time you use Evil Crow Cable Wind.
+* **Set Layout:**
+
+Configure the keyboard layout. Keyboard Layout changes are not stored. Configure your layout each time you use Evil Crow Cable Wind.
+
+![Config](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/set-layout.png)
+
+* **Set Wi-Fi Config:**
+
+SSID and password of your Wi-Fi access point. Wi-Fi configuration changes are stored. Evil Crow Cable Wind will restart when changes are applied.
+
+![Config](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/set-wifi.png)
+
+* **Delete Wi-Fi Config:**
+
+Delete Wi-Fi configuration file. Evil Crow Cable Wind will restart and connect to the default Wi-Fi access point (SSID: Evil Crow Cable Wind / Password: 123456789).
+
+![Config](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/delete-configwifi.png)
+
+* **Set USB Config:**
+
+Configure Vendor ID, Product ID, Product Name y Manufacturer Name. USB Configuration changes are stored. Evil Crow Cable Wind will restart when changes are applied.
+
+![Config](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/set-usb.png)
+
+![Config](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/vid-pid.png)
+
+**Note:** Be sure to enter the correct data, or you may risk bricking the device.
+
+* **Delete USB Config:**
+
+Delete USB configuration file. Evil Crow Cable Wind will restart and configure itself with the default USB configuration.
+
+![Config](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/delete-usb.png)
+
+* **Debug messages:**
+
+In the web panel, you can check whether a configuration has been applied correctly or if there is an error.
+
+![Config](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/usb-ok.png)
+
+![Config](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/usb-error.png)
+
+![Config](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/wifi-ok.png)
+
+![Config](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/wifi-error.png)
 
 ## HTTP Update
 
