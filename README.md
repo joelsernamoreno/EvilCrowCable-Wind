@@ -319,59 +319,68 @@ To develop Evil Crow Cable Wind payloads, you need to know the syntax of the int
 
 **MODIFIERS:**
 
-| Modifiers |
-| --- |
-| `KEY_LEFT_ALT` |
-| `KEY_LEFT_GUI` |
-| `KEY_LEFT_CTRL` |
-| `KEY_LEFT_SHIFT` |
-| `KEY_RIGHT_ALT` |
-| `KEY_RIGHT_GUI` |
-| `KEY_RIGHT_CTRL` |
-| `KEY_RIGHT_SHIFT` |
+| Modifiers | Example | 
+| ------- | ------- |
+| `KEY_LEFT_ALT` | `Press KEY_LEFT_ALT` |
+| `KEY_LEFT_GUI` | `Press KEY_LEFT_GUI` |
+| `KEY_LEFT_CTRL` | `Press KEY_LEFT_CTRL` |
+| `KEY_LEFT_SHIFT` | `Press KEY_LEFT_SHIFT` |
+| `KEY_RIGHT_ALT` | `Press KEY_RIGHT_ALT` |
+| `KEY_RIGHT_GUI` | `Press KEY_RIGHT_GUI` |
+| `KEY_RIGHT_CTRL` | `Press KEY_RIGHT_CTRL` |
+| `KEY_RIGHT_SHIFT` | `Press KEY_RIGHT_SHIFT` |
 
-**KEYS:**
+**STANDARD KEYS:**
 
-| Keys |
-| --- |
-| `KEY_ENTER` |
-| `KEY_UP_ARROW` |
-| `KEY_DOWN_ARROW` |
-| `KEY_LEFT_ARROW` |
-| `KEY_RIGHT_ARROW` |
-| `KEY_BACKSPACE` |
-| `KEY_TAB` |
-| `KEY_PAUSE` |
-| `KEY_INSERT` |
-| `KEY_DELETE` |
-| `KEY_PAGE_UP` |
-| `KEY_PAGE_DOWN` |
-| `KEY_ESC` |
-| `KEY_SPACE` |
-| `KEY_HOME` |
-| `KEY_END` |
-| `KEY_CAPS_LOCK` |
-| `KEY_PRINT_SCREEN` |
-| `KEY_SCROLL_LOCK` |
-| `KEY_NUM_LOCK` |
-| `KEY_MENU` |
-| `LED_NUMLOCK` |
-| `LED_CAPSLOCK` |
-| `LED_SCROLLLOCK` |
-| `LED_COMPOSE` |
-| `LED_KANA` |
-| `KEY_F1` |
-| `KEY_F2` |
-| `KEY_F3` |
-| `KEY_F4` |
-| `KEY_F5` |
-| `KEY_F6` |
-| `KEY_F7` |
-| `KEY_F8` |
-| `KEY_F9` |
-| `KEY_F10` |
-| `KEY_F11` |
-| `KEY_F12` |
+| Keys | Example |
+| ------- | ------- |
+| `a` - `z` | `Press r` or `PressRelease r`|
+| `A` - `Z` | `Press A` or `PressRelease A`|
+| `0` - `9` | `Press 1` or `PressRelease 1`|
+| `Special characters` | `Press @` or `PressRelease @`|
+
+**OTHER KEYS:**
+
+| Other Keys | Example |
+| ------- | ------- |
+| `KEY_ENTER` | `Press KEY_ENTER` or `PressRelease KEY_ENTER`|
+| `KEY_UP_ARROW` | `Press KEY_UP_ARROW` or `PressRelease KEY_UP_ARROW`|
+| `KEY_DOWN_ARROW` | `Press KEY_DOWN_ARROW` or `PressRelease KEY_DOWN_ARROW`|
+| `KEY_LEFT_ARROW` | `Press KEY_LEFT_ARROW` or `PressRelease KEY_LEFT_ARROW`|
+| `KEY_RIGHT_ARROW` | `Press KEY_RIGHT_ARROW` or `PressRelease KEY_RIGHT_ARROW`|
+| `KEY_BACKSPACE` | `Press KEY_BACKSPACE` or `PressRelease KEY_BACKSPACE`|
+| `KEY_TAB` | `Press KEY_TAB` or `PressRelease KEY_TAB`|
+| `KEY_PAUSE` | `Press KEY_PAUSE` or `PressRelease KEY_PAUSE`|
+| `KEY_INSERT` | `Press KEY_INSERT` or `PressRelease KEY_INSERT`|
+| `KEY_DELETE` | `Press KEY_DELETE` or `PressRelease KEY_DELETE`|
+| `KEY_PAGE_UP` | `Press KEY_PAGE_UP` or `PressRelease KEY_PAGE_UP`|
+| `KEY_PAGE_DOWN` | `Press KEY_PAGE_DOWN` or `PressRelease KEY_PAGE_DOWN`|
+| `KEY_ESC` | `Press KEY_ESC` or `PressRelease KEY_ESC`|
+| `KEY_SPACE` | `Press KEY_SPACE` or `PressRelease KEY_SPACE`|
+| `KEY_HOME` | `Press KEY_HOME` or `PressRelease KEY_HOME`|
+| `KEY_END` | `Press KEY_END` or `PressRelease KEY_END`|
+| `KEY_CAPS_LOCK` | `Press KEY_CAPS_LOCK` or `PressRelease KEY_CAPS_LOCK`|
+| `KEY_PRINT_SCREEN` | `Press KEY_PRINT_SCREEN` or `PressRelease KEY_PRINT_SCREEN`|
+| `KEY_SCROLL_LOCK` | `Press KEY_SCROLL_LOCK` or `PressRelease KEY_SCROLL_LOCK`|
+| `KEY_NUM_LOCK` | `Press KEY_NUM_LOCK` or `PressRelease KEY_NUM_LOCK`|
+| `KEY_MENU` | `Press KEY_MENU` or `PressRelease KEY_MENU`|
+| `LED_NUMLOCK` | `Press LED_NUMLOCK` or `PressRelease LED_NUMLOCK`|
+| `LED_CAPSLOCK` | `Press LED_CAPSLOCK` or `PressRelease LED_CAPSLOCK`|
+| `LED_SCROLLLOCK` | `Press LED_SCROLLLOCK` or `PressRelease LED_SCROLLLOCK`|
+| `LED_COMPOSE` | `Press LED_COMPOSE` or `PressRelease LED_COMPOSE`|
+| `LED_KANA` | `Press LED_KANA` or `PressRelease LED_KANA`|
+| `KEY_F1` | `Press KEY_F1` or `PressRelease KEY_F1`|
+| `KEY_F2` | `Press KEY_F2` or `PressRelease KEY_F2`|
+| `KEY_F3` | `Press KEY_F3` or `PressRelease KEY_F3`|
+| `KEY_F4` | `Press KEY_F4` or `PressRelease KEY_F4`|
+| `KEY_F5` | `Press KEY_F5` or `PressRelease KEY_F5`|
+| `KEY_F6` | `Press KEY_F6` or `PressRelease KEY_F6`|
+| `KEY_F7` | `Press KEY_F7` or `PressRelease KEY_F7`|
+| `KEY_F8` | `Press KEY_F8` or `PressRelease KEY_F8`|
+| `KEY_F9` | `Press KEY_F9` or `PressRelease KEY_F9`|
+| `KEY_F10` | `Press KEY_F10` or `PressRelease KEY_F10`|
+| `KEY_F11` | `Press KEY_F11` or `PressRelease KEY_F11`|
+| `KEY_F12` | `Press KEY_F12` or `PressRelease KEY_F12`|
 
 # Remote Shell
 
