@@ -293,23 +293,25 @@ If you want to add a new keyboard layout:
 
 To develop Evil Crow Cable Wind payloads, you need to know the syntax of the interpreter. All the commands allowed in the interpreter are listed here:
 
-* RunWin COMMAND: Runs a command or a program on the victim's computer (example: RunWin cmd)
-* RunPowershellAdmin: Run powershell as administrator
-* RunCmdAdmin: Run cmd as administrator
-* ShellWin IP: Read the "Remote Shell" section for more information
-* RunLauncher COMMAND: Runs a command or a program on the victim's computer (example: RunLauncher libreoffice)
-* CtrlAltT: Run a terminal on the victim's computer
-* ShellNix IP: Read the "Remote Shell" section for more information
-* RunMac COMMAND: Runs a command or a program on the victim's computer (example: RunMac terminal)
-* GuiR: Press WINDOWS+R on the victim's computer
-* AltF2: Press ALT+F2 on the victim's computer
-* GuiSpace: Press WINDOWS+SPACE on the victim's computer
-* Print TEXT: Prints a text on the victim's computer (example: Print Hello World!)
-* PrintLine TEXT: Prints a text and presses the ENTER key on the victim's computer (example: PrintLine Hello World!).
-* Delay MILLISECONDS: Pauses before continuing payload execution (example: Delay 5000)
-* Press KEY: Press a key or modifier on the victim's computer (example: Press KEY_ENTER).
-* PressRelease KEY: Press and Release a key or modifier on the victim's computer (example: PressRelease KEY_ENTER)
-* Release: Release all pressed keys
+| Command | Example | Description |
+| ------- | ------- | ----------- |
+| `RunWin` | `RunWin cmd` |Runs a command or a program on the victim's computer |
+| `RunPowershellAdmin` | `RunPowershellAdmin` | Run powershell as administrator |
+| `RunCmdAdmin` | `RunCmdAdmin` | Run cmd as administrator |
+| `ShellWin` | `ShellWin IP` | Read the "Remote Shell" section for more information |
+| `RunLauncher` | `RunLauncher libreoffice` | Runs a command or a program on the victim's computer |
+| `CtrlAltT` | `CtrlAltT` | Run a terminal on the victim's computer |
+| `ShellNix` | `ShellNix IP` | Read the "Remote Shell" section for more information |
+| `RunMac` | `RunMac terminal` | Runs a command or a program on the victim's computer |
+| `GuiR` | `GuiR` | Press WINDOWS+R on the victim's computer |
+| `AltF2` | `AltF2` | Press ALT+F2 on the victim's computer |
+| `GuiSpace` | `GuiSpace` | Press WINDOWS+SPACE on the victim's computer |
+| `Print` | `Print Hello World!` | Prints a text on the victim's computer |
+| `PrintLine` | `PrintLine Hello World!` | Prints a text and presses the ENTER key on the victim's computer |
+| `Delay` | `Delay 5000` | Delay in ms |
+| `Press` | `Press KEY_ENTER` | Press a key or modifier on the victim's computer |
+| `PressRelease` | `PressRelease KEY_ENTER` | Press and Release a key or modifier on the victim's computer |
+| `Release` | `Release` | Release all pressed keys |
 
 **NOTE:** You can find payloads for Evil Crow Cable Wind in this repository (EvilCrowCable-Wind/payloads).
 
@@ -317,55 +319,59 @@ To develop Evil Crow Cable Wind payloads, you need to know the syntax of the int
 
 **MODIFIERS:**
 
-* KEY_LEFT_ALT
-* KEY_LEFT_GUI
-* KEY_LEFT_CTRL
-* KEY_LEFT_SHIFT
-* KEY_RIGHT_ALT
-* KEY_RIGHT_GUI
-* KEY_RIGHT_CTRL
-* KEY_RIGHT_SHIFT
+| Modifiers |
+| --- |
+| `KEY_LEFT_ALT` |
+| `KEY_LEFT_GUI` |
+| `KEY_LEFT_CTRL` |
+| `KEY_LEFT_SHIFT` |
+| `KEY_RIGHT_ALT` |
+| `KEY_RIGHT_GUI` |
+| `KEY_RIGHT_CTRL` |
+| `KEY_RIGHT_SHIFT` |
 
 **KEYS:**
 
-* KEY_ENTER
-* KEY_UP_ARROW
-* KEY_DOWN_ARROW
-* KEY_LEFT_ARROW
-* KEY_RIGHT_ARROW
-* KEY_BACKSPACE
-* KEY_TAB
-* KEY_PAUSE
-* KEY_INSERT
-* KEY_DELETE
-* KEY_PAGE_UP
-* KEY_PAGE_DOWN
-* KEY_ESC
-* KEY_SPACE
-* KEY_HOME
-* KEY_END
-* KEY_CAPS_LOCK
-* KEY_PRINT_SCREEN
-* KEY_SCROLL_LOCK
-* KEY_NUM_LOCK
-* KEY_MENU
-* LED_NUMLOCK
-* LED_CAPSLOCK
-* LED_SCROLLLOCK
-* LED_COMPOSE
-* LED_KANA
-* KEY_F1
-* KEY_F2
-* KEY_F3
-* KEY_F4
-* KEY_F5
-* KEY_F6
-* KEY_F7
-* KEY_F8
-* KEY_F9
-* KEY_F10
-* KEY_F11
-* KEY_F12
+| Keys |
+| --- |
+| `KEY_ENTER` |
+| `KEY_UP_ARROW` |
+| `KEY_DOWN_ARROW` |
+| `KEY_LEFT_ARROW` |
+| `KEY_RIGHT_ARROW` |
+| `KEY_BACKSPACE` |
+| `KEY_TAB` |
+| `KEY_PAUSE` |
+| `KEY_INSERT` |
+| `KEY_DELETE` |
+| `KEY_PAGE_UP` |
+| `KEY_PAGE_DOWN` |
+| `KEY_ESC` |
+| `KEY_SPACE` |
+| `KEY_HOME` |
+| `KEY_END` |
+| `KEY_CAPS_LOCK` |
+| `KEY_PRINT_SCREEN` |
+| `KEY_SCROLL_LOCK` |
+| `KEY_NUM_LOCK` |
+| `KEY_MENU` |
+| `LED_NUMLOCK` |
+| `LED_CAPSLOCK` |
+| `LED_SCROLLLOCK` |
+| `LED_COMPOSE` |
+| `LED_KANA` |
+| `KEY_F1` |
+| `KEY_F2` |
+| `KEY_F3` |
+| `KEY_F4` |
+| `KEY_F5` |
+| `KEY_F6` |
+| `KEY_F7` |
+| `KEY_F8` |
+| `KEY_F9` |
+| `KEY_F10` |
+| `KEY_F11` |
+| `KEY_F12` |
 
 # Remote Shell
 
