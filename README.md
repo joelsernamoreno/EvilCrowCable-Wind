@@ -30,6 +30,7 @@ You can invite me to a coffee to further develop low-cost hacking devices. If yo
 1. Disclaimer
 2. Introduction
 3. Firmware
+	* Flash Mode
 	* Installation
 	* First steps with Evil Crow Cable Wind
 	* Home
@@ -43,6 +44,8 @@ You can invite me to a coffee to further develop low-cost hacking devices. If yo
 	* Payload Syntax
 	* Keys and Modifiers Syntax
 6. Remote Shell
+
+![Cable](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/cable.jpg)
 
 # Disclaimer
 
@@ -86,6 +89,18 @@ You can change the keyboard layout in real time from the web panel.
 * **Please do not request new features in this code. You can develop code for Evil Crow Cable Wind and submit a PR with your new features.**
 
 # Firmware
+
+## Flash Mode
+
+To flash the SIDE-A and SIDE-B firmwares on Evil Crow Cable Wind you need a magnet.
+
+Place the magnet on one end of the Evil Crow Cable Wind and connect it to the computer. After flashing SIDE-A or SIDE-B do the same with the other end.
+
+![Magnet](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/magnet.jpg)
+
+You can check that the flash mode is correct with the following image:
+
+![Flash Mode](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/flash-mode.png)
 
 ## Installation
 
@@ -210,7 +225,7 @@ Configure Vendor ID, Product ID, Product Name y Manufacturer Name. USB Configura
 
 ![Config](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/vid-pid.png)
 
-**Note:** Be sure to enter the correct data, or you may risk bricking the device.
+**Note:** Be sure to enter the correct data, or you may risk bricking the device. Additional VendorID/ProductIDs available on: https://devicehunt.com/all-usb-vendors
 
 * **Delete USB Config:**
 
