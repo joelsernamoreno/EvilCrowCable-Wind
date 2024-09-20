@@ -17,12 +17,10 @@ You can invite me to a coffee to further develop low-cost hacking devices. If yo
 
 **Available from April Brother (shipping from China):** 
 
-* USB-A to USB-C: Coming soon
 * USB-C to USB-C: Coming soon
 
 **Available from KSEC Worldwide (shipping from the United Kingdom):**
 
-* USB-A to USB-C: Coming soon
 * USB-C to USB-C: Coming soon
 
 **Summary:**
@@ -59,7 +57,7 @@ Evil Crow Cable Wind © 2024 by Joel Serna Moreno is licensed under CC BY-NC-SA 
 
 # Introduction
 
-Evil Crow Cable Wind is a BadUSB device based on two ESP32-S3 (It only allows charging of the mobile phone).
+Evil Crow Cable Wind is a BadUSB device based on ESP32-S3 (It only allows charging of the mobile phone).
 
 Evil Crow Cable Wind can be controlled with a web panel over Wi-Fi, the device is configured in STATION mode. You will need to set up a Wi-Fi access point with your mobile phone or another device, Evil Crow Cable Wind will automatically connect to it.
 
@@ -92,9 +90,9 @@ You can change the keyboard layout in real time from the web panel.
 
 ## Flash Mode
 
-To flash the SIDE-A and SIDE-B firmwares on Evil Crow Cable Wind you need a magnet.
+To flash the firmware on Evil Crow Cable Wind you need a magnet.
 
-Place the magnet on one end of the Evil Crow Cable Wind and connect it to the computer. After flashing SIDE-A or SIDE-B do the same with the other end.
+Place the magnet on the active end of the Evil Crow Cable Wind and connect it to the computer.
 
 ![Magnet](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/magnet.jpg)
 
@@ -112,9 +110,9 @@ You can check that the flash mode is correct with the following image:
 6. Open Arduino IDE
 7. Go to File - Preferences. Locate the field "Additional Board Manager URLs:" Add "https://espressif.github.io/arduino-esp32/package_esp32_index.json" without quotes. Click "Ok"
 8. Select Tools - Board - Boards Manager. Search for "esp32". Install "esp32 by Espressif system version 3.0.4"
-9. Flash SIDE-A.ino firmware:
-	* Connect one end of the cable (USB-A or USB-C) with a magnet to the computer
-	* Open EvilCrowCable-Wind/firmware/SIDE-A.ino firmware in Arduino IDE
+9. Flash firmware.ino:
+	* Connect active end of the cable with a magnet to the computer
+	* Open EvilCrowCable-Wind/firmware/firmware.ino in Arduino IDE
 	* Select Tools:
 		- Board - "ESP32S3 Dev Module"
     	  	- USB CDC On Boot - "Disabled"
@@ -134,37 +132,14 @@ You can check that the flash mode is correct with the following image:
     		- Upload Speed - "921600"
     		- USB Mode - "Hardware CDC and JTAG"
     		- Zigbee Mode - "Disabled"
-    	* Flash SIDE-A.ino firmware
-10. Flash SIDE-B.ino firmware:
-	* Connect the second end of the cable (USB-C) with a magnet to the computer
-	* Open EvilCrowCable-Wind/firmware/SIDE-B.ino firmware in Arduino IDE
-	* Select Tools:
-		- Board - "ESP32S3 Dev Module"
-    	  	- USB CDC On Boot - "Disabled"
-    	  	- CPU Frequency - "80MHz (Wi-Fi)
-    	  	- Core Debug Level - "None"
-    	  	- USB DFU On Boot - "Disabled"
-    	  	- Erase All Flash Before Sketch Upload - "Disabled"
-    	  	- Events Run On - "Core 1"
-    	  	- Flash Mode - "QIO 80MHZ"
-    	  	- Flash Size - "8MB (64Mb)"
-    	  	- JTAG Adapter - "Disabled"
-    	  	- Arduino Runs On - "Core 1"
-    		- USB Firmware MSC On Boot - "Disabled".
-    		- Partition Scheme - "8M with SPIFFS (3MB APP/1.5MB SPIFFS)"
-    		- PSRAM - "Disabled"
-    		- Upload Mode - "UART0 / Hardware CDC"
-    		- Upload Speed - "921600"
-    		- USB Mode - "Hardware CDC and JTAG"
-    		- Zigbee Mode - "Disabled"
-    	* Flash SIDE-B.ino firmware
+    	* Upload firmware
 
 ## First steps with Evil Crow Cable Wind
 
 1. Set up a Wi-Fi AP with your mobile phone:
 	* SSID: Evil Crow Cable Wind
 	* Password: 123456789
-2. Disconnect and re-connect the device to the computer (Connect the end of SIDE-A firmware).
+2. Disconnect and re-connect the device to the computer (Connect the active end to the computer).
 3. Open a browser and access the web panel: http://cable-wind.local/
 
 **Note:** If you cannot access the web panel, use the IP address assigned to Evil Crow Cable Wind.
@@ -173,17 +148,39 @@ You can check that the flash mode is correct with the following image:
 
 The Home page shows interesting information about the device.
 
+![Home](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/home.png)
+
 ## Live Payload
 
 The Live Payload page allows you to run payloads on a computer or mobile phone. The execution of the payloads is bidirectional:
 
-* You can use the "Run Payload" option to run the payload on the first end of the cable (USB-A or USB-C).
-* You can use the "Run Mobile" option to run the payload on the other end of the cable (USB-C).
+* You can use the "Run Payload" option to run the payload.
+* You can use the "Startup exec payload" option to save the payload in memory and run it every time Evil Crow Cable Wind is connected to a computer.
 * You can use the "Save Payload" option to save the payload in memory.
+
+![LivePayload](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/livepayload.png)
+
+**Run Payload example:**
+
+![RunPayloadExample](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/run-payload-example.png)
+
+**Startup exec payload example:** You have to include the keyboard layout in the payload
+
+![ExecExample](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/startup-exec-example.png)
+
+To remove the automatic exec, delete the payload-startup.txt payload from the List Payloads option.
+
+![DelStartup](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/del-startup.png)
+
+**Save Payload example:** You have to include the file name
+
+![SaveExample](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/save-payload-example.png)
 
 ## Upload Payload
 
 The Upload Payload page allows you to upload and store payloads in memory.
+
+![Upload](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/upload.png)
 
 **Note:** Check the available memory on the Home page.
 
@@ -191,7 +188,9 @@ The Upload Payload page allows you to upload and store payloads in memory.
 
 The Live Payload page allows you to run or delete payloads stored in memory.
 
-**Note:** From this menu you will not be able to run payloads on the two ends of the cable. This option only works from Live Payload.
+![Payloads](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/payloads.png)
+
+![ListPayloads](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/list-payloads-example.png)
 
 ## Config
 
@@ -249,34 +248,23 @@ In the web panel, you can check whether a configuration has been applied correct
 
 You can update the firmware without a magnet:
 
-1. Open SIDE-A.ino in the Arduino IDE
+1. Open firmware.ino in the Arduino IDE
 2. Configure the options as described in the 'Installation' section
 3. Click on sketch -> Export Compiled Binary
-4. Open SIDE-B.ino in the Arduino IDE
-5. Configure the options as described in the 'Installation' section
-6. Click on sketch -> Export Compiled Binary
 
 This will create the binaries:
 
-* EvilCrowCable-Wind/firmware/SIDE-A/build/esp32.esp32.esp32s3/
-* EvilCrowCable-Wind/firmware/SIDE-B/build/esp32.esp32.esp32s3/
+* EvilCrowCable-Wind/firmware/build/esp32.esp32.esp32s3/
 
-![Binaries](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/binaries1.png)
-
-![Binaries](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/binaries2.png)
+![Binaries](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/binaries.png)
 
 7. Set up a Wi-Fi access point for Evil Crow Cable Wind and your computer
-8. Connect Evil Crow Cable Wind to the Wi-Fi AP and your computer
+8. Connect Evil Crow Cable Wind to the Wi-Fi AP and your computer (without magnet)
 9. Connect your computer to the Wi-Fi AP
-10. Open a terminal in EvilCrowCable-Wind/firmware/SIDE-A/build/esp32.esp32.esp32s3/
-11. Flash the binary SIDE-A.ino.bin with the following command: curl -F "image=@SIDE-A.ino.bin" cable-wind.local/update
+10. Open a terminal in EvilCrowCable-Wind/firmware/build/esp32.esp32.esp32s3/
+11. Flash the binary firmware.ino.bin with the following command: curl -F "image=@firmware.ino.bin" cable-wind.local/update
 
-![Update](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/update1.png)
-
-12. Open a terminal in EvilCrowCable-Wind/firmware/SIDE-B/build/esp32.esp32.esp32s3/
-13. Flash the binary SIDE-B.ino.bin with the following command: curl -F "image=@SIDE-B.ino.bin" cablewind-client.local/update
-
-![Update](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/update2.png)
+![Update](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/update.png)
 
 # Add a new Keyboard Layout
 
@@ -292,15 +280,15 @@ If you want to add a new keyboard layout:
 
 ![Include Layout](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/include-layout.png)
 
-3. Modify the SIDE-A.ino and SIDE-B.ino firmwares to change your layout in real time.
+3. Modify the firmware.ino to change your layout in real time.
 
 ![Firmware Layout](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/firmware-layout.png)
 
-4. Modify config.h in SIDE-A.ino to change to your new layout from the web panel.
+4. Modify config.h in firmware.ino to change to your new layout from the web panel.
 
 ![Web Layout](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/web-layout.png)
 
-5. Flash SIDE-A.ino and SIDE-B.ino firmwares again.
+5. Flash firmware.ino again.
 
 # Sintax
 
@@ -401,7 +389,7 @@ To develop Evil Crow Cable Wind payloads, you need to know the syntax of the int
 
 Evil Crow Cable Wind allows you to execute commands remotely on a computer without a network connection.
 
-Evil Crow Cable Wind uses port 4444 for communication. If you want to change this, modify SIDE-A.ino:
+Evil Crow Cable Wind uses port 4444 for communication. If you want to change this, modify firmware.ino:
 
 ![Port](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/port.png)
 
@@ -417,7 +405,7 @@ Evil Crow Cable Wind uses port 4444 for communication. If you want to change thi
 	* Windows Target: ShellWin "Evil Crow server IP" (example: ShellWin 192.168.85.230)
 	* Linux Target: ShellNix "Evil Crow server IP" (example: ShellNix 192.168.85.230)
 	
-3. Click on 'Run Payload' (**Note:** 'Run Mobile' does not work with this attack)
+3. Click on 'Run Payload'.
 
 **Demo:** [Remote Shell](https://www.youtube.com/watch?v=FmkIHYdOxS4)
 
