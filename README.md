@@ -152,7 +152,7 @@ The Home page shows interesting information about the device.
 
 ## Live Payload
 
-The Live Payload page allows you to run payloads on a computer or mobile phone. The execution of the payloads is bidirectional:
+The Live Payload page allows you to run payloads or save payloads:
 
 * You can use the "Run Payload" option to run the payload.
 * You can use the "Startup exec payload" option to save the payload in memory and run it every time Evil Crow Cable Wind is connected to a computer.
