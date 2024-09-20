@@ -302,6 +302,7 @@ To develop Evil Crow Cable Wind payloads, you need to know the syntax of the int
 | `RunPowershellAdmin` | `RunPowershellAdmin` | Run powershell as administrator |
 | `RunCmdAdmin` | `RunCmdAdmin` | Run cmd as administrator |
 | `ShellWin` | `ShellWin IP` | Read the "Remote Shell" section for more information |
+| `RunNix` | `RunNix gedit` | Runs a command or a program on the victim's computer |
 | `RunLauncher` | `RunLauncher libreoffice` | Runs a command or a program on the victim's computer |
 | `CtrlAltT` | `CtrlAltT` | Run a terminal on the victim's computer |
 | `ShellNix` | `ShellNix IP` | Read the "Remote Shell" section for more information |
