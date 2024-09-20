@@ -275,6 +275,17 @@ void payloadExec(){
     Keyboard.println(Command + 12);
   }
 
+  else if(cmd.startsWith("RunNix ")){
+    cmd.toCharArray(Command, cmd.length() + 1);
+    Keyboard.press(KEY_LEFT_CTRL);
+    Keyboard.press(KEY_LEFT_ALT);
+    Keyboard.print("t");
+    delay(100);
+    Keyboard.releaseAll();
+    delay(2000);
+    Keyboard.println(Command + 7);
+  }
+
   else if(cmd.startsWith("RunWin ")){
     cmd.toCharArray(Command, cmd.length() + 1);
     Keyboard.press(KEY_LEFT_GUI);
