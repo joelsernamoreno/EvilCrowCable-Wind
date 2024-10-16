@@ -21,7 +21,7 @@ You can invite me to a coffee to further develop low-cost hacking devices. If yo
 
 	* Tindie: https://www.tindie.com/products/aprbrother/evilcrowcable-wind/
 	* Alibaba: https://www.alibaba.com/product-detail/Crow-Cable-wind-based-on-ESP32_1601269809241.html
-	* Aliexpress: https://www.aliexpress.com/item/1005007904610809.html (**NOTE:** The Aliexpress link isn't working for users in Spain.)
+	* Aliexpress: https://www.aliexpress.com/item/1005007904610809.html (**NOTE:** The Aliexpress link isn't working for users in Europe.)
 
 **Available from KSEC Worldwide (shipping from the United Kingdom):**
 
