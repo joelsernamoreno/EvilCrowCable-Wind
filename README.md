@@ -17,7 +17,7 @@ You can invite me to a coffee to further develop low-cost hacking devices. If yo
 
 **Available from April Brother (shipping from China):** 
 
-* USB-C to USB-C: Coming soon
+* USB-C to USB-C: https://www.tindie.com/products/aprbrother/evilcrowcable-wind/
 
 **Available from KSEC Worldwide (shipping from the United Kingdom):**
 
@@ -258,11 +258,11 @@ This will create the binaries:
 
 ![Binaries](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/binaries.png)
 
-7. Set up a Wi-Fi access point for Evil Crow Cable Wind and your computer
-8. Connect Evil Crow Cable Wind to the Wi-Fi AP and your computer (without magnet)
-9. Connect your computer to the Wi-Fi AP
-10. Open a terminal in EvilCrowCable-Wind/firmware/build/esp32.esp32.esp32s3/
-11. Flash the binary firmware.ino.bin with the following command: curl -F "image=@firmware.ino.bin" cable-wind.local/update
+4. Set up a Wi-Fi access point for Evil Crow Cable Wind and your computer
+5. Connect Evil Crow Cable Wind to the Wi-Fi AP and your computer (without magnet)
+6. Connect your computer to the Wi-Fi AP
+7. Open a terminal in EvilCrowCable-Wind/firmware/build/esp32.esp32.esp32s3/
+8. Flash the binary firmware.ino.bin with the following command: curl -F "image=@firmware.ino.bin" cable-wind.local/update
 
 ![Update](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/update.png)
 
