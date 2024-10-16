@@ -17,7 +17,11 @@ You can invite me to a coffee to further develop low-cost hacking devices. If yo
 
 **Available from April Brother (shipping from China):** 
 
-* USB-C to USB-C: https://www.tindie.com/products/aprbrother/evilcrowcable-wind/
+* USB-C to USB-C: 
+
+	* Tindie: https://www.tindie.com/products/aprbrother/evilcrowcable-wind/
+	* Alibaba: https://www.alibaba.com/product-detail/Crow-Cable-wind-based-on-ESP32_1601269809241.html
+	* Aliexpress: https://www.aliexpress.com/item/1005007904610809.html (**NOTE:** The Aliexpress link isn't working for users in Spain.)
 
 **Available from KSEC Worldwide (shipping from the United Kingdom):**
 
