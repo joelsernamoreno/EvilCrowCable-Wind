@@ -25,7 +25,7 @@ You can invite me to a coffee to further develop low-cost hacking devices. If yo
 
 **Available from KSEC Worldwide (shipping from the United Kingdom):**
 
-* USB-C to USB-C: Coming soon
+* USB-C to USB-C: https://labs.ksec.co.uk/product/evil-crow-wind-usb-c-wifi-enabled-badusb-device/
 
 **Summary:**
 
