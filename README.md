@@ -4,6 +4,8 @@
 
 **Idea, development and implementation:** Joel Serna (@JoelSernaMoreno).
 
+**Firmware collaborators:** Juraj Belko (@s_c_johnson).
+
 **Final PCB design:** April Brother (@aprbrother).
 
 **Manufacturer and distributor:** April Brother (@aprbrother).
