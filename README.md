@@ -449,7 +449,7 @@ You have several ways to run Evil Crow Server.
 
 1. Run evilcrow-server.exe to start the attack:
 
-	* Windows, Linux or MacOS Target: python evilcrow-server.exe --port 4444
+	* Windows, Linux or MacOS Target: evilcrow-server.exe --port 4444
 
 2. Go to the web panel and type the following payload from Live Payload:
 
