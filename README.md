@@ -206,7 +206,7 @@ The Upload Payload page allows you to upload and store payloads in memory.
 
 ## List Payloads
 
-The Live Payload page allows you to run or delete payloads stored in memory.
+The List Payload page allows you to run or delete payloads stored in memory.
 
 ![Payloads](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/payloads.png)
 
