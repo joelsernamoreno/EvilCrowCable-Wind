@@ -17,7 +17,7 @@ You can invite me to a coffee to further develop low-cost hacking devices. If yo
 
 [![ko-fi](https://www.ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/E1E614OA5)
 
-**Available from April Brother (shipping from China):** 
+**Available with April Brother (shipping from China):** 
 
 * USB-A to USB-C:
 	
@@ -31,7 +31,17 @@ You can invite me to a coffee to further develop low-cost hacking devices. If yo
 	* Alibaba: https://www.alibaba.com/product-detail/Crow-Cable-wind-based-on-ESP32_1601269809241.html
 	* Aliexpress: https://www.aliexpress.com/item/1005007904610809.html
 
-**Available from KSEC Worldwide (shipping from the United Kingdom):**
+**Available with SAPSAN Cybersec & Military (shipping from EU, Poland):**
+
+* USB-A to USB-C:
+
+	* https://sapsan-sklep.pl/en/products/evil-crow-cable-wind-badusb-wifi
+
+* USB-C to USB-C: https://sapsan-sklep.pl/en/products/evil-crow-cable-wind-badusb-wifi
+
+	* https://sapsan-sklep.pl/en/products/evil-crow-cable-wind-badusb-wifi
+
+**Available with KSEC Worldwide (shipping from the United Kingdom):**
 
 * USB-C to USB-C: https://labs.ksec.co.uk/product/evil-crow-wind-usb-c-wifi-enabled-badusb-device/
 
