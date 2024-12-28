@@ -37,7 +37,7 @@ You can invite me to a coffee to further develop low-cost hacking devices. If yo
 
 	* https://sapsan-sklep.pl/en/products/evil-crow-cable-wind-badusb-wifi
 
-* USB-C to USB-C: https://sapsan-sklep.pl/en/products/evil-crow-cable-wind-badusb-wifi
+* USB-C to USB-C:
 
 	* https://sapsan-sklep.pl/en/products/evil-crow-cable-wind-badusb-wifi
 
