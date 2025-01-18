@@ -1,15 +1,4 @@
 const char Redirect[] PROGMEM = R"=====(
-/*
-function AutoRefresh(t) {
-  setTimeout("window.location.reload(1);", t);
-  }
-
-function AutoRedirect() {
-  window.setTimeout(function () {
-        window.location.href = "/";
-    }, 5000)
-  }
-*/
 
 function checkConnection() {
     fetch('/stats')

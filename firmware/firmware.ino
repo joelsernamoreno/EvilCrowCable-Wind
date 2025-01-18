@@ -661,10 +661,7 @@ void handleDeletePayload() {
 }
 
 void setup() {
-  Keyboard.begin();
-  USB.begin();
-  USBSerial.begin();
-  Keyboard.setLayout(en_us);
+  
   // LittleFS.begin(true);
   if (!LittleFS.begin(true)) {
     // format in case of missing file system
@@ -691,6 +688,11 @@ void setup() {
       USB.productName(productName.c_str());
     }
   }
+
+  Keyboard.begin();
+  USB.begin();
+  USBSerial.begin();
+  Keyboard.setLayout(en_us);
 
   if (LittleFS.exists("/payloads/payload-startup.txt")) {
     File fsUploadFile = LittleFS.open("/payloads/payload-startup.txt", FILE_READ);

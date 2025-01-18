@@ -200,6 +200,8 @@ const char Configuration[] PROGMEM = R"=====(
                 return;
             }
 
+            showMessage('success', 'USB settings successfully applied!');
+
             const form = document.getElementById('usbForm');
             const formData = new FormData(form);
             fetch('/updateusb', {
@@ -207,27 +209,15 @@ const char Configuration[] PROGMEM = R"=====(
                 body: formData,
             })
             .then(response => response.text())
-            .then(data => {
-                showMessage('success', 'USB settings successfully applied!');
-            })
-            .catch(error => {
-                showMessage('error', 'Error applying USB settings.');
-                console.error('Error:', error);
-            });
         }
 
         function deleteUSBConfig() {
+            showMessage('success', 'USB Configuration successfully deleted!');
+
             fetch('/deleteusbconfig', {
                 method: 'POST',
             })
             .then(response => response.text())
-            .then(data => {
-                showMessage('success', 'USB Configuration successfully deleted!');
-            })
-            .catch(error => {
-                showMessage('error', 'Error deleting USB Configuration.');
-                console.error('Error:', error);
-            });
         }
     </script>
 
