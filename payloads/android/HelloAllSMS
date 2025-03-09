@@ -1,0 +1,56 @@
+// Android SMS Broadcast Script for Evil Crow Cable Wind
+
+// Open the default messaging app
+RunNix am start -a android.intent.action.MAIN -n com.android.messaging/.ui.conversationlist.ConversationListActivity
+Delay 3000
+
+// Start a new message by clicking the compose button (typically at bottom right)
+// The exact coordinates might need adjustment based on the device screen size
+Press KEY_TAB
+Press KEY_TAB
+Press KEY_TAB
+Press KEY_TAB
+Press KEY_ENTER
+Delay 2000
+
+// Click on "To" field to add recipient
+Press KEY_TAB
+Press KEY_ENTER
+Delay 1500
+
+// Select "All Contacts" option
+// May need to navigate based on the specific device/SMS app
+Press KEY_TAB
+Press KEY_TAB
+Press KEY_ENTER
+Delay 2000
+
+// Select all contacts (this will vary by device, but typically there's a "Select All" option)
+Press KEY_TAB
+Press KEY_TAB
+Press KEY_TAB
+Press KEY_ENTER
+Delay 2000
+
+// Confirm contact selection
+Press KEY_TAB
+Press KEY_TAB
+Press KEY_ENTER
+Delay 2000
+
+// Now focus on message field
+Press KEY_TAB
+Press KEY_TAB
+Delay 1000
+
+// Type the message
+Print hello
+Delay 1000
+
+// Send the message
+Press KEY_TAB
+Press KEY_ENTER
+Delay 2000
+
+// Return to home screen
+Press KEY_HOME

