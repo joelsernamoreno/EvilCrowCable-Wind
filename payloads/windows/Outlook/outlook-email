@@ -1,0 +1,36 @@
+// Open Run dialog
+GuiR
+Delay 500
+
+// Type 'outlook' and press Enter
+Print outlook
+Delay 500
+Press KEY_ENTER
+Delay 3000
+
+// Create a new email (Ctrl+N)
+Press KEY_LEFT_CTRL
+Print n
+Release
+Delay 1000
+
+// Type the email address in the 'To' field
+Print andrzej.piotrowski@issa.org.pl
+Delay 500
+Press KEY_TAB
+Delay 300
+
+// Add a subject
+Print Test test email sent using Evil Crow Cable Wind.
+Delay 300
+Press KEY_TAB
+Delay 300
+
+// Add email body content
+Print This is a test email sent using Evil Crow Cable Wind.
+Delay 500
+
+// Send the email (Ctrl+Enter)
+Press KEY_LEFT_CTRL
+Press KEY_ENTER
+Release
