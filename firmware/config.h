@@ -51,6 +51,7 @@ const char Configuration[] PROGMEM = R"=====(
                     <option value="layout15">SK_SK</option>
                     <option value="layout16">CZ_CZ</option>
                     <option value="layout17">SV_SE</option>
+                    <option value="layout18">SI_SI</option>
                 </select>
             </div>
             <button type="button" onclick="applyLayout()">Apply</button>

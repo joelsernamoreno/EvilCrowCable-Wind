@@ -60,6 +60,7 @@ extern const unsigned char ca_fr[128];
 extern const unsigned char sk_sk[128];
 extern const unsigned char cz_cz[128];
 extern const unsigned char sv_se[128];
+extern const unsigned char si_si[128];
 
 std::map<String, const unsigned char *> layoutMap = {
   { "layout1", en_us },
@@ -79,6 +80,7 @@ std::map<String, const unsigned char *> layoutMap = {
   { "layout15", sk_sk },
   { "layout16", cz_cz },
   { "layout17", sv_se },
+  { "layout18", si_si },
 };
 
 std::map<String, const unsigned char *> layoutMapInit = {
@@ -99,6 +101,7 @@ std::map<String, const unsigned char *> layoutMapInit = {
   { "SK_SK", sk_sk },
   { "CZ_CZ", cz_cz },
   { "SV_SE", sv_se },
+  { "SI_SI", si_si },
 };
 
 std::map<String, uint8_t> keyMap = {
