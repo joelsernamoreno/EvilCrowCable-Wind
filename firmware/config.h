@@ -220,6 +220,23 @@ const char Configuration[] PROGMEM = R"=====(
             })
             .then(response => response.text())
         }
+        
+        // Function to load the current layout when the config page is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Fetch the current layout from the server
+            fetch('/getcurrentlayout')
+                .then(response => response.text())
+                .then(currentLayout => {
+                    // Set the select dropdown to the current layout
+                    const layoutSelect = document.getElementById('layout');
+                    if (layoutSelect && currentLayout) {
+                        layoutSelect.value = currentLayout;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching current layout:', error);
+                });
+});
     </script>
 
 </body>
