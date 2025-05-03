@@ -508,6 +508,29 @@ button[name="deleteWifiButton"], button[name="deleteUSBButton"] {
     color: white;
 }
 
+.button-container {
+    display: flex;
+    justify-content: flex-start;
+    margin: 10px 0;
+    width: 10%;
+}
+
+.copy-button {
+    background-color: #73879F;
+    color: white;
+    border: none;
+    padding: 10px 10px;
+    border-radius: 13px;
+    font-size: 12px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+.copy-button:hover {
+    background-color: #55616F;;
+}
+
 select, input[type="text"], input[type="password"] {
     /* width: 89%; */
     width: 95%;

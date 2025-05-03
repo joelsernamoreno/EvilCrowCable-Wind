@@ -34,6 +34,10 @@ const char LivePayload[] PROGMEM = R"=====(
         <textarea id="livePayloadInput" class="payload-input" name="livepayload"></textarea>
     </form>
 
+    <div class="button-container">
+        <button type="button" onclick="copyPayload()" class="copy-button">Copy Payload</button>
+    </div>
+
     <div class="switch-container">
         <div class="switch-group">
             <span class="switch-label">Run payload</span>
@@ -133,6 +137,20 @@ const char LivePayload[] PROGMEM = R"=====(
             setTimeout(() => {
                 container.innerHTML = '';
             }, 5000);
+        }
+
+        function copyPayload() {
+            const payloadText = document.getElementById('livePayloadInput');
+            payloadText.select();
+            document.execCommand('copy');
+            
+            // Show a brief message to indicate the copy was successful
+            const originalText = payloadText.value;
+            if (originalText.length > 0) {
+                showMessage('success', 'Payload copied to clipboard!');
+            } else {
+                showMessage('error', 'No payload to copy!');
+            }
         }
 
         function runPayload() {
