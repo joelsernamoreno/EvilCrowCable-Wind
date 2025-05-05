@@ -419,6 +419,63 @@ label {
     backdrop-filter: saturate(180%) blur(20px);
 }
 
+/* Command table styles */
+.command-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 0.9em;
+    color: white;
+}
+.command-table th, .command-table td {
+    padding: 8px 12px;
+    border: 1px solid #555;
+    text-align: left;
+}
+.command-table th {
+    background-color: rgba(68, 68, 68, 0.95);
+    font-weight: bold;
+    color: white;
+}
+.command-table tr:nth-child(even) {
+    background-color: rgba(51, 51, 51, 0.7);
+}
+.command-table tr:hover {
+    background-color: rgba(85, 85, 85, 0.7);
+}
+.command-reference {
+    margin: 20px 0;
+    padding: 0;
+    background-color: rgba(51, 51, 51, 0.95);
+    border: 1px solid #555;
+    border-radius: 13px;
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    backdrop-filter: saturate(180%) blur(20px);
+}
+.command-reference-toggle {
+    margin: 0;
+    padding: 15px;
+    color: white;
+    font-size: 17px;
+    font-weight: 600;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+.command-reference-toggle:hover {
+    color: #007AFF;
+}
+.command-table-container {
+    padding: 0 15px 15px 15px;
+}
+.command-cell {
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.command-cell:hover {
+    background-color: rgba(0, 122, 255, 0.2) !important;
+}
+
 input[type="submit"], button {
     -webkit-appearance: none;
     appearance: none;
@@ -449,6 +506,29 @@ input[type="file"] {
 button[name="deleteWifiButton"], button[name="deleteUSBButton"] {
     background-color: #FF3B30;
     color: white;
+}
+
+.button-container {
+    display: flex;
+    justify-content: flex-start;
+    margin: 10px 0;
+    width: 10%;
+}
+
+.copy-button {
+    background-color: #73879F;
+    color: white;
+    border: none;
+    padding: 10px 10px;
+    border-radius: 13px;
+    font-size: 12px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+.copy-button:hover {
+    background-color: #55616F;;
 }
 
 select, input[type="text"], input[type="password"] {

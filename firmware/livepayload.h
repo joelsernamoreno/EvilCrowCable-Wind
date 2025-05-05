@@ -34,6 +34,10 @@ const char LivePayload[] PROGMEM = R"=====(
         <textarea id="livePayloadInput" class="payload-input" name="livepayload"></textarea>
     </form>
 
+    <div class="button-container">
+        <button type="button" onclick="copyPayload()" class="copy-button">Copy Payload</button>
+    </div>
+
     <div class="switch-container">
         <div class="switch-group">
             <span class="switch-label">Run payload</span>
@@ -57,6 +61,44 @@ const char LivePayload[] PROGMEM = R"=====(
                 <input type="checkbox" id="toggleSave" onclick="savePayload()">
                 <span class="slider round"></span>
             </label>
+        </div>
+    </div>
+
+    <div class="command-reference">
+        <h3 class="command-reference-toggle">Syntax Reference ▼</h3>
+        <div class="command-table-container" style="display: none;">
+            <table class="command-table">
+                <thead>
+                    <tr>
+                        <th>Command</th>
+                        <th>Example</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+					<tr><td class="command-cell">ServerConnect</td><td>ServerConnect IP</td><td>Read the "Remote Shell" section for more information</td></tr>
+                    <tr><td class="command-cell">RunWin</td><td>RunWin cmd</td><td>Runs a command or a program on the victim's computer</td></tr>
+                    <tr><td class="command-cell">RunPowershellAdmin</td><td>RunPowershellAdmin</td><td>Run powershell as administrator</td></tr>
+                    <tr><td class="command-cell">RunCmdAdmin</td><td>RunCmdAdmin</td><td>Run cmd as administrator</td></tr>
+                    <tr><td class="command-cell">ShellWin</td><td>ShellWin IP</td><td>Read the "Remote Shell" section for more information</td></tr>
+                    <tr><td class="command-cell">RunNix</td><td>RunNix getit</td><td>Runs a command or a program on the victim's computer</td></tr>
+                    <tr><td class="command-cell">RunLauncher</td><td>RunLauncher Libreoffice</td><td>Runs a command or a program on the victim's computer</td></tr>
+                    <tr><td class="command-cell">CtrlAltT</td><td>CtrlAltT</td><td>Run a terminal on the victim's computer</td></tr>
+                    <tr><td class="command-cell">ShellNix</td><td>ShellNix IP</td><td>Read the "Remote Shell" section for more information</td></tr>
+                    <tr><td class="command-cell">ShellMac</td><td>ShellMac IP</td><td>Read the "Remote Shell" section for more information</td></tr>
+                    <tr><td class="command-cell">ShellMacCleanup</td><td>ShellMacCleanup</td><td>Read the "Remote Shell" section for more information</td></tr>
+                    <tr><td class="command-cell">RunMac</td><td>RunMac terminal</td><td>Runs a command or a program on the victim's computer</td></tr>
+                    <tr><td class="command-cell">GuiR</td><td>GuiR</td><td>Press WINDOWS+R on the victim's computer</td></tr>
+                    <tr><td class="command-cell">AltF2</td><td>AltF2</td><td>Press ALT+F2 on the victim's computer</td></tr>
+                    <tr><td class="command-cell">GuiSpace</td><td>GuiSpace</td><td>Press WINDOWS+SPACE on the victim's computer</td></tr>
+                    <tr><td class="command-cell">Print</td><td>Print Hello World!</td><td>Prints a text on the victim's computer</td></tr>
+                    <tr><td class="command-cell">PrintLine</td><td>Printable Hello World!</td><td>Prints a text and presses the ENTER key on the victim's computer</td></tr>
+                    <tr><td class="command-cell">Delay</td><td>Delay 5000</td><td>Delay in ms</td></tr>
+                    <tr><td class="command-cell">Press</td><td>Press KEY_ENTER</td><td>Press a key or modifier on the victim's computer</td></tr>
+                    <tr><td class="command-cell">PressRelease</td><td>PressRelease KEY_ENTER</td><td>Press and Release a key or modifier on the victim's computer</td></tr>
+                    <tr><td class="command-cell">Release</td><td>Release</td><td>Release all pressed keys</td></tr>
+                </tbody>
+            </table>
         </div>
     </div>
 
@@ -95,6 +137,20 @@ const char LivePayload[] PROGMEM = R"=====(
             setTimeout(() => {
                 container.innerHTML = '';
             }, 5000);
+        }
+
+        function copyPayload() {
+            const payloadText = document.getElementById('livePayloadInput');
+            payloadText.select();
+            document.execCommand('copy');
+            
+            // Show a brief message to indicate the copy was successful
+            const originalText = payloadText.value;
+            if (originalText.length > 0) {
+                showMessage('success', 'Payload copied to clipboard!');
+            } else {
+                showMessage('error', 'No payload to copy!');
+            }
         }
 
         function runPayload() {
@@ -189,6 +245,48 @@ const char LivePayload[] PROGMEM = R"=====(
                 toggle.checked = false;
             });
         }
+
+        document.querySelector('.command-reference-toggle').addEventListener('click', function() {
+            const container = this.nextElementSibling;
+            if (container.style.display === 'none') {
+                container.style.display = 'block';
+                this.innerHTML = 'Syntax Reference ▲';
+            } else {
+                container.style.display = 'none';
+                this.innerHTML = 'Syntax Reference ▼';
+            }
+        });
+
+        document.querySelectorAll('.command-cell').forEach(cell => {
+            cell.addEventListener('click', function() {
+                const textarea = document.getElementById('livePayloadInput');
+                const command = this.textContent;
+                
+                if (textarea.value === '') {
+                    textarea.value = command;
+                } else {
+                    // Add new line if last character isn't already a newline
+                    if (textarea.value.slice(-1) !== '\n') {
+                        textarea.value += '\n';
+                    }
+                    textarea.value += command;
+                }
+                
+                // Focus the textarea and scroll to bottom
+                textarea.focus();
+                textarea.scrollTop = textarea.scrollHeight;
+                
+                // Optional: Highlight the newly added command briefly
+                this.style.backgroundColor = 'rgba(0, 122, 255, 0.3)';
+                setTimeout(() => {
+                    this.style.backgroundColor = '';
+                }, 300);
+            });
+            
+            // Add pointer cursor to command cells
+            cell.style.cursor = 'pointer';
+        });
+
     </script>
 </body>
 </html>

@@ -31,7 +31,11 @@ const char StaticFileList[] PROGMEM = R"=====(
 
     <h3>{{path}}:</h3>
     <div class="payload-container">
-        <pre>{{payloadContent}}</pre>
+        <pre id="payloadContent">{{payloadContent}}</pre>
+    </div>
+
+    <div class="button-container">
+        <button type="button" onclick="copyPayloadContent()" class="copy-button">Copy Payload</button>
     </div>
 
     <div class="switch-container">
@@ -73,6 +77,28 @@ const char StaticFileList[] PROGMEM = R"=====(
             setTimeout(() => {
                 container.innerHTML = '';
             }, 5000);
+        }
+
+        function copyPayloadContent() {
+            const payloadText = document.getElementById('payloadContent').textContent;
+
+            // Create a temporary textarea element
+            const tempTextArea = document.createElement('textarea');
+            tempTextArea.value = payloadText;
+            document.body.appendChild(tempTextArea);
+
+            // Select and copy the text
+            tempTextArea.select();
+            document.execCommand('copy');
+
+            // Remove the temporary element
+            document.body.removeChild(tempTextArea);
+        
+            if (payloadText.length > 0) {
+                showMessage('success', 'Payload copied to clipboard!');
+            } else {
+                showMessage('error', 'No payload to copy!');
+            }
         }
 
         document.getElementById('runPayloadCheckbox').addEventListener('change', function() {

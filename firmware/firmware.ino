@@ -60,6 +60,7 @@ extern const unsigned char ca_fr[128];
 extern const unsigned char sk_sk[128];
 extern const unsigned char cz_cz[128];
 extern const unsigned char sv_se[128];
+extern const unsigned char si_si[128];
 
 std::map<String, const unsigned char *> layoutMap = {
   { "layout1", en_us },
@@ -79,6 +80,7 @@ std::map<String, const unsigned char *> layoutMap = {
   { "layout15", sk_sk },
   { "layout16", cz_cz },
   { "layout17", sv_se },
+  { "layout18", si_si },
 };
 
 std::map<String, const unsigned char *> layoutMapInit = {
@@ -99,6 +101,7 @@ std::map<String, const unsigned char *> layoutMapInit = {
   { "SK_SK", sk_sk },
   { "CZ_CZ", cz_cz },
   { "SV_SE", sv_se },
+  { "SI_SI", si_si },
 };
 
 std::map<String, uint8_t> keyMap = {
@@ -244,6 +247,34 @@ void handleStats() {
   json += ",\"freeram\":" + String(ESP.getFreeHeap());
   json += "}";
   controlserver.send(200, "application/json", json);
+}
+
+// Function to get the currently selected layout
+String getCurrentLayout() {
+  String currentLayout = "layout1"; // Default to EN_US
+  
+  if (LittleFS.exists("/layout_config.txt")) {
+    File fsUploadFile = LittleFS.open("/layout_config.txt", FILE_READ);
+    if (fsUploadFile) {
+      currentLayout = fsUploadFile.readStringUntil('\n');
+      currentLayout.trim();
+      fsUploadFile.close();
+    }
+  }
+  
+  return currentLayout;
+}
+
+// Function to save the layout configuration to a file
+void saveLayoutConfig(const String &layout) {
+  File fsUploadFile = LittleFS.open("/layout_config.txt", FILE_WRITE);
+  if (!fsUploadFile) {
+    controlserver.send(500, "text/plain", "Failed to open file for writing");
+    return;
+  }
+  
+  fsUploadFile.println(layout);
+  fsUploadFile.close();
 }
 
 void payloadExec() {
@@ -638,6 +669,7 @@ void handleLayout() {
 
     if (it != layoutMap.end()) {
       Keyboard.setLayout(it->second);
+      saveLayoutConfig(layout); // Save the layout selection
       controlserver.send(200, "text/plain", "Layout applied successfully!");
     } else {
       controlserver.send(400, "text/plain", "Invalid layout specified.");
@@ -645,6 +677,11 @@ void handleLayout() {
   } else {
     controlserver.send(400, "text/plain", "No layout specified.");
   }
+}
+
+void handleGetCurrentLayout() {
+  String currentLayout = getCurrentLayout();
+  controlserver.send(200, "text/plain", currentLayout);
 }
 
 void handleDeletePayload() {
@@ -692,7 +729,26 @@ void setup() {
   Keyboard.begin();
   USB.begin();
   USBSerial.begin();
-  Keyboard.setLayout(en_us);
+
+  // Load the saved layout if it exists
+  const unsigned char *selected_layout = en_us; // Default to EN_US
+  
+  if (LittleFS.exists("/layout_config.txt")) {
+    File fsUploadFile = LittleFS.open("/layout_config.txt", FILE_READ);
+    if (fsUploadFile) {
+      String layoutKey = fsUploadFile.readStringUntil('\n');
+      layoutKey.trim();
+      
+      auto it = layoutMap.find(layoutKey);
+      if (it != layoutMap.end()) {
+        selected_layout = it->second;
+      }
+      
+      fsUploadFile.close();
+    }
+  }
+
+  Keyboard.setLayout(selected_layout);
 
   if (LittleFS.exists("/payloads/payload-startup.txt")) {
     File fsUploadFile = LittleFS.open("/payloads/payload-startup.txt", FILE_READ);
@@ -927,6 +983,7 @@ void setup() {
   controlserver.on("/updateusb", HTTP_POST, handleUpdateUSB);
   controlserver.on("/deleteusbconfig", HTTP_POST, handleDeleteUSBConfig);
   controlserver.on("/deletepayload", HTTP_POST, handleDeletePayload);
+  controlserver.on("/getcurrentlayout", handleGetCurrentLayout);
 
   httpUpdater.setup(&controlserver);
   controlserver.begin();

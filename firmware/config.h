@@ -51,6 +51,7 @@ const char Configuration[] PROGMEM = R"=====(
                     <option value="layout15">SK_SK</option>
                     <option value="layout16">CZ_CZ</option>
                     <option value="layout17">SV_SE</option>
+                    <option value="layout18">SI_SI</option>
                 </select>
             </div>
             <button type="button" onclick="applyLayout()">Apply</button>
@@ -219,6 +220,23 @@ const char Configuration[] PROGMEM = R"=====(
             })
             .then(response => response.text())
         }
+        
+        // Function to load the current layout when the config page is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Fetch the current layout from the server
+            fetch('/getcurrentlayout')
+                .then(response => response.text())
+                .then(currentLayout => {
+                    // Set the select dropdown to the current layout
+                    const layoutSelect = document.getElementById('layout');
+                    if (layoutSelect && currentLayout) {
+                        layoutSelect.value = currentLayout;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching current layout:', error);
+                });
+});
     </script>
 
 </body>
