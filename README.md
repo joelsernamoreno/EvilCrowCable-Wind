@@ -4,7 +4,7 @@
 
 **Idea, development and implementation:** Joel Serna (@JoelSernaMoreno).
 
-**Firmware collaborators:** Juraj Belko (@s_c_johnson).
+**Firmware collaborators:** Juraj Belko (@s_c_johnson) and rustysun9.
 
 **Final PCB design:** April Brother (@aprbrother).
 
@@ -111,6 +111,7 @@ Evil Crow Cable Wind is pre-configured with English layout (EN_US), but is compa
 * SK_SK
 * CZ_CZ
 * SV_SE
+* SI_SI
 
 You can change the keyboard layout in real time from the web panel.
 
@@ -236,7 +237,7 @@ The Config page allows you to change the Keyboard Layout, Wi-Fi configuration or
 
 * **Set Layout:**
 
-Configure the keyboard layout. Keyboard Layout changes are not stored. Configure your layout each time you use Evil Crow Cable Wind.
+Configure the keyboard layout. Keyboard Layout changes are stored.
 
 ![Config](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/set-layout.png)
 
