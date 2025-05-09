@@ -219,16 +219,6 @@ const char Configuration[] PROGMEM = R"=====(
                 showMessage('error', 'All USB fields are required.');
                 return;
             }
-
-            showMessage('success', 'USB settings successfully applied!');
-
-            const form = document.getElementById('usbForm');
-            const formData = new FormData(form);
-            fetch('/updateusb', {
-                method: 'POST',
-                body: formData,
-            })
-            .then(response => response.text())
         }
 
         function deleteUSBConfig() {

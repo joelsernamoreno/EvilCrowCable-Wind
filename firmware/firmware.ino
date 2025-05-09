@@ -188,7 +188,7 @@ void readFile(fs::FS &fs, const String &path) {
 
 void handleFileUpload() {
   HTTPUpload &upload = controlserver.upload();
-  static const uint32_t MAX_FILE_SIZE = 102400; // 100KB limit (adjust as needed)
+  static const uint32_t MAX_FILE_SIZE = 204800; // 200KB limit (adjust as needed)
   static uint32_t totalUploaded = 0;
 
   if (upload.status == UPLOAD_FILE_START) {
@@ -205,7 +205,7 @@ void handleFileUpload() {
     if (controlserver.hasHeader("Content-Length")) {
       uint32_t contentLength = controlserver.header("Content-Length").toInt();
       if (contentLength > MAX_FILE_SIZE) {
-        controlserver.send(413, "application/json", "{\"status\":\"error\",\"message\":\"File too large (max 100KB)\"}");
+        controlserver.send(413, "application/json", "{\"status\":\"error\",\"message\":\"File too large (max 200KB)\"}");
         return;
       }
     }
