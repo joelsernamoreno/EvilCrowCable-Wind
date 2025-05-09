@@ -11,7 +11,7 @@ const char Index[] PROGMEM = R"=====(
     <script src="javascript.js"></script>
 </head>
 <body>
-
+    <div id="global-toast" class="toast-container"></div>
     <nav id='menu'>
         <input type='checkbox' id='responsive-menu'><label></label>
         <ul>

@@ -188,28 +188,71 @@ void readFile(fs::FS &fs, const String &path) {
 
 void handleFileUpload() {
   HTTPUpload &upload = controlserver.upload();
+  static const uint32_t MAX_FILE_SIZE = 102400; // 100KB limit (adjust as needed)
+  static uint32_t totalUploaded = 0;
 
   if (upload.status == UPLOAD_FILE_START) {
-    String filename = upload.filename;
+    totalUploaded = 0; // Reset counter for new upload
 
+    // First validate file type
+    String filename = upload.filename;
+    if (!filename.endsWith(".txt")) {
+      controlserver.send(400, "application/json", "{\"status\":\"error\",\"message\":\"Only .txt files allowed\"}");
+      return;
+    }
+
+    // Check Content-Length header for size validation
+    if (controlserver.hasHeader("Content-Length")) {
+      uint32_t contentLength = controlserver.header("Content-Length").toInt();
+      if (contentLength > MAX_FILE_SIZE) {
+        controlserver.send(413, "application/json", "{\"status\":\"error\",\"message\":\"File too large (max 100KB)\"}");
+        return;
+      }
+    }
+
+    // Prepare file path
     if (!filename.startsWith("/")) {
       filename = "/payloads/" + filename;
     }
 
+    // Create directory if needed
+    if (!LittleFS.exists("/payloads")) {
+      LittleFS.mkdir("/payloads");
+    }
+
+    // Try to open file
     fsUploadFile = LittleFS.open(filename, "w");
     if (!fsUploadFile) {
-      controlserver.send(500, "text/plain", "Failed to open file for writing");
+      controlserver.send(500, "application/json", "{\"status\":\"error\",\"message\":\"Cannot create file\"}");
       return;
     }
-  } else if (upload.status == UPLOAD_FILE_WRITE) {
+  } 
+  else if (upload.status == UPLOAD_FILE_WRITE) {
+    // Check size during upload (defense in depth)
+    totalUploaded += upload.currentSize;
+    if (totalUploaded > MAX_FILE_SIZE) {
+      fsUploadFile.close();
+      LittleFS.remove(fsUploadFile.name());
+      controlserver.send(413, "application/json", "{\"status\":\"error\",\"message\":\"File exceeded size limit\"}");
+      return;
+    }
+
     if (fsUploadFile) {
       fsUploadFile.write(upload.buf, upload.currentSize);
     }
-  } else if (upload.status == UPLOAD_FILE_END) {
+  }
+  else if (upload.status == UPLOAD_FILE_END) {
     if (fsUploadFile) {
       fsUploadFile.close();
-      controlserver.send(200, "text/plain", "File uploaded successfully");
+      // Success response handled by POST handler
     }
+  }
+  else { // UPLOAD_FILE_ABORTED or error
+    if (fsUploadFile) {
+      fsUploadFile.close();
+      LittleFS.remove(fsUploadFile.name());
+    }
+    controlserver.send(500, "application/json", "{\"status\":\"error\",\"message\":\"Upload failed\"}");
   }
 }
 
@@ -596,30 +639,32 @@ void handleUpdateWiFi() {
 
     File fsUploadFile = LittleFS.open("/wifi_config.txt", FILE_WRITE);
     if (!fsUploadFile) {
-      controlserver.send(500, "text/plain", "Failed to open file for writing");
+      controlserver.send(500, "application/json", "{\"status\":\"error\",\"message\":\"Failed to open file for writing\"}");
       return;
     }
 
     fsUploadFile.println(newSSID);
     fsUploadFile.println(newPassword);
     fsUploadFile.close();
-    controlserver.send(200, "text/plain", "Wi-Fi config applied successfully!");
+    controlserver.send(200, "application/json", "{\"status\":\"success\",\"message\":\"Wi-Fi config applied successfully! Device will restart.\"}");
+    delay(1000); // Give time for response to be sent
     ESP.restart();
   } else {
-    controlserver.send(400, "text/plain", "Missing SSID or password");
+    controlserver.send(400, "application/json", "{\"status\":\"error\",\"message\":\"Missing SSID or password\"}");
   }
 }
 
 void handleDeleteWiFiConfig() {
   if (LittleFS.exists("/wifi_config.txt")) {
     if (LittleFS.remove("/wifi_config.txt")) {
-      controlserver.send(200, "text/plain", "Wi-Fi config deleted successfully");
+      controlserver.send(200, "application/json", "{\"status\":\"success\",\"message\":\"Wi-Fi config deleted successfully\"}");
+      delay(1000); // Give time for response to be sent
       ESP.restart();
     } else {
-      controlserver.send(500, "text/plain", "Failed to delete the file");
+      controlserver.send(500, "application/json", "{\"status\":\"error\",\"message\":\"Failed to delete the file\"}");
     }
   } else {
-    controlserver.send(500, "text/plain", "File does not exist");
+    controlserver.send(500, "application/json", "{\"status\":\"error\",\"message\":\"File does not exist\"}");
   }
 }
 
@@ -844,10 +889,11 @@ void setup() {
   });
 
   controlserver.on(
-    "/upload", HTTP_POST, []() {
-      controlserver.send(200, "text/plain", "");
-    },
-    handleFileUpload);
+  "/upload", HTTP_POST, []() {
+    // Only called if the upload completed successfully
+    controlserver.send(200, "application/json", "{\"status\":\"success\",\"message\":\"File uploaded successfully\"}");
+  },
+  handleFileUpload);
 
   controlserver.on("/listpayloads", []() {
     listDir(LittleFS, "/payloads", 0);
