@@ -11,7 +11,7 @@ const char UploadPayload[] PROGMEM = R"=====(
     <script src="javascript.js"></script>
 </head>
 <body>
-
+    <div id="global-toast" class="toast-container"></div>
     <nav id='menu'>
         <input type='checkbox' id='responsive-menu'><label></label>
         <ul>
@@ -36,50 +36,98 @@ const char UploadPayload[] PROGMEM = R"=====(
         </form>
     </div>
 
-    <div class="messages-container" id="uploadMessageContainer"></div>
-
     <script>
+
         function handleSubmit(event) {
             event.preventDefault();
-
-            const formData = new FormData(document.getElementById('uploadForm'));
-
-            fetch('/upload', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => {
-                if (response.ok) {
-                    showMessage('success', 'File uploaded successfully');
-                } else {
-                    showMessage('error', 'Error uploading file');
+            const form = document.getElementById('uploadForm');
+            const fileInput = form.querySelector('input[type="file"]');
+            const file = fileInput.files[0];
+            const MAX_SIZE = 200 * 1024; // 200KB in bytes
+        
+            // Client-side validation
+            if (!file) {
+                showMessage('error', 'Please select a file');
+                return;
+            }
+        
+            if (!file.name.endsWith('.txt')) {
+                showMessage('error', 'Only .txt files allowed');
+                return;
+            }
+        
+            if (file.size > MAX_SIZE) {
+                showMessage('error', 'File too large (max 200KB)');
+                return;
+            }
+        
+            // Proceed with upload
+            const formData = new FormData(form);
+            const xhr = new XMLHttpRequest();
+        
+            xhr.upload.onprogress = function(e) {
+                if (e.lengthComputable) {
+                    const percent = Math.round((e.loaded / e.total) * 100);
+                    document.querySelector('.upload-progress').textContent = `Uploading: ${percent}%`;
                 }
-            })
-            .catch(error => {
-                showMessage('error', 'Error uploading file');
-                console.error('Error:', error);
-            });
-        }
+            };
+        
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    const response = JSON.parse(xhr.responseText);
+                    showMessage('success', response.message);
+                    form.reset();
+                } else {
+                    try {
+                        const response = JSON.parse(xhr.responseText);
+                        showMessage('error', response.message);
+                    } catch {
+                        showMessage('error', 'Upload failed');
+                    }
+                }
+            };
+        
+            xhr.open('POST', '/upload', true);
+            xhr.send(formData);
+        
+            // Add progress element
+            const progressDiv = document.createElement('div');
+            progressDiv.className = 'upload-progress';
+            document.getElementById('uploadMessageContainer').appendChild(progressDiv);
+}
 
         function showMessage(type, text) {
-            const container = document.querySelector('#uploadMessageContainer');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${type}`;
-            messageDiv.textContent = text;
+            const container = document.getElementById('global-toast');
+            const toast = document.createElement('div');
+            toast.className = `toast-message ${type}`;
 
-            if (type === 'error') {
-                messageDiv.style.color = 'red';
-            } else if (type === 'success') {
-                messageDiv.style.color = 'green';
-            }
+            const messageSpan = document.createElement('span');
+            messageSpan.textContent = text;
 
-            container.innerHTML = '';
-            container.appendChild(messageDiv);
+            const closeButton = document.createElement('span');
+            closeButton.className = 'toast-close';
+            closeButton.innerHTML = '&times;';
+            closeButton.onclick = () => {
+                toast.style.animation = 'toastFadeOut 0.3s ease-out';
+                setTimeout(() => toast.remove(), 300);
+            };
 
-            setTimeout(() => {
-                container.innerHTML = '';
+            toast.appendChild(messageSpan);
+            toast.appendChild(closeButton);
+            container.appendChild(toast);
+
+            const timer = setTimeout(() => {
+                toast.style.animation = 'toastFadeOut 0.3s ease-out';
+                setTimeout(() => toast.remove(), 300);
             }, 5000);
+
+            closeButton.onclick = () => {
+                clearTimeout(timer);
+                toast.style.animation = 'toastFadeOut 0.3s ease-out';
+                setTimeout(() => toast.remove(), 300);
+            };
         }
+
     </script>
 </body>
 </html>
