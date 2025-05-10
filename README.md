@@ -64,6 +64,7 @@ You can invite me to a coffee to further develop low-cost hacking devices. If yo
 	* Upload Payload
 	* List Payloads
 	* Config
+	* Debug messages
 	* HTTP Update
 4. Add a new Keyboard Layout
 5. Sintax
@@ -141,12 +142,12 @@ You can check that the flash mode is correct with the following image:
 
 1. Install esptool: sudo apt install esptool
 2. Install pyserial: sudo pip install pyserial
-3. Download and Install the Arduino IDE 2.3.2: https://www.arduino.cc/en/main/software
+3. Download and Install the Arduino IDE: https://www.arduino.cc/en/main/software
 4. Download Evil Crow Cable Wind repository: git clone https://github.com/joelsernamoreno/EvilCrowCable-Wind.git
 5. Copy and unzip the USB library included in this repository (EvilCrowCable-Wind/modified-libraries/) to your Arduino library directory
 6. Open Arduino IDE
 7. Go to File - Preferences. Locate the field "Additional Board Manager URLs:" Add "https://espressif.github.io/arduino-esp32/package_esp32_index.json" without quotes. Click "Ok"
-8. Select Tools - Board - Boards Manager. Search for "esp32". Install "esp32 by Espressif system version 3.0.4"
+8. Select Tools - Board - Boards Manager. Search for "esp32". Install "esp32 by Espressif system version 3.2.0"
 9. Flash firmware.ino:
 	* Connect active end of the cable with a magnet to the computer
 	* Open EvilCrowCable-Wind/firmware/firmware.ino in Arduino IDE
@@ -269,17 +270,17 @@ Delete USB configuration file. Evil Crow Cable Wind will restart and configure i
 
 ![Config](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/delete-usb.png)
 
-* **Debug messages:**
+## Debug messages
 
-In the web panel, you can check whether a configuration has been applied correctly or if there is an error.
+Debug messages will be displayed for each feature in the web panel:
 
-![Config](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/usb-ok.png)
+![Debug](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/debug-payload.png)
 
-![Config](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/usb-error.png)
+![Debug](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/debug-layout.png)
 
-![Config](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/wifi-ok.png)
+![Debug](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/debug-save.png)
 
-![Config](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/wifi-error.png)
+![Debug](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/debug-startup.png)
 
 ## HTTP Update
 

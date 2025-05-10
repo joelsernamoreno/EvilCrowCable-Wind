@@ -572,23 +572,36 @@ button[name="deleteWifiButton"], button[name="deleteUSBButton"] {
     display: flex;
     justify-content: flex-start;
     margin: 10px 0;
-    width: 10%;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .copy-button {
     background-color: #73879F;
     color: white;
     border: none;
-    padding: 10px 10px;
+    padding: 12px 16px;
     border-radius: 13px;
-    font-size: 12px;
+    font-size: 14px;
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
+    white-space: nowrap;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .copy-button:hover {
-    background-color: #55616F;;
+    background-color: #55616F;
+}
+
+@media (max-width: 600px) {
+    .copy-button {
+        font-size: 16px;
+        padding: 14px 20px;
+    }
 }
 
 select, input[type="text"], input[type="password"] {
