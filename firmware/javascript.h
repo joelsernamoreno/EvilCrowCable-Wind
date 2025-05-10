@@ -78,32 +78,67 @@ function pollPayloadStatus(action) {
     });
 }
 
-/* tu je problem */
 function handleSubmit(event) {
     event.preventDefault();
 
-    var form = document.getElementById('uploadForm');
-    var formData = new FormData(form);
-
-    /* delete in future */
-    console.log(Array.from(formData.entries()));
+    const formData = new FormData(document.getElementById('uploadForm'));
+    const uploadMessage = document.getElementById('uploadMessageContainer');
 
     fetch('/upload', {
         method: 'POST',
-        body: formData,
-        credentials: 'same-origin',
-        mode: 'cors'
+        body: formData
     })
-
-    .then(response => response.text())
+    .then(response => response.json())
     .then(data => {
-        document.getElementById('uploadMessage').innerText = 'Payload upload correctly';
-        form.reset();
+        if (data.status === 'success') {
+            showMessage('success', data.message);
+            document.getElementById('uploadForm').reset();
+        } else {
+            showMessage('error', data.message);
+        }
     })
     .catch(error => {
+        showMessage('error', 'Error uploading file');
         console.error('Error:', error);
-        document.getElementById('uploadMessage').innerText = 'Upload failed: ' + error;
     });
+}
+
+function showMessage(type, text) {
+    const container = document.getElementById('global-toast') || document.createElement('div');
+    if (!container.id) {
+        container.id = 'global-toast';
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+    }
+    
+    const toast = document.createElement('div');
+    toast.className = `toast-message ${type}`;
+    
+    const messageSpan = document.createElement('span');
+    messageSpan.textContent = text;
+    
+    const closeButton = document.createElement('span');
+    closeButton.className = 'toast-close';
+    closeButton.innerHTML = '&times;';
+    closeButton.onclick = () => {
+        toast.style.animation = 'toastFadeOut 0.3s ease-out';
+        setTimeout(() => toast.remove(), 300);
+    };
+    
+    toast.appendChild(messageSpan);
+    toast.appendChild(closeButton);
+    container.appendChild(toast);
+    
+    const timer = setTimeout(() => {
+        toast.style.animation = 'toastFadeOut 0.3s ease-out';
+        setTimeout(() => toast.remove(), 300);
+    }, 5000);
+    
+    closeButton.onclick = () => {
+        clearTimeout(timer);
+        toast.style.animation = 'toastFadeOut 0.3s ease-out';
+        setTimeout(() => toast.remove(), 300);
+    };
 }
 
 document.addEventListener('gesturestart', function(e) {

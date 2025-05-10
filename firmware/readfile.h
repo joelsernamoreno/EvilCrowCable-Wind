@@ -11,7 +11,7 @@ const char StaticFileList[] PROGMEM = R"=====(
     <script src="javascript.js"></script>
 </head>
 <body>
-
+    <div id="global-toast" class="toast-container"></div>
     <nav id='menu'>
         <input type='checkbox' id='responsive-menu'><label></label>
         <ul>
@@ -31,7 +31,11 @@ const char StaticFileList[] PROGMEM = R"=====(
 
     <h3>{{path}}:</h3>
     <div class="payload-container">
-        <pre>{{payloadContent}}</pre>
+        <pre id="payloadContent">{{payloadContent}}</pre>
+    </div>
+
+    <div class="button-container">
+        <button type="button" onclick="copyPayloadContent()" class="copy-button">Copy Payload</button>
     </div>
 
     <div class="switch-container">
@@ -52,27 +56,59 @@ const char StaticFileList[] PROGMEM = R"=====(
         </div>
     </div>
 
-    <div id="messageContainer" class="messages-container"></div>
-
     <script>
         function showMessage(type, text) {
-            const container = document.querySelector('.messages-container');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${type}`;
-            messageDiv.textContent = text;
+            const container = document.getElementById('global-toast');
+            const toast = document.createElement('div');
+            toast.className = `toast-message ${type}`;
 
-            if (type === 'error') {
-                messageDiv.style.color = 'red';
-            } else if (type === 'success') {
-                messageDiv.style.color = 'green';
-            }
+            const messageSpan = document.createElement('span');
+            messageSpan.textContent = text;
 
-            container.innerHTML = '';
-            container.appendChild(messageDiv);
+            const closeButton = document.createElement('span');
+            closeButton.className = 'toast-close';
+            closeButton.innerHTML = '&times;';
+            closeButton.onclick = () => {
+                toast.style.animation = 'toastFadeOut 0.3s ease-out';
+                setTimeout(() => toast.remove(), 300);
+            };
 
-            setTimeout(() => {
-                container.innerHTML = '';
+            toast.appendChild(messageSpan);
+            toast.appendChild(closeButton);
+            container.appendChild(toast);
+
+            const timer = setTimeout(() => {
+                toast.style.animation = 'toastFadeOut 0.3s ease-out';
+                setTimeout(() => toast.remove(), 300);
             }, 5000);
+
+            closeButton.onclick = () => {
+                clearTimeout(timer);
+                toast.style.animation = 'toastFadeOut 0.3s ease-out';
+                setTimeout(() => toast.remove(), 300);
+            };
+        }
+
+        function copyPayloadContent() {
+            const payloadText = document.getElementById('payloadContent').textContent;
+
+            // Create a temporary textarea element
+            const tempTextArea = document.createElement('textarea');
+            tempTextArea.value = payloadText;
+            document.body.appendChild(tempTextArea);
+
+            // Select and copy the text
+            tempTextArea.select();
+            document.execCommand('copy');
+
+            // Remove the temporary element
+            document.body.removeChild(tempTextArea);
+        
+            if (payloadText.length > 0) {
+                showMessage('success', 'Payload copied to clipboard!');
+            } else {
+                showMessage('error', 'No payload to copy!');
+            }
         }
 
         document.getElementById('runPayloadCheckbox').addEventListener('change', function() {

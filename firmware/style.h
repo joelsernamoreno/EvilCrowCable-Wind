@@ -346,6 +346,60 @@ input:checked + .slider:before {
     border-radius: 50%;
 }
 
+/* Toast Notification Styles */
+.toast-container {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10000;
+    width: 90%;
+    max-width: 500px;
+    pointer-events: none;
+}
+
+.toast-message {
+    padding: 12px 20px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    font-weight: bold;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+    animation: toastSlideIn 0.3s ease-out;
+    pointer-events: auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.toast-message.error {
+    background-color: #ffebee;
+    border-left: 4px solid #f44336;
+    color: #d32f2f;
+}
+
+.toast-message.success {
+    background-color: #e8f5e9;
+    border-left: 4px solid #4caf50;
+    color: #2e7d32;
+}
+
+.toast-close {
+    cursor: pointer;
+    margin-left: 15px;
+    font-size: 1.2em;
+    color: inherit;
+}
+
+@keyframes toastSlideIn {
+    from { transform: translateY(-100px) translateX(-50%); opacity: 0; }
+    to { transform: translateY(0) translateX(-50%); opacity: 1; }
+}
+
+@keyframes toastFadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
 .messages-container {
     margin-top: 10px;
     display: flex;
@@ -394,6 +448,12 @@ label {
     -webkit-overflow-scrolling: touch;
 }
 
+.upload-progress {
+    color: #007bff;
+    margin: 10px 0;
+    font-weight: bold;
+}
+
 .view-container {
     border: 1px solid #555;
     border-radius: 13px;
@@ -417,6 +477,63 @@ label {
     background-color: rgba(51, 51, 51, 0.95);
     -webkit-backdrop-filter: saturate(180%) blur(20px);
     backdrop-filter: saturate(180%) blur(20px);
+}
+
+/* Command table styles */
+.command-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 0.9em;
+    color: white;
+}
+.command-table th, .command-table td {
+    padding: 8px 12px;
+    border: 1px solid #555;
+    text-align: left;
+}
+.command-table th {
+    background-color: rgba(68, 68, 68, 0.95);
+    font-weight: bold;
+    color: white;
+}
+.command-table tr:nth-child(even) {
+    background-color: rgba(51, 51, 51, 0.7);
+}
+.command-table tr:hover {
+    background-color: rgba(85, 85, 85, 0.7);
+}
+.command-reference {
+    margin: 20px 0;
+    padding: 0;
+    background-color: rgba(51, 51, 51, 0.95);
+    border: 1px solid #555;
+    border-radius: 13px;
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    backdrop-filter: saturate(180%) blur(20px);
+}
+.command-reference-toggle {
+    margin: 0;
+    padding: 15px;
+    color: white;
+    font-size: 17px;
+    font-weight: 600;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+.command-reference-toggle:hover {
+    color: #007AFF;
+}
+.command-table-container {
+    padding: 0 15px 15px 15px;
+}
+.command-cell {
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.command-cell:hover {
+    background-color: rgba(0, 122, 255, 0.2) !important;
 }
 
 input[type="submit"], button {
@@ -449,6 +566,42 @@ input[type="file"] {
 button[name="deleteWifiButton"], button[name="deleteUSBButton"] {
     background-color: #FF3B30;
     color: white;
+}
+
+.button-container {
+    display: flex;
+    justify-content: flex-start;
+    margin: 10px 0;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.copy-button {
+    background-color: #73879F;
+    color: white;
+    border: none;
+    padding: 12px 16px;
+    border-radius: 13px;
+    font-size: 14px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    white-space: nowrap;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.copy-button:hover {
+    background-color: #55616F;
+}
+
+@media (max-width: 600px) {
+    .copy-button {
+        font-size: 16px;
+        padding: 14px 20px;
+    }
 }
 
 select, input[type="text"], input[type="password"] {

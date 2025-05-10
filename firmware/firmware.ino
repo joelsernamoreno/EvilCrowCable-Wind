@@ -60,6 +60,7 @@ extern const unsigned char ca_fr[128];
 extern const unsigned char sk_sk[128];
 extern const unsigned char cz_cz[128];
 extern const unsigned char sv_se[128];
+extern const unsigned char si_si[128];
 
 std::map<String, const unsigned char *> layoutMap = {
   { "layout1", en_us },
@@ -79,6 +80,7 @@ std::map<String, const unsigned char *> layoutMap = {
   { "layout15", sk_sk },
   { "layout16", cz_cz },
   { "layout17", sv_se },
+  { "layout18", si_si },
 };
 
 std::map<String, const unsigned char *> layoutMapInit = {
@@ -99,6 +101,7 @@ std::map<String, const unsigned char *> layoutMapInit = {
   { "SK_SK", sk_sk },
   { "CZ_CZ", cz_cz },
   { "SV_SE", sv_se },
+  { "SI_SI", si_si },
 };
 
 std::map<String, uint8_t> keyMap = {
@@ -185,28 +188,71 @@ void readFile(fs::FS &fs, const String &path) {
 
 void handleFileUpload() {
   HTTPUpload &upload = controlserver.upload();
+  static const uint32_t MAX_FILE_SIZE = 204800; // 200KB limit (adjust as needed)
+  static uint32_t totalUploaded = 0;
 
   if (upload.status == UPLOAD_FILE_START) {
-    String filename = upload.filename;
+    totalUploaded = 0; // Reset counter for new upload
 
+    // First validate file type
+    String filename = upload.filename;
+    if (!filename.endsWith(".txt")) {
+      controlserver.send(400, "application/json", "{\"status\":\"error\",\"message\":\"Only .txt files allowed\"}");
+      return;
+    }
+
+    // Check Content-Length header for size validation
+    if (controlserver.hasHeader("Content-Length")) {
+      uint32_t contentLength = controlserver.header("Content-Length").toInt();
+      if (contentLength > MAX_FILE_SIZE) {
+        controlserver.send(413, "application/json", "{\"status\":\"error\",\"message\":\"File too large (max 200KB)\"}");
+        return;
+      }
+    }
+
+    // Prepare file path
     if (!filename.startsWith("/")) {
       filename = "/payloads/" + filename;
     }
 
+    // Create directory if needed
+    if (!LittleFS.exists("/payloads")) {
+      LittleFS.mkdir("/payloads");
+    }
+
+    // Try to open file
     fsUploadFile = LittleFS.open(filename, "w");
     if (!fsUploadFile) {
-      controlserver.send(500, "text/plain", "Failed to open file for writing");
+      controlserver.send(500, "application/json", "{\"status\":\"error\",\"message\":\"Cannot create file\"}");
       return;
     }
-  } else if (upload.status == UPLOAD_FILE_WRITE) {
+  } 
+  else if (upload.status == UPLOAD_FILE_WRITE) {
+    // Check size during upload (defense in depth)
+    totalUploaded += upload.currentSize;
+    if (totalUploaded > MAX_FILE_SIZE) {
+      fsUploadFile.close();
+      LittleFS.remove(fsUploadFile.name());
+      controlserver.send(413, "application/json", "{\"status\":\"error\",\"message\":\"File exceeded size limit\"}");
+      return;
+    }
+
     if (fsUploadFile) {
       fsUploadFile.write(upload.buf, upload.currentSize);
     }
-  } else if (upload.status == UPLOAD_FILE_END) {
+  }
+  else if (upload.status == UPLOAD_FILE_END) {
     if (fsUploadFile) {
       fsUploadFile.close();
-      controlserver.send(200, "text/plain", "File uploaded successfully");
+      // Success response handled by POST handler
     }
+  }
+  else { // UPLOAD_FILE_ABORTED or error
+    if (fsUploadFile) {
+      fsUploadFile.close();
+      LittleFS.remove(fsUploadFile.name());
+    }
+    controlserver.send(500, "application/json", "{\"status\":\"error\",\"message\":\"Upload failed\"}");
   }
 }
 
@@ -244,6 +290,34 @@ void handleStats() {
   json += ",\"freeram\":" + String(ESP.getFreeHeap());
   json += "}";
   controlserver.send(200, "application/json", json);
+}
+
+// Function to get the currently selected layout
+String getCurrentLayout() {
+  String currentLayout = "layout1"; // Default to EN_US
+  
+  if (LittleFS.exists("/layout_config.txt")) {
+    File fsUploadFile = LittleFS.open("/layout_config.txt", FILE_READ);
+    if (fsUploadFile) {
+      currentLayout = fsUploadFile.readStringUntil('\n');
+      currentLayout.trim();
+      fsUploadFile.close();
+    }
+  }
+  
+  return currentLayout;
+}
+
+// Function to save the layout configuration to a file
+void saveLayoutConfig(const String &layout) {
+  File fsUploadFile = LittleFS.open("/layout_config.txt", FILE_WRITE);
+  if (!fsUploadFile) {
+    controlserver.send(500, "text/plain", "Failed to open file for writing");
+    return;
+  }
+  
+  fsUploadFile.println(layout);
+  fsUploadFile.close();
 }
 
 void payloadExec() {
@@ -565,30 +639,32 @@ void handleUpdateWiFi() {
 
     File fsUploadFile = LittleFS.open("/wifi_config.txt", FILE_WRITE);
     if (!fsUploadFile) {
-      controlserver.send(500, "text/plain", "Failed to open file for writing");
+      controlserver.send(500, "application/json", "{\"status\":\"error\",\"message\":\"Failed to open file for writing\"}");
       return;
     }
 
     fsUploadFile.println(newSSID);
     fsUploadFile.println(newPassword);
     fsUploadFile.close();
-    controlserver.send(200, "text/plain", "Wi-Fi config applied successfully!");
+    controlserver.send(200, "application/json", "{\"status\":\"success\",\"message\":\"Wi-Fi config applied successfully! Device will restart.\"}");
+    delay(1000); // Give time for response to be sent
     ESP.restart();
   } else {
-    controlserver.send(400, "text/plain", "Missing SSID or password");
+    controlserver.send(400, "application/json", "{\"status\":\"error\",\"message\":\"Missing SSID or password\"}");
   }
 }
 
 void handleDeleteWiFiConfig() {
   if (LittleFS.exists("/wifi_config.txt")) {
     if (LittleFS.remove("/wifi_config.txt")) {
-      controlserver.send(200, "text/plain", "Wi-Fi config deleted successfully");
+      controlserver.send(200, "application/json", "{\"status\":\"success\",\"message\":\"Wi-Fi config deleted successfully\"}");
+      delay(1000); // Give time for response to be sent
       ESP.restart();
     } else {
-      controlserver.send(500, "text/plain", "Failed to delete the file");
+      controlserver.send(500, "application/json", "{\"status\":\"error\",\"message\":\"Failed to delete the file\"}");
     }
   } else {
-    controlserver.send(500, "text/plain", "File does not exist");
+    controlserver.send(500, "application/json", "{\"status\":\"error\",\"message\":\"File does not exist\"}");
   }
 }
 
@@ -638,6 +714,7 @@ void handleLayout() {
 
     if (it != layoutMap.end()) {
       Keyboard.setLayout(it->second);
+      saveLayoutConfig(layout); // Save the layout selection
       controlserver.send(200, "text/plain", "Layout applied successfully!");
     } else {
       controlserver.send(400, "text/plain", "Invalid layout specified.");
@@ -645,6 +722,11 @@ void handleLayout() {
   } else {
     controlserver.send(400, "text/plain", "No layout specified.");
   }
+}
+
+void handleGetCurrentLayout() {
+  String currentLayout = getCurrentLayout();
+  controlserver.send(200, "text/plain", currentLayout);
 }
 
 void handleDeletePayload() {
@@ -692,7 +774,26 @@ void setup() {
   Keyboard.begin();
   USB.begin();
   USBSerial.begin();
-  Keyboard.setLayout(en_us);
+
+  // Load the saved layout if it exists
+  const unsigned char *selected_layout = en_us; // Default to EN_US
+  
+  if (LittleFS.exists("/layout_config.txt")) {
+    File fsUploadFile = LittleFS.open("/layout_config.txt", FILE_READ);
+    if (fsUploadFile) {
+      String layoutKey = fsUploadFile.readStringUntil('\n');
+      layoutKey.trim();
+      
+      auto it = layoutMap.find(layoutKey);
+      if (it != layoutMap.end()) {
+        selected_layout = it->second;
+      }
+      
+      fsUploadFile.close();
+    }
+  }
+
+  Keyboard.setLayout(selected_layout);
 
   if (LittleFS.exists("/payloads/payload-startup.txt")) {
     File fsUploadFile = LittleFS.open("/payloads/payload-startup.txt", FILE_READ);
@@ -788,10 +889,11 @@ void setup() {
   });
 
   controlserver.on(
-    "/upload", HTTP_POST, []() {
-      controlserver.send(200, "text/plain", "");
-    },
-    handleFileUpload);
+  "/upload", HTTP_POST, []() {
+    // Only called if the upload completed successfully
+    controlserver.send(200, "application/json", "{\"status\":\"success\",\"message\":\"File uploaded successfully\"}");
+  },
+  handleFileUpload);
 
   controlserver.on("/listpayloads", []() {
     listDir(LittleFS, "/payloads", 0);
@@ -927,6 +1029,7 @@ void setup() {
   controlserver.on("/updateusb", HTTP_POST, handleUpdateUSB);
   controlserver.on("/deleteusbconfig", HTTP_POST, handleDeleteUSBConfig);
   controlserver.on("/deletepayload", HTTP_POST, handleDeletePayload);
+  controlserver.on("/getcurrentlayout", handleGetCurrentLayout);
 
   httpUpdater.setup(&controlserver);
   controlserver.begin();
