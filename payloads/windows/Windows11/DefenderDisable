@@ -1,0 +1,16 @@
+Delay 1000
+GuiR
+Delay 500
+PrintLine powershell -WindowStyle Hidden -Command "Start-Process powershell -Verb RunAs"
+Delay 1500
+Press KEY_LEFT_ALT
+Press y
+Release
+Delay 1000
+PrintLine Remove-LocalUser -Name "ITSupport" -ErrorAction SilentlyContinue
+Delay 300
+PrintLine Remove-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\SpecialAccounts\UserList" -Name "ITSupport" -ErrorAction SilentlyContinue
+Delay 300
+PrintLine "Backdoor account removed for educational purposes" | Out-File "$env:TEMP\educational_cleanup.txt"
+Delay 300
+PrintLine exit
