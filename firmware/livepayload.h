@@ -11,7 +11,7 @@ const char LivePayload[] PROGMEM = R"=====(
     <script src="javascript.js"></script>
 </head>
 <body>
-
+    <div id="global-toast" class="toast-container"></div>
     <nav id='menu'>
         <input type='checkbox' id='responsive-menu'><label></label>
         <ul>
@@ -102,8 +102,6 @@ const char LivePayload[] PROGMEM = R"=====(
         </div>
     </div>
 
-    <div id="messageContainer" class="messages-container"></div>
-
     <script>
         let toggleIntervals = {};
 
@@ -120,23 +118,35 @@ const char LivePayload[] PROGMEM = R"=====(
         }
 
         function showMessage(type, text) {
-            const container = document.querySelector('.messages-container');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${type}`;
-            messageDiv.textContent = text;
+            const container = document.getElementById('global-toast');
+            const toast = document.createElement('div');
+            toast.className = `toast-message ${type}`;
 
-            if (type === 'error') {
-                messageDiv.style.color = 'red';
-            } else if (type === 'success') {
-                messageDiv.style.color = 'green';
-            }
+            const messageSpan = document.createElement('span');
+            messageSpan.textContent = text;
 
-            container.innerHTML = '';
-            container.appendChild(messageDiv);
+            const closeButton = document.createElement('span');
+            closeButton.className = 'toast-close';
+            closeButton.innerHTML = '&times;';
+            closeButton.onclick = () => {
+                toast.style.animation = 'toastFadeOut 0.3s ease-out';
+                setTimeout(() => toast.remove(), 300);
+            };
 
-            setTimeout(() => {
-                container.innerHTML = '';
+            toast.appendChild(messageSpan);
+            toast.appendChild(closeButton);
+            container.appendChild(toast);
+
+            const timer = setTimeout(() => {
+                toast.style.animation = 'toastFadeOut 0.3s ease-out';
+                setTimeout(() => toast.remove(), 300);
             }, 5000);
+
+            closeButton.onclick = () => {
+                clearTimeout(timer);
+                toast.style.animation = 'toastFadeOut 0.3s ease-out';
+                setTimeout(() => toast.remove(), 300);
+            };
         }
 
         function copyPayload() {

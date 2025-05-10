@@ -11,7 +11,7 @@ const char Configuration[] PROGMEM = R"=====(
     <script src="javascript.js"></script>
 </head>
 <body>
-
+    <div id="global-toast" class="toast-container"></div>
     <nav id='menu'>
         <input type='checkbox' id='responsive-menu'><label></label>
         <ul>
@@ -97,60 +97,72 @@ const char Configuration[] PROGMEM = R"=====(
         </form>
 
         <hr>
-        <div class="messages-container"></div>
     </div>
 
     <script>
         function showMessage(type, text) {
-            const container = document.querySelector('.messages-container');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${type}`;
-            messageDiv.textContent = text;
-
-            if (type === 'error') {
-                messageDiv.style.color = 'red';
-            } else if (type === 'success') {
-                messageDiv.style.color = 'green';
-            }
-
-            container.innerHTML = '';
-            container.appendChild(messageDiv);
-
-            setTimeout(() => {
-                container.innerHTML = '';
+            const container = document.getElementById('global-toast');
+            const toast = document.createElement('div');
+            toast.className = `toast-message ${type}`;
+            
+            // Message content
+            const messageSpan = document.createElement('span');
+            messageSpan.textContent = text;
+            
+            // Close button
+            const closeButton = document.createElement('span');
+            closeButton.className = 'toast-close';
+            closeButton.innerHTML = '&times;';
+            closeButton.onclick = () => {
+                toast.style.animation = 'toastFadeOut 0.3s ease-out';
+                setTimeout(() => toast.remove(), 300);
+            };
+            
+            toast.appendChild(messageSpan);
+            toast.appendChild(closeButton);
+            container.appendChild(toast);
+            
+            // Auto-remove after delay
+            const timer = setTimeout(() => {
+                toast.style.animation = 'toastFadeOut 0.3s ease-out';
+                setTimeout(() => toast.remove(), 300);
             }, 5000);
+            
+            // Clear timer if manually closed
+            closeButton.onclick = () => {
+                clearTimeout(timer);
+                toast.style.animation = 'toastFadeOut 0.3s ease-out';
+                setTimeout(() => toast.remove(), 300);
+            };
         }
 
         function applyLayout() {
-          const layoutSelect = document.getElementById('layout');
-          const selectedLayout = layoutSelect.value;
-          const formData = new URLSearchParams();
-          formData.append('layout', selectedLayout);
+            const layoutSelect = document.getElementById('layout');
+            const selectedLayout = layoutSelect.value;
+            const formData = new URLSearchParams();
+            formData.append('layout', selectedLayout);
 
-          fetch('/layout', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: formData.toString(),
-          })
-    .
-          then(response => {
-            if (response.ok) {
-              return response.text();
-            } else {
-              throw new Error(`Error: ${response.statusText}`);
-            }
-          })
-    .
-          then(data => {
-            showMessage('success', 'Layout successfully applied!');
-          })
-    
-          .catch(error => {
-            showMessage('error', 'Error applying layout.');
-            console.error('Error:', error);
-          });
+            fetch('/layout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: formData.toString(),
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.text();
+                } else {
+                    throw new Error(`Error: ${response.statusText}`);
+                }
+            })
+            .then(data => {
+                showMessage('success', 'Layout successfully applied!');
+            })
+            .catch(error => {
+                showMessage('error', 'Error applying layout.');
+                console.error('Error:', error);
+            });
         }
 
         function applyWiFi() {
@@ -164,11 +176,18 @@ const char Configuration[] PROGMEM = R"=====(
 
             fetch('/updatewifi', {
                 method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
                 body: new URLSearchParams({ ssid, password }),
             })
-            .then(response => response.text())
+            .then(response => response.json())
             .then(data => {
-                showMessage('success', 'Wi-Fi settings successfully applied. Device will restart.');
+                if (data.status === 'success') {
+                    showMessage('success', data.message);
+                } else {
+                    showMessage('error', data.message);
+                }
             })
             .catch(error => {
                 showMessage('error', 'Error applying Wi-Fi settings.');
@@ -236,7 +255,7 @@ const char Configuration[] PROGMEM = R"=====(
                 .catch(error => {
                     console.error('Error fetching current layout:', error);
                 });
-});
+        });
     </script>
 
 </body>
