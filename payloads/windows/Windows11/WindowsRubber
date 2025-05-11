@@ -1,0 +1,39 @@
+Delay 1000
+GuiR
+Delay 1000
+PrintLine powershell Start-Process powershell -Verb runAs
+Delay 15000
+Press KEY_LEFT_ALT
+Press y
+Release
+PressRelease KEY_ENTER
+Delay 11000
+PressRelease KEY_ENTER
+Delay 1000
+PrintLine Write-Host "WARNING: EDUCATIONAL DEMONSTRATION ONLY" -ForegroundColor Red
+Delay 1000
+PrintLine $demoScript = "$env:TEMP\demo_educational.ps1"
+Delay 500
+PrintLine "# This file demonstrates security vulnerabilities for educational purposes" | Out-File $demoScript
+Delay 500
+PrintLine "Write-Host 'THIS IS A SECURITY EDUCATION DEMONSTRATION' -ForegroundColor Red" | Out-File $demoScript -Append
+Delay 500
+PrintLine "Get-MpPreference | Out-File '$env:TEMP\security_settings_before.txt'" | Out-File $demoScript -Append
+Delay 500
+PrintLine "Write-Host 'System security settings logged for educational review' -ForegroundColor Yellow" | Out-File $demoScript -Append
+Delay 500
+PrintLine "# In a real attack, malicious code would be downloaded here" | Out-File $demoScript -Append
+Delay 500
+PrintLine "Write-Host 'Demonstrating how attackers could create security exceptions' -ForegroundColor Yellow" | Out-File $demoScript -Append
+Delay 500
+PrintLine "# Note: No actual security settings will be modified" | Out-File $demoScript -Append
+Delay 500
+PrintLine "Write-Host 'DEMONSTRATION COMPLETE - Remember to protect against these vulnerabilities' -ForegroundColor Green" | Out-File $demoScript -Append
+Delay 1000
+PrintLine Write-Host "Educational demo script created at $demoScript" -ForegroundColor Green
+Delay 1000
+PrintLine Write-Host "To explore security vulnerabilities safely, review this script instead of executing external code" -ForegroundColor Yellow
+Delay 1000
+PrintLine Write-Host "Never download or execute unknown files from untrusted sources" -ForegroundColor Red
+Delay 2000
+PrintLine exit

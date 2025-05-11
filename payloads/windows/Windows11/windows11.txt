@@ -1,0 +1,16 @@
+Delay 1000
+GuiR
+Delay 500
+PrintLine powershell
+Delay 1000
+PrintLine $wv = (Get-ComputerInfo).WindowsVersion; if($wv -ge 22000) {Write-Host "Windows 11 detected. Proceeding with diagnostic." -ForegroundColor Green} else {Write-Host "This script requires Windows 11" -ForegroundColor Red; exit}
+Delay 1000
+PrintLine Get-ComputerInfo | Select-Object WindowsVersion, OsHardwareAbstractionLayer, CsManufacturer, CsModel | Format-List
+Delay 1000
+PrintLine Get-AppxPackage -AllUsers | Where-Object {$_.IsFramework -eq $false} | Select-Object Name, PackageFullName | Sort-Object Name | Format-Table -AutoSize
+Delay 1000
+PrintLine Get-ScheduledTask | Where-Object {$_.State -eq "Ready" -and $_.TaskPath -notlike "\Microsoft\*"} | Select-Object TaskName, TaskPath | Format-Table -AutoSize
+Delay 1000
+PrintLine Get-WindowsCapability -Online | Where-Object {$_.State -eq "Installed"} | Select-Object Name, State | Format-Table -AutoSize
+Delay 2000
+PrintLine exit
