@@ -6,6 +6,8 @@
 
 **Firmware collaborators:** Juraj Belko (@s_c_johnson) and rustysun9.
 
+**Payloads collaborators:** AndrzejRPiotrowski.
+
 **Final PCB design:** April Brother (@aprbrother).
 
 **Manufacturer and distributor:** April Brother (@aprbrother).
