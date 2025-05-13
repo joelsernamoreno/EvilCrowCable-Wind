@@ -31,17 +31,29 @@ const char UploadPayload[] PROGMEM = R"=====(
 
     <div class="view-container">
         <form id="uploadForm" method="POST" action="/upload" enctype="multipart/form-data" onsubmit="handleSubmit(event)">
-            <input type="file" name="uploadFile" required accept=".txt">
+            <div class="form-group">
+                <label for="payloadName">Payload Name:</label>
+                <input type="text" id="payloadName" name="payloadName" placeholder="Enter a descriptive name" required>
+            </div>
+            <div class="form-group">
+                <label for="payloadDescription">Description:</label>
+                <textarea id="payloadDescription" name="payloadDescription" placeholder="Enter a brief description" rows="3"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="uploadFile">Payload File (.txt only):</label>
+                <input type="file" id="uploadFile" name="uploadFile" required accept=".txt">
+            </div>
             <input type="submit" value="Upload">
         </form>
     </div>
 
     <script>
-
         function handleSubmit(event) {
             event.preventDefault();
             const form = document.getElementById('uploadForm');
             const fileInput = form.querySelector('input[type="file"]');
+            const nameInput = form.querySelector('#payloadName');
+            const descInput = form.querySelector('#payloadDescription');
             const file = fileInput.files[0];
             const MAX_SIZE = 200 * 1024; // 200KB in bytes
         
@@ -58,6 +70,11 @@ const char UploadPayload[] PROGMEM = R"=====(
         
             if (file.size > MAX_SIZE) {
                 showMessage('error', 'File too large (max 200KB)');
+                return;
+            }
+        
+            if (!nameInput.value.trim()) {
+                showMessage('error', 'Payload name is required');
                 return;
             }
         
@@ -94,7 +111,7 @@ const char UploadPayload[] PROGMEM = R"=====(
             const progressDiv = document.createElement('div');
             progressDiv.className = 'upload-progress';
             document.getElementById('uploadMessageContainer').appendChild(progressDiv);
-}
+        }
 
         function showMessage(type, text) {
             const container = document.getElementById('global-toast');
@@ -127,7 +144,6 @@ const char UploadPayload[] PROGMEM = R"=====(
                 setTimeout(() => toast.remove(), 300);
             };
         }
-
     </script>
 </body>
 </html>

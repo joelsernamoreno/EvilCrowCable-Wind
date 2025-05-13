@@ -186,95 +186,139 @@ void readFile(fs::FS &fs, const String &path) {
   livepayload = payloadContent;
 }
 
+// Helper function to save payload metadata
+void savePayloadMetadata(const String &filename, const String &name, const String &description) {
+    String metaPath = filename + ".meta";
+    File metaFile = LittleFS.open(metaPath, FILE_WRITE);
+    if (metaFile) {
+        metaFile.println(name);
+        metaFile.println(description);
+        metaFile.close();
+    }
+}
+
+// Helper function to read payload metadata
+String readPayloadMetadata(const String &filename, bool getName) {
+    String metaPath = filename + ".meta";
+    if (!LittleFS.exists(metaPath)) {
+        return getName ? filename.substring(filename.lastIndexOf('/') + 1) : "No description";
+    }
+    
+    File metaFile = LittleFS.open(metaPath, FILE_READ);
+    if (!metaFile) {
+        return getName ? filename.substring(filename.lastIndexOf('/') + 1) : "No description";
+    }
+    
+    String name = metaFile.readStringUntil('\n');
+    name.trim();
+    String description = metaFile.readStringUntil('\n');
+    description.trim();
+    metaFile.close();
+    
+    // Handle empty values
+    if (getName) {
+        return name.length() > 0 ? name : filename.substring(filename.lastIndexOf('/') + 1);
+    } else {
+        return description.length() > 0 ? description : "No description";
+    }
+}
+
 void handleFileUpload() {
-  HTTPUpload &upload = controlserver.upload();
-  static const uint32_t MAX_FILE_SIZE = 204800; // 200KB limit (adjust as needed)
-  static uint32_t totalUploaded = 0;
+    HTTPUpload &upload = controlserver.upload();
+    static const uint32_t MAX_FILE_SIZE = 204800; // 200KB limit
+    static uint32_t totalUploaded = 0;
+    static String payloadName, payloadDescription, fileName;
 
-  if (upload.status == UPLOAD_FILE_START) {
-    totalUploaded = 0; // Reset counter for new upload
+    if (upload.status == UPLOAD_FILE_START) {
+        totalUploaded = 0;
+        payloadName = controlserver.arg("payloadName");
+        payloadDescription = controlserver.arg("payloadDescription");
+        
+        // Get filename from upload, not from args
+        fileName = upload.filename;
+        
+        if (!fileName.endsWith(".txt")) {
+            controlserver.send(400, "application/json", "{\"status\":\"error\",\"message\":\"Only .txt files allowed\"}");
+            return;
+        }
 
-    // First validate file type
-    String filename = upload.filename;
-    if (!filename.endsWith(".txt")) {
-      controlserver.send(400, "application/json", "{\"status\":\"error\",\"message\":\"Only .txt files allowed\"}");
-      return;
-    }
+        if (!fileName.startsWith("/")) {
+            fileName = "/payloads/" + fileName;
+        }
 
-    // Check Content-Length header for size validation
-    if (controlserver.hasHeader("Content-Length")) {
-      uint32_t contentLength = controlserver.header("Content-Length").toInt();
-      if (contentLength > MAX_FILE_SIZE) {
-        controlserver.send(413, "application/json", "{\"status\":\"error\",\"message\":\"File too large (max 200KB)\"}");
-        return;
-      }
-    }
+        if (!LittleFS.exists("/payloads")) {
+            LittleFS.mkdir("/payloads");
+        }
 
-    // Prepare file path
-    if (!filename.startsWith("/")) {
-      filename = "/payloads/" + filename;
-    }
+        fsUploadFile = LittleFS.open(fileName, "w");
+        if (!fsUploadFile) {
+            controlserver.send(500, "application/json", "{\"status\":\"error\",\"message\":\"Cannot create file\"}");
+            return;
+        }
+    } 
+    else if (upload.status == UPLOAD_FILE_WRITE) {
+        totalUploaded += upload.currentSize;
+        if (totalUploaded > MAX_FILE_SIZE) {
+            fsUploadFile.close();
+            LittleFS.remove(fsUploadFile.name());
+            controlserver.send(413, "application/json", "{\"status\":\"error\",\"message\":\"File exceeded size limit\"}");
+            return;
+        }
 
-    // Create directory if needed
-    if (!LittleFS.exists("/payloads")) {
-      LittleFS.mkdir("/payloads");
+        if (fsUploadFile) {
+            fsUploadFile.write(upload.buf, upload.currentSize);
+        }
     }
-
-    // Try to open file
-    fsUploadFile = LittleFS.open(filename, "w");
-    if (!fsUploadFile) {
-      controlserver.send(500, "application/json", "{\"status\":\"error\",\"message\":\"Cannot create file\"}");
-      return;
+    else if (upload.status == UPLOAD_FILE_END) {
+        if (fsUploadFile) {
+            fsUploadFile.close();
+            // Save metadata only if we have values
+            if (payloadName.length() > 0 || payloadDescription.length() > 0) {
+                savePayloadMetadata(fileName, payloadName, payloadDescription);
+            }
+        }
     }
-  } 
-  else if (upload.status == UPLOAD_FILE_WRITE) {
-    // Check size during upload (defense in depth)
-    totalUploaded += upload.currentSize;
-    if (totalUploaded > MAX_FILE_SIZE) {
-      fsUploadFile.close();
-      LittleFS.remove(fsUploadFile.name());
-      controlserver.send(413, "application/json", "{\"status\":\"error\",\"message\":\"File exceeded size limit\"}");
-      return;
+    else {
+        if (fsUploadFile) {
+            fsUploadFile.close();
+            LittleFS.remove(fsUploadFile.name());
+        }
+        controlserver.send(500, "application/json", "{\"status\":\"error\",\"message\":\"Upload failed\"}");
     }
-
-    if (fsUploadFile) {
-      fsUploadFile.write(upload.buf, upload.currentSize);
-    }
-  }
-  else if (upload.status == UPLOAD_FILE_END) {
-    if (fsUploadFile) {
-      fsUploadFile.close();
-      // Success response handled by POST handler
-    }
-  }
-  else { // UPLOAD_FILE_ABORTED or error
-    if (fsUploadFile) {
-      fsUploadFile.close();
-      LittleFS.remove(fsUploadFile.name());
-    }
-    controlserver.send(500, "application/json", "{\"status\":\"error\",\"message\":\"Upload failed\"}");
-  }
 }
 
 void listDir(fs::FS &fs, const char *dirname, uint8_t levels) {
-  FileList = StaticListPayloads;
+    FileList = StaticListPayloads;
 
-  File root = fs.open(dirname);
-  if (!root || !root.isDirectory()) {
-    FileList += "<br>Empty<br></body></html>";
-    return;
-  }
+    File root = fs.open(dirname);
+    if (!root || !root.isDirectory()) {
+        FileList += "<br>Empty<br></body></html>";
+        return;
+    }
 
-  File file = root.openNextFile();
-  while (file) {
-    String fileName = "/payloads/";
-    fileName += file.name();
-    FileList += "";
-    FileList += "<a class=\"pyaloadButton\" href=\"/showpayload?payload=" + fileName + "\">" + fileName + "</a>" + "<br>";
+    File file = root.openNextFile();
+    while (file) {
+        String fileName = "/payloads/";
+        fileName += file.name();
+        
+        // Skip metadata files
+        if (fileName.endsWith(".meta")) {
+            file = root.openNextFile();
+            continue;
+        }
 
-    file = root.openNextFile();
-  }
-  FileList += "</body></html>";
+        String payloadName = readPayloadMetadata(fileName, true);
+        String payloadDesc = readPayloadMetadata(fileName, false);
+        
+        FileList += "<div class='payload-item'>";
+        FileList += "<a class=\"pyaloadButton\" href=\"/showpayload?payload=" + fileName + "\">" + payloadName + "</a>";
+        FileList += "<div class='payload-desc'>" + payloadDesc + "</div>";
+        FileList += "<div class='payload-filename'>" + String(file.name()) + "</div>";
+        FileList += "</div>";
+
+        file = root.openNextFile();
+    }
+    FileList += "</body></html>";
 }
 
 void handleStats() {
@@ -889,11 +933,11 @@ void setup() {
   });
 
   controlserver.on(
-  "/upload", HTTP_POST, []() {
-    // Only called if the upload completed successfully
-    controlserver.send(200, "application/json", "{\"status\":\"success\",\"message\":\"File uploaded successfully\"}");
-  },
-  handleFileUpload);
+      "/upload", HTTP_POST, []() {
+          controlserver.send(200, "application/json", "{\"status\":\"success\",\"message\":\"File uploaded successfully\"}");
+      },
+      handleFileUpload
+  );
 
   controlserver.on("/listpayloads", []() {
     listDir(LittleFS, "/payloads", 0);
@@ -952,48 +996,52 @@ void setup() {
     payloadExecuted = true;
     controlserver.send(200, "text/plain", "Payload saved");
   });
-
+  
   controlserver.on("/runlivesave", HTTP_POST, []() {
-    String payload_save;
-    payload_save = controlserver.arg("livepayload");
-    String fileName;
+      String payload_save = controlserver.arg("livepayload");
+      String payloadName = controlserver.arg("payloadName");
+      String payloadDesc = controlserver.arg("payloadDescription");
+      String fileName;
 
-    int namePos = payload_save.indexOf("# Name: ");
-    if (namePos != -1) {
-      int start = namePos + 8;
-      int end = payload_save.indexOf('\n', start);
-      if (end == -1) {
-        end = payload_save.length();
+      int namePos = payload_save.indexOf("# Name: ");
+      if (namePos != -1) {
+          int start = namePos + 8;
+          int end = payload_save.indexOf('\n', start);
+          if (end == -1) {
+              end = payload_save.length();
+          }
+          fileName = payload_save.substring(start, end);
+          fileName.trim();
       }
-      fileName = payload_save.substring(start, end);
-      fileName.trim();
-    }
 
-    if (fileName.length() == 0 || fileName.indexOf('/') != -1) {
-      const char charset[] = "abcdefghijklmnopqrstuvwxyz1234567890";
-      fileName = "livepayload-";
-      for (int i = 0; i < 8; i++) {
-        fileName += charset[random(0, 26)];
+      if (fileName.length() == 0 || fileName.indexOf('/') != -1) {
+          const char charset[] = "abcdefghijklmnopqrstuvwxyz1234567890";
+          fileName = "livepayload-";
+          for (int i = 0; i < 8; i++) {
+              fileName += charset[random(0, 26)];
+          }
+          fileName += ".txt";
       }
-      fileName += ".txt";
-    }
 
-    String filePath = "/payloads/" + fileName;
+      String filePath = "/payloads/" + fileName;
 
-    if (!LittleFS.exists("/payloads")) {
-      LittleFS.mkdir("/payloads");
-    }
+      if (!LittleFS.exists("/payloads")) {
+          LittleFS.mkdir("/payloads");
+      }
 
-    File fsUploadFile = LittleFS.open(filePath, FILE_WRITE);
-    if (!fsUploadFile) {
-      controlserver.send(500, "text/plain", "Failed to open file for writing");
-      return;
-    }
-    fsUploadFile.print(payload_save);
-    fsUploadFile.close();
+      File fsUploadFile = LittleFS.open(filePath, FILE_WRITE);
+      if (!fsUploadFile) {
+          controlserver.send(500, "text/plain", "Failed to open file for writing");
+          return;
+      }
+      fsUploadFile.print(payload_save);
+      fsUploadFile.close();
 
-    payloadExecuted = true;
-    controlserver.send(200, "text/plain", "Payload saved");
+      // Save metadata
+      savePayloadMetadata(filePath, payloadName, payloadDesc);
+
+      payloadExecuted = true;
+      controlserver.send(200, "text/plain", "Payload saved");
   });
 
   controlserver.on("/payloadstatuspayload", []() {
