@@ -38,6 +38,22 @@ const char LivePayload[] PROGMEM = R"=====(
         <button type="button" onclick="copyPayload()" class="copy-button">Copy Payload</button>
     </div>
 
+    <!-- Hidden metadata form that appears when saving -->
+    <div id="metadataForm" style="display: none;">
+        <div class="form-group">
+            <label for="payloadName">Payload Name:</label>
+            <input type="text" id="payloadName" name="payloadName" placeholder="Enter a descriptive name">
+        </div>
+        <div class="form-group">
+            <label for="payloadDescription">Description:</label>
+            <textarea id="payloadDescription" name="payloadDescription" placeholder="Enter a brief description" rows="3"></textarea>
+        </div>
+        <div class="button-container">
+            <button type="button" onclick="confirmSavePayload()" class="copy-button">Confirm Save</button>
+            <button type="button" onclick="cancelSavePayload()" class="copy-button" style="background-color: #FF3B30;">Cancel</button>
+        </div>
+    </div>
+
     <div class="switch-container">
         <div class="switch-group">
             <span class="switch-label">Run payload</span>
@@ -58,7 +74,7 @@ const char LivePayload[] PROGMEM = R"=====(
         <div class="switch-group">
             <span class="switch-label">Save payload</span>
             <label class="switch">
-                <input type="checkbox" id="toggleSave" onclick="savePayload()">
+                <input type="checkbox" id="toggleSave" onclick="showSavePayloadForm()">
                 <span class="slider round"></span>
             </label>
         </div>
@@ -194,34 +210,57 @@ const char LivePayload[] PROGMEM = R"=====(
             });
         }
 
-        function savePayload() {
+        function showSavePayloadForm() {
             const toggle = document.getElementById('toggleSave');
             const payloadContent = document.getElementById('livePayloadInput').value;
-
+            
             if (!payloadContent) {
                 showMessage('error', 'Payload content cannot be empty!');
                 toggle.checked = false;
                 return;
             }
+            
+            document.getElementById('metadataForm').style.display = 'block';
+            // Scroll to the form
+            document.getElementById('metadataForm').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function cancelSavePayload() {
+            document.getElementById('metadataForm').style.display = 'none';
+            document.getElementById('toggleSave').checked = false;
+        }
+
+        function confirmSavePayload() {
+            const payloadContent = document.getElementById('livePayloadInput').value;
+            const payloadName = document.getElementById('payloadName').value;
+            const payloadDesc = document.getElementById('payloadDescription').value;
+            
+            // Create FormData object to send both payload and metadata
+            const formData = new FormData();
+            formData.append('livepayload', payloadContent);
+            formData.append('payloadName', payloadName || 'Unnamed Payload');
+            formData.append('payloadDescription', payloadDesc || 'No description provided');
 
             fetch('/runlivesave', {
                 method: 'POST',
-                body: new URLSearchParams({ livepayload: payloadContent }),
+                body: formData
             })
             .then(response => {
                 if (response.ok) return response.text();
                 else throw new Error('Error saving payload');
             })
             .then(data => {
-                showMessage('success', 'Payload saving...');
-                toggleIntervals['toggleSave'] = setInterval(() => {
-                    checkPayloadStatus('/payloadstatussave', 'toggleSave');
-                }, 1000);
+                showMessage('success', 'Payload saved successfully!');
+                document.getElementById('metadataForm').style.display = 'none';
+                document.getElementById('toggleSave').checked = false;
+                // Clear the form for next use
+                document.getElementById('payloadName').value = '';
+                document.getElementById('payloadDescription').value = '';
             })
             .catch(error => {
                 showMessage('error', 'Error saving payload.');
                 console.error('Error:', error);
-                toggle.checked = false;
+                document.getElementById('toggleSave').checked = false;
             });
         }
 

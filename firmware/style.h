@@ -248,6 +248,29 @@ textarea.payload-input, .payload-container pre {
     -webkit-overflow-scrolling: touch;
 }
 
+textarea {
+    width: 100%;
+    overflow: auto;
+    max-height: 80vh;
+    height: 23em;
+    resize: vertical;
+    font-size: 17px;
+    border-radius: 13px;
+    display: block;
+    appearance: none;
+    -webkit-appearance: none;
+    background-color: rgba(0, 0, 0, 0.95);
+    color: white;
+    font-family: -apple-system-monospace, monospace;
+    border: 1px solid #555; 
+    box-sizing: border-box;
+    max-width: 100%;
+    padding: 10px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    -webkit-overflow-scrolling: touch;
+}
+
 .switch-container {
     display: -webkit-flex;
     display: flex;
@@ -388,6 +411,37 @@ input:checked + .slider:before {
     margin-left: 15px;
     font-size: 1.2em;
     color: inherit;
+}
+
+.payload-list-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.payload-item {
+    background-color: rgba(51, 51, 51, 0.95);
+    border: 1px solid #555;
+    border-radius: 13px;
+    padding: 15px;
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    backdrop-filter: saturate(180%) blur(20px);
+}
+
+.payload-desc {
+    color: #aaa;
+    font-size: 14px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+.payload-filename {
+    color: #666;
+    font-size: 12px;
+    font-family: monospace;
 }
 
 @keyframes toastSlideIn {
@@ -597,11 +651,47 @@ button[name="deleteWifiButton"], button[name="deleteUSBButton"] {
     background-color: #55616F;
 }
 
+#metadataForm {
+    background-color: rgba(51, 51, 51, 0.95);
+    border: 1px solid #555;
+    border-radius: 13px;
+    padding: 15px;
+    margin: 15px 0;
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    backdrop-filter: saturate(180%) blur(20px);
+}
+
+.button-container button {
+    flex: 1;
+}
+
 @media (max-width: 600px) {
     .copy-button {
         font-size: 16px;
         padding: 14px 20px;
     }
+}
+
+input[type="text"], textarea {
+    width: 95%;
+    padding: 12px 15px;
+    margin-top: 5px;
+    margin-bottom: 15px;
+    margin-left: auto;
+    border-radius: 13px;
+    -webkit-appearance: none;
+    appearance: none;
+    border: 1px solid white;
+    color: black;
+    font-size: 17px;
+    touch-action: manipulation;
+    background-color: #d7d7d7;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+textarea {
+    min-height: 100px;
+    resize: vertical;
 }
 
 select, input[type="text"], input[type="password"] {
