@@ -118,6 +118,69 @@ const char LivePayload[] PROGMEM = R"=====(
         </div>
     </div>
 
+    <div class="command-reference">
+        <h3 class="keys-reference-toggle">Keys and Modifiers Syntax ▼</h3>
+        <div class="keys-table-container" style="display: none;">
+            <table class="command-table">
+                <thead>
+                    <tr>
+                        <th>Keys and Modifiers - Press</th>
+                        <th>Keys - PressRelease</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>a - Z, 0 - 9, Special characters</td><td>Example: Press a or PressRelease a</td></tr>
+                    <tr><td class="command-cell">Press KEY_LEFT_ALT</td><td>Only press available for modifiers</td></tr>
+                    <tr><td class="command-cell">Press KEY_LEFT_GUI</td><td>Only press available for modifiers</td></tr>
+                    <tr><td class="command-cell">Press KEY_LEFT_CTRL</td><td>Only press available for modifiers</td></tr>
+                    <tr><td class="command-cell">Press KEY_LEFT_SHIFT</td><td>Only press available for modifiers</td></tr>
+                    <tr><td class="command-cell">Press KEY_RIGHT_ALT</td><td>Only press available for modifiers</td></tr>
+                    <tr><td class="command-cell">Press KEY_RIGHT_GUI</td><td>Only press available for modifiers</td></tr>
+                    <tr><td class="command-cell">Press KEY_RIGHT_CTRL</td><td>Only press available for modifiers</td></tr>
+                    <tr><td class="command-cell">Press KEY_RIGHT_SHIFT</td><td>Only press available for modifiers</td></tr>
+                    <tr><td class="command-cell">Press KEY_ENTER</td><td class="command-cell">PressRelease KEY_ENTER</td></tr>
+                    <tr><td class="command-cell">Press KEY_UP_ARROW</td><td class="command-cell">PressRelease KEY_UP_ARROW</td></tr>
+                    <tr><td class="command-cell">Press KEY_DOWN_ARROW</td><td class="command-cell">PressRelease KEY_DOWN_ARROW</td></tr>
+                    <tr><td class="command-cell">Press KEY_LEFT_ARROW</td><td class="command-cell">PressRelease KEY_LEFT_ARROW</td></tr>
+                    <tr><td class="command-cell">Press KEY_RIGHT_ARROW</td><td class="command-cell">PressRelease KEY_RIGHT_ARROW</td></tr>
+                    <tr><td class="command-cell">Press KEY_BACKSPACE</td><td class="command-cell">PressRelease KEY_BACKSPACE</td></tr>
+                    <tr><td class="command-cell">Press KEY_TAB</td><td class="command-cell">PressRelease KEY_TAB</td></tr>
+                    <tr><td class="command-cell">Press KEY_PAUSE</td><td class="command-cell">PressRelease KEY_PAUSE</td></tr>
+                    <tr><td class="command-cell">Press KEY_INSERT</td><td class="command-cell">PressRelease KEY_INSERT</td></tr>
+                    <tr><td class="command-cell">Press KEY_DELETE</td><td class="command-cell">PressRelease KEY_DELETE</td></tr>
+                    <tr><td class="command-cell">Press KEY_PAGE_UP</td><td class="command-cell">PressRelease KEY_PAGE_UP</td></tr>
+                    <tr><td class="command-cell">Press KEY_PAGE_DOWN</td><td class="command-cell">PressRelease KEY_PAGE_DOWN</td></tr>
+                    <tr><td class="command-cell">Press KEY_ESC</td><td class="command-cell">PressRelease KEY_ESC</td></tr>
+                    <tr><td class="command-cell">Press KEY_SPACE</td><td class="command-cell">PressRelease KEY_SPACE</td></tr>
+                    <tr><td class="command-cell">Press KEY_HOME</td><td class="command-cell">PressRelease KEY_HOME</td></tr>
+                    <tr><td class="command-cell">Press KEY_END</td><td class="command-cell">PressRelease KEY_END</td></tr>
+                    <tr><td class="command-cell">Press KEY_CAPS_LOCK</td><td class="command-cell">PressRelease KEY_CAPS_LOCK</td></tr>
+                    <tr><td class="command-cell">Press KEY_PRINT_SCREEN</td><td class="command-cell">PressRelease KEY_PRINT_SCREEN</td></tr>
+                    <tr><td class="command-cell">Press KEY_SCROLL_LOCK</td><td class="command-cell">PressRelease KEY_SCROLL_LOCK</td></tr>
+                    <tr><td class="command-cell">Press KEY_NUM_LOCK</td><td class="command-cell">PressRelease KEY_NUM_LOCK</td></tr>
+                    <tr><td class="command-cell">Press KEY_MENU</td><td class="command-cell">PressRelease KEY_MENU</td></tr>
+                    <tr><td class="command-cell">Press LED_NUMLOCK</td><td class="command-cell">PressRelease LED_NUMLOCK</td></tr>
+                    <tr><td class="command-cell">Press LED_CAPSLOCK</td><td class="command-cell">PressRelease LED_CAPSLOCK</td></tr>
+                    <tr><td class="command-cell">Press LED_SCROLLLOCK</td><td class="command-cell">PressRelease LED_SCROLLLOCK</td></tr>
+                    <tr><td class="command-cell">Press LED_COMPOSE</td><td class="command-cell">PressRelease LED_COMPOSE</td></tr>
+                    <tr><td class="command-cell">Press LED_KANA</td><td class="command-cell">PressRelease LED_KANA</td></tr>
+                    <tr><td class="command-cell">Press KEY_F1</td><td class="command-cell">PressRelease KEY_F1</td></tr>
+                    <tr><td class="command-cell">Press KEY_F2</td><td class="command-cell">PressRelease KEY_F2</td></tr>
+                    <tr><td class="command-cell">Press KEY_F3</td><td class="command-cell">PressRelease KEY_F3</td></tr>
+                    <tr><td class="command-cell">Press KEY_F4</td><td class="command-cell">PressRelease KEY_F4</td></tr>
+                    <tr><td class="command-cell">Press KEY_F5</td><td class="command-cell">PressRelease KEY_F5</td></tr>
+                    <tr><td class="command-cell">Press KEY_F6</td><td class="command-cell">PressRelease KEY_F6</td></tr>
+                    <tr><td class="command-cell">Press KEY_F7</td><td class="command-cell">PressRelease KEY_F7</td></tr>
+                    <tr><td class="command-cell">Press KEY_F8</td><td class="command-cell">PressRelease KEY_F8</td></tr>
+                    <tr><td class="command-cell">Press KEY_F9</td><td class="command-cell">PressRelease KEY_F9</td></tr>
+                    <tr><td class="command-cell">Press KEY_F10</td><td class="command-cell">PressRelease KEY_F10</td></tr>
+                    <tr><td class="command-cell">Press KEY_F11</td><td class="command-cell">PressRelease KEY_F11</td></tr>
+                    <tr><td class="command-cell">Press KEY_F12</td><td class="command-cell">PressRelease KEY_F12</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
     <script>
         let toggleIntervals = {};
 
@@ -303,6 +366,17 @@ const char LivePayload[] PROGMEM = R"=====(
             } else {
                 container.style.display = 'none';
                 this.innerHTML = 'Syntax Reference ▼';
+            }
+        });
+
+        document.querySelector('.keys-reference-toggle').addEventListener('click', function() {
+            const container = this.nextElementSibling;
+            if (container.style.display === 'none') {
+                container.style.display = 'block';
+                this.innerHTML = 'Keys and Modifiers Syntax ▲';
+            } else {
+                container.style.display = 'none';
+                this.innerHTML = 'Keys and Modifiers Syntax ▼';
             }
         });
 

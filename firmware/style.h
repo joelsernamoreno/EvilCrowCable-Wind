@@ -589,6 +589,22 @@ label {
 .command-cell:hover {
     background-color: rgba(0, 122, 255, 0.2) !important;
 }
+.keys-reference-toggle {
+    margin: 0;
+    padding: 15px;
+    color: white;
+    font-size: 17px;
+    font-weight: 600;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+.keys-reference-toggle:hover {
+    color: #007AFF;
+}
+.keys-table-container {
+    padding: 0 15px 15px 15px;
+}
 
 input[type="submit"], button {
     -webkit-appearance: none;
