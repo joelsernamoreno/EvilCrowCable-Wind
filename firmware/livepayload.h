@@ -38,6 +38,22 @@ const char LivePayload[] PROGMEM = R"=====(
         <button type="button" onclick="copyPayload()" class="copy-button">Copy Payload</button>
     </div>
 
+    <!-- Hidden metadata form that appears when saving -->
+    <div id="metadataForm" style="display: none;">
+        <div class="form-group">
+            <label for="payloadName">Payload Name:</label>
+            <input type="text" id="payloadName" name="payloadName" placeholder="Enter a descriptive name">
+        </div>
+        <div class="form-group">
+            <label for="payloadDescription">Description:</label>
+            <textarea id="payloadDescription" name="payloadDescription" placeholder="Enter a brief description" rows="3"></textarea>
+        </div>
+        <div class="button-container">
+            <button type="button" onclick="confirmSavePayload()" class="copy-button">Confirm Save</button>
+            <button type="button" onclick="cancelSavePayload()" class="copy-button" style="background-color: #FF3B30;">Cancel</button>
+        </div>
+    </div>
+
     <div class="switch-container">
         <div class="switch-group">
             <span class="switch-label">Run payload</span>
@@ -58,7 +74,7 @@ const char LivePayload[] PROGMEM = R"=====(
         <div class="switch-group">
             <span class="switch-label">Save payload</span>
             <label class="switch">
-                <input type="checkbox" id="toggleSave" onclick="savePayload()">
+                <input type="checkbox" id="toggleSave" onclick="showSavePayloadForm()">
                 <span class="slider round"></span>
             </label>
         </div>
@@ -97,6 +113,69 @@ const char LivePayload[] PROGMEM = R"=====(
                     <tr><td class="command-cell">Press</td><td>Press KEY_ENTER</td><td>Press a key or modifier on the victim's computer</td></tr>
                     <tr><td class="command-cell">PressRelease</td><td>PressRelease KEY_ENTER</td><td>Press and Release a key or modifier on the victim's computer</td></tr>
                     <tr><td class="command-cell">Release</td><td>Release</td><td>Release all pressed keys</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="command-reference">
+        <h3 class="keys-reference-toggle">Keys and Modifiers Syntax ▼</h3>
+        <div class="keys-table-container" style="display: none;">
+            <table class="command-table">
+                <thead>
+                    <tr>
+                        <th>Keys and Modifiers - Press</th>
+                        <th>Keys - PressRelease</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>a - Z, 0 - 9, Special characters</td><td>Example: Press a or PressRelease a</td></tr>
+                    <tr><td class="command-cell">Press KEY_LEFT_ALT</td><td>Only press available for modifiers</td></tr>
+                    <tr><td class="command-cell">Press KEY_LEFT_GUI</td><td>Only press available for modifiers</td></tr>
+                    <tr><td class="command-cell">Press KEY_LEFT_CTRL</td><td>Only press available for modifiers</td></tr>
+                    <tr><td class="command-cell">Press KEY_LEFT_SHIFT</td><td>Only press available for modifiers</td></tr>
+                    <tr><td class="command-cell">Press KEY_RIGHT_ALT</td><td>Only press available for modifiers</td></tr>
+                    <tr><td class="command-cell">Press KEY_RIGHT_GUI</td><td>Only press available for modifiers</td></tr>
+                    <tr><td class="command-cell">Press KEY_RIGHT_CTRL</td><td>Only press available for modifiers</td></tr>
+                    <tr><td class="command-cell">Press KEY_RIGHT_SHIFT</td><td>Only press available for modifiers</td></tr>
+                    <tr><td class="command-cell">Press KEY_ENTER</td><td class="command-cell">PressRelease KEY_ENTER</td></tr>
+                    <tr><td class="command-cell">Press KEY_UP_ARROW</td><td class="command-cell">PressRelease KEY_UP_ARROW</td></tr>
+                    <tr><td class="command-cell">Press KEY_DOWN_ARROW</td><td class="command-cell">PressRelease KEY_DOWN_ARROW</td></tr>
+                    <tr><td class="command-cell">Press KEY_LEFT_ARROW</td><td class="command-cell">PressRelease KEY_LEFT_ARROW</td></tr>
+                    <tr><td class="command-cell">Press KEY_RIGHT_ARROW</td><td class="command-cell">PressRelease KEY_RIGHT_ARROW</td></tr>
+                    <tr><td class="command-cell">Press KEY_BACKSPACE</td><td class="command-cell">PressRelease KEY_BACKSPACE</td></tr>
+                    <tr><td class="command-cell">Press KEY_TAB</td><td class="command-cell">PressRelease KEY_TAB</td></tr>
+                    <tr><td class="command-cell">Press KEY_PAUSE</td><td class="command-cell">PressRelease KEY_PAUSE</td></tr>
+                    <tr><td class="command-cell">Press KEY_INSERT</td><td class="command-cell">PressRelease KEY_INSERT</td></tr>
+                    <tr><td class="command-cell">Press KEY_DELETE</td><td class="command-cell">PressRelease KEY_DELETE</td></tr>
+                    <tr><td class="command-cell">Press KEY_PAGE_UP</td><td class="command-cell">PressRelease KEY_PAGE_UP</td></tr>
+                    <tr><td class="command-cell">Press KEY_PAGE_DOWN</td><td class="command-cell">PressRelease KEY_PAGE_DOWN</td></tr>
+                    <tr><td class="command-cell">Press KEY_ESC</td><td class="command-cell">PressRelease KEY_ESC</td></tr>
+                    <tr><td class="command-cell">Press KEY_SPACE</td><td class="command-cell">PressRelease KEY_SPACE</td></tr>
+                    <tr><td class="command-cell">Press KEY_HOME</td><td class="command-cell">PressRelease KEY_HOME</td></tr>
+                    <tr><td class="command-cell">Press KEY_END</td><td class="command-cell">PressRelease KEY_END</td></tr>
+                    <tr><td class="command-cell">Press KEY_CAPS_LOCK</td><td class="command-cell">PressRelease KEY_CAPS_LOCK</td></tr>
+                    <tr><td class="command-cell">Press KEY_PRINT_SCREEN</td><td class="command-cell">PressRelease KEY_PRINT_SCREEN</td></tr>
+                    <tr><td class="command-cell">Press KEY_SCROLL_LOCK</td><td class="command-cell">PressRelease KEY_SCROLL_LOCK</td></tr>
+                    <tr><td class="command-cell">Press KEY_NUM_LOCK</td><td class="command-cell">PressRelease KEY_NUM_LOCK</td></tr>
+                    <tr><td class="command-cell">Press KEY_MENU</td><td class="command-cell">PressRelease KEY_MENU</td></tr>
+                    <tr><td class="command-cell">Press LED_NUMLOCK</td><td class="command-cell">PressRelease LED_NUMLOCK</td></tr>
+                    <tr><td class="command-cell">Press LED_CAPSLOCK</td><td class="command-cell">PressRelease LED_CAPSLOCK</td></tr>
+                    <tr><td class="command-cell">Press LED_SCROLLLOCK</td><td class="command-cell">PressRelease LED_SCROLLLOCK</td></tr>
+                    <tr><td class="command-cell">Press LED_COMPOSE</td><td class="command-cell">PressRelease LED_COMPOSE</td></tr>
+                    <tr><td class="command-cell">Press LED_KANA</td><td class="command-cell">PressRelease LED_KANA</td></tr>
+                    <tr><td class="command-cell">Press KEY_F1</td><td class="command-cell">PressRelease KEY_F1</td></tr>
+                    <tr><td class="command-cell">Press KEY_F2</td><td class="command-cell">PressRelease KEY_F2</td></tr>
+                    <tr><td class="command-cell">Press KEY_F3</td><td class="command-cell">PressRelease KEY_F3</td></tr>
+                    <tr><td class="command-cell">Press KEY_F4</td><td class="command-cell">PressRelease KEY_F4</td></tr>
+                    <tr><td class="command-cell">Press KEY_F5</td><td class="command-cell">PressRelease KEY_F5</td></tr>
+                    <tr><td class="command-cell">Press KEY_F6</td><td class="command-cell">PressRelease KEY_F6</td></tr>
+                    <tr><td class="command-cell">Press KEY_F7</td><td class="command-cell">PressRelease KEY_F7</td></tr>
+                    <tr><td class="command-cell">Press KEY_F8</td><td class="command-cell">PressRelease KEY_F8</td></tr>
+                    <tr><td class="command-cell">Press KEY_F9</td><td class="command-cell">PressRelease KEY_F9</td></tr>
+                    <tr><td class="command-cell">Press KEY_F10</td><td class="command-cell">PressRelease KEY_F10</td></tr>
+                    <tr><td class="command-cell">Press KEY_F11</td><td class="command-cell">PressRelease KEY_F11</td></tr>
+                    <tr><td class="command-cell">Press KEY_F12</td><td class="command-cell">PressRelease KEY_F12</td></tr>
                 </tbody>
             </table>
         </div>
@@ -194,34 +273,57 @@ const char LivePayload[] PROGMEM = R"=====(
             });
         }
 
-        function savePayload() {
+        function showSavePayloadForm() {
             const toggle = document.getElementById('toggleSave');
             const payloadContent = document.getElementById('livePayloadInput').value;
-
+            
             if (!payloadContent) {
                 showMessage('error', 'Payload content cannot be empty!');
                 toggle.checked = false;
                 return;
             }
+            
+            document.getElementById('metadataForm').style.display = 'block';
+            // Scroll to the form
+            document.getElementById('metadataForm').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function cancelSavePayload() {
+            document.getElementById('metadataForm').style.display = 'none';
+            document.getElementById('toggleSave').checked = false;
+        }
+
+        function confirmSavePayload() {
+            const payloadContent = document.getElementById('livePayloadInput').value;
+            const payloadName = document.getElementById('payloadName').value;
+            const payloadDesc = document.getElementById('payloadDescription').value;
+            
+            // Create FormData object to send both payload and metadata
+            const formData = new FormData();
+            formData.append('livepayload', payloadContent);
+            formData.append('payloadName', payloadName || 'Unnamed Payload');
+            formData.append('payloadDescription', payloadDesc || 'No description provided');
 
             fetch('/runlivesave', {
                 method: 'POST',
-                body: new URLSearchParams({ livepayload: payloadContent }),
+                body: formData
             })
             .then(response => {
                 if (response.ok) return response.text();
                 else throw new Error('Error saving payload');
             })
             .then(data => {
-                showMessage('success', 'Payload saving...');
-                toggleIntervals['toggleSave'] = setInterval(() => {
-                    checkPayloadStatus('/payloadstatussave', 'toggleSave');
-                }, 1000);
+                showMessage('success', 'Payload saved successfully!');
+                document.getElementById('metadataForm').style.display = 'none';
+                document.getElementById('toggleSave').checked = false;
+                // Clear the form for next use
+                document.getElementById('payloadName').value = '';
+                document.getElementById('payloadDescription').value = '';
             })
             .catch(error => {
                 showMessage('error', 'Error saving payload.');
                 console.error('Error:', error);
-                toggle.checked = false;
+                document.getElementById('toggleSave').checked = false;
             });
         }
 
@@ -264,6 +366,17 @@ const char LivePayload[] PROGMEM = R"=====(
             } else {
                 container.style.display = 'none';
                 this.innerHTML = 'Syntax Reference ▼';
+            }
+        });
+
+        document.querySelector('.keys-reference-toggle').addEventListener('click', function() {
+            const container = this.nextElementSibling;
+            if (container.style.display === 'none') {
+                container.style.display = 'block';
+                this.innerHTML = 'Keys and Modifiers Syntax ▲';
+            } else {
+                container.style.display = 'none';
+                this.innerHTML = 'Keys and Modifiers Syntax ▼';
             }
         });
 
