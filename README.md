@@ -200,9 +200,11 @@ The Live Payload page allows you to run payloads or save payloads:
 
 * You can use the "Run Payload" option to run the payload.
 * You can use the "Startup exec payload" option to save the payload in memory and run it every time Evil Crow Cable Wind is connected to a computer.
-* You can use the "Save Payload" option to save the payload in memory.
+* You can use the "Save Payload" option to save the payload in memory. Optionally, you can add a descriptive name and a brief explanation of what the payload does.
 
 ![LivePayload](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/livepayload.png)
+
+![LivePayload](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/livepayload2.png)
 
 **Run Payload example:**
 
