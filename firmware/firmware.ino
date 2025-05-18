@@ -34,13 +34,20 @@ const bool formatOnFail = true;
 String FileName;
 String FileList;
 String vendorID, productID, manufacturerName, productName;
-bool led_response_received = false;
-int led_event_count = 0;
-unsigned long led_event_time = 0;
-bool caps_status = false;
-bool num_status = false;
-bool scroll_status = false;
-bool numlock_checked = false;
+String os;
+volatile bool led_response_received = false;
+volatile int led_event_count = 0;
+volatile unsigned long led_event_time = 0;
+volatile bool caps_status = false;
+volatile bool num_status = false;
+volatile bool scroll_status = false;
+volatile bool numlock_checked = false;
+unsigned long caps_sent_time = 0;
+unsigned long num_sent_time = 0;
+unsigned long scroll_sent_time = 0;
+unsigned long caps_delay = 0;
+unsigned long num_delay = 0;
+unsigned long scroll_delay = 0;
 
 File fsUploadFile;
 WebServer controlserver(80);
@@ -49,6 +56,17 @@ WiFiClient clientServer;
 HTTPUpdateServer httpUpdater;
 USBCDC USBSerial;
 USBHIDKeyboard Keyboard;
+
+enum HostOS {
+  OS_UNKNOWN,
+  OS_WINDOWS,
+  OS_LINUX,
+  OS_MACOS,
+  OS_IOS,
+  OS_ANDROID
+};
+
+HostOS detected_os = OS_UNKNOWN;
 
 extern const unsigned char en_us[128];
 extern const unsigned char es_es[128];
@@ -168,10 +186,18 @@ void usbEventCallback(void* arg, esp_event_base_t event_base, int32_t event_id, 
       led_response_received = true;
       led_event_count++;
       led_event_time = millis();
-      caps_status = data->capslock;
-      num_status = data->numlock;
-      scroll_status = data->scrolllock;
+
+      caps_status = data->capslock != 0;
+      num_status = data->numlock != 0;
+      scroll_status = data->scrolllock != 0;
       numlock_checked = true;
+
+      if (caps_sent_time > 0 && caps_delay == 0)
+        caps_delay = led_event_time - caps_sent_time;
+      if (num_sent_time > 0 && num_delay == 0)
+        num_delay = led_event_time - num_sent_time;
+      if (scroll_sent_time > 0 && scroll_delay == 0)
+        scroll_delay = led_event_time - scroll_sent_time;
     }
   }
 }
@@ -229,6 +255,109 @@ void writeLineWindows(const char* str) {
   Keyboard.press(KEY_NUM_LOCK);
   delay(100);
   Keyboard.releaseAll();
+}
+
+void toggleKey(uint8_t key, unsigned long* send_time) {
+  *send_time = millis();
+  led_response_received = false;
+
+  Keyboard.press(key);
+  delay(300);
+  Keyboard.release(key);
+  delay(800);
+}
+
+void resetKeyboardLEDs() {
+  unsigned long temp_time;
+  delay(500);
+  if (caps_status) {
+    toggleKey(KEY_CAPS_LOCK, &temp_time);
+    delay(800);
+  }
+  if (num_status) {
+    toggleKey(KEY_NUM_LOCK, &temp_time);
+    delay(800);
+  }
+  if (scroll_status) {
+    toggleKey(KEY_SCROLL_LOCK, &temp_time);
+    delay(800);
+  }
+}
+
+void detectHostOS() {
+  led_event_count = 0;
+  caps_status = num_status = scroll_status = 0;
+  caps_delay = num_delay = scroll_delay = 0;
+  caps_sent_time = num_sent_time = scroll_sent_time = 0;
+  led_response_received = false;
+  uint8_t initial_caps = caps_status;
+  toggleKey(KEY_CAPS_LOCK, &caps_sent_time);
+  delay(1500);
+
+  if (!led_response_received && caps_status != initial_caps) {
+    detected_os = OS_IOS;
+    return;
+  }
+
+  toggleKey(KEY_NUM_LOCK, &num_sent_time);
+  delay(1200);
+  toggleKey(KEY_SCROLL_LOCK, &scroll_sent_time);
+  delay(1200);
+
+  if (led_event_count == 0) {
+    detected_os = (caps_status != initial_caps) ? OS_IOS : OS_MACOS;
+  }
+  else if (led_event_count >= 3 && caps_delay < 100 && num_delay < 100 && scroll_delay < 100) {
+    detected_os = OS_WINDOWS;
+  }
+  else {
+    bool has_numlock_response = (num_delay > 0);
+    bool has_scrolllock_response = (scroll_delay > 0);
+    
+    if (num_status && !scroll_status && has_numlock_response && !has_scrolllock_response) {
+      detected_os = OS_LINUX;
+    }
+    else if ((caps_delay > 200 || num_delay > 200 || scroll_delay > 200) && 
+             (has_numlock_response || has_scrolllock_response)) {
+      detected_os = OS_ANDROID;
+    }
+    else if (caps_status != initial_caps) {
+      detected_os = OS_IOS;
+    }
+    else {
+      detected_os = OS_UNKNOWN;
+    }
+  }
+}
+
+void printDetectedOS() {
+  switch (detected_os) {
+    case OS_WINDOWS:
+      os = "Windows";
+      break;
+    case OS_LINUX:
+      os = "Linux";
+      break;
+    case OS_MACOS:
+      os = "macOS";
+      break;
+    case OS_IOS:
+      os = "iOS";
+      break;
+    case OS_ANDROID:
+      os = "Android";
+      break;
+    default:
+      os = "OS Unknown";
+      break;
+  }
+}
+
+void onDetectOSRequested() {
+  resetKeyboardLEDs();
+  detectHostOS();
+  resetKeyboardLEDs();
+  printDetectedOS();
 }
 
 void deleteFile(fs::FS &fs, const String &path) {
@@ -410,6 +539,7 @@ void handleStats() {
   json += ",\"temperature\":" + String(temperatureRead());
   json += ",\"totalram\":" + String(ESP.getHeapSize());
   json += ",\"freeram\":" + String(ESP.getFreeHeap());
+  json += ",\"os\":\"" + os + "\"";  // <-- Aquí se agrega
   json += "}";
   controlserver.send(200, "application/json", json);
 }
@@ -666,6 +796,10 @@ void payloadExec() {
     Keyboard.releaseAll();
   }
 
+  else if (cmd == "DetectOS") {
+    onDetectOSRequested();
+  }
+
   else if (cmd.startsWith("PrintLine ")) {
     cmd.toCharArray(Command, cmd.length() + 1);
     Keyboard.println(Command + 10);
@@ -885,8 +1019,10 @@ void handleDeletePayload() {
 }
 
 void setup() {
-  
-  // LittleFS.begin(true);
+  USB.onEvent(usbEventCallback);
+  Keyboard.onEvent(usbEventCallback);
+  USBSerial.onEvent(usbEventCallback);
+
   if (!LittleFS.begin(true)) {
     // format in case of missing file system
     LittleFS.format();
@@ -913,8 +1049,8 @@ void setup() {
     }
   }
 
-  Keyboard.begin();
   USB.begin();
+  Keyboard.begin();
   USBSerial.begin();
 
   // Load the saved layout if it exists
@@ -957,21 +1093,11 @@ void setup() {
           selected_layout = layoutMapInit[tmp_layout];
         }
       }
-      //Keyboard.begin();
-      //USB.begin();
       Keyboard.setLayout(selected_layout);
-
       payload_state = 1;
       payloadExecuted = false;
     }
-  } /*else {
-    Keyboard.begin();
-    USB.begin();
-    Keyboard.setLayout(en_us);
-  }*/
-
-  // Disabled and move up in code due stability issues
-  // USBSerial.begin();
+  }
 
   if (LittleFS.exists("/wifi_config.txt")) {
     File fsUploadFile = LittleFS.open("/wifi_config.txt", FILE_READ);

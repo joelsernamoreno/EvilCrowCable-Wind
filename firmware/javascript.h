@@ -26,6 +26,7 @@ function checkConnection() {
                 document.getElementById('temperature').innerText = data.temperature + ' °C';
                 document.getElementById('totalram').innerText = data.totalram + ' bytes';
                 document.getElementById('freeram').innerText = data.freeram + ' bytes';
+                document.getElementById("targetos").textContent = data.os || "N/A";
             }
         });
 }

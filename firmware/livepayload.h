@@ -93,6 +93,7 @@ const char LivePayload[] PROGMEM = R"=====(
                 </thead>
                 <tbody>
 					<tr><td class="command-cell">ServerConnect</td><td>ServerConnect IP</td><td>Read the "Remote Shell" section for more information</td></tr>
+                    <tr><td class="command-cell">DetectOS</td><td>DetectOS</td><td>Detect the operating system</td></tr>
                     <tr><td class="command-cell">RunWin</td><td>RunWin cmd</td><td>Runs a command or a program on the victim's computer</td></tr>
                     <tr><td class="command-cell">RunPowershellAdmin</td><td>RunPowershellAdmin</td><td>Run powershell as administrator</td></tr>
                     <tr><td class="command-cell">RunCmdAdmin</td><td>RunCmdAdmin</td><td>Run cmd as administrator</td></tr>

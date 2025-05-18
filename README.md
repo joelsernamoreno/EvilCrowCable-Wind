@@ -63,6 +63,7 @@ You can invite me to a coffee to further develop low-cost hacking devices. If yo
 	* First steps with Evil Crow Cable Wind
 	* Home
 	* Live Payload
+	* Detect OS
 	* Upload Payload
 	* List Payloads
 	* Config
@@ -225,6 +226,26 @@ To remove the automatic exec, delete the payload-startup.txt payload from the Li
 
 ![SaveExample](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/save-payload-example.png)
 
+## Detect OS
+
+Evil Crow Cable Wind can detect the operating system and display it on the home screen of the web panel.
+
+![DetectOS](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/detectos-na.png)
+
+Use the DetectOS command from livepayload to get the victim's operating system:
+
+![DetectOS](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/detectos-payload.png)
+
+This is a BETA feature. Currently it can detect the following operating systems: Windows, Linux, Android and iOS. MacOS detection is implemented but does not work properly yet.
+
+![DetectOS](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/detectos-windows.png)
+
+![DetectOS](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/detectos-linux.png)
+
+![DetectOS](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/detectos-android.png)
+
+![DetectOS](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/detectos-ios.png)
+
 ## Upload Payload
 
 The Upload Payload page allows you to upload and store payloads in memory.
@@ -352,6 +373,7 @@ To develop Evil Crow Cable Wind payloads, you need to know the syntax of the int
 | Command | Example | Description |
 | ------- | ------- | ----------- |
 | `ServerConnect` | `ServerConnect IP` |Read the "Remote Shell" section for more information |
+| `DetectOS` | `DetectOS` |Detect the operating system |
 | `RunWin` | `RunWin cmd` |Runs a command or a program on the victim's computer |
 | `RunPowershellAdmin` | `RunPowershellAdmin` | Run powershell as administrator |
 | `RunCmdAdmin` | `RunCmdAdmin` | Run cmd as administrator |

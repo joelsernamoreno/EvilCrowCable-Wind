@@ -38,7 +38,11 @@ const char Index[] PROGMEM = R"=====(
     <div class="stat-container">
     	<div class="stat-group">
             <strong>Firmware:</strong>
-            <span id="firmware">v1.2</span>
+            <span id="firmware">v1.3</span>
+        </div>
+        <div class="stat-group">
+            <strong>Target OS:</strong>
+            <span id="targetos">N/A</span>
         </div>
         <div class="stat-group">
             <strong>Uptime:</strong>
