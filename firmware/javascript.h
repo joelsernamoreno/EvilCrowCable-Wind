@@ -30,7 +30,7 @@ function checkConnection() {
             }
         });
 }
-setInterval(checkConnection, 1000);
+setInterval(checkConnection, 5000);
 checkConnection();
 
 function togglePayload(action) {

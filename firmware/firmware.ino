@@ -1309,6 +1309,7 @@ void setup() {
 
 void loop() {
   controlserver.handleClient();
+  delay(10);
   vTaskDelay(1);
 
   while (USBSerial.available()) {
