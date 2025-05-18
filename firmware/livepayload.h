@@ -105,10 +105,13 @@ const char LivePayload[] PROGMEM = R"=====(
                     <tr><td class="command-cell">ShellMacCleanup</td><td>ShellMacCleanup</td><td>Read the "Remote Shell" section for more information</td></tr>
                     <tr><td class="command-cell">RunMac</td><td>RunMac terminal</td><td>Runs a command or a program on the victim's computer</td></tr>
                     <tr><td class="command-cell">GuiR</td><td>GuiR</td><td>Press WINDOWS+R on the victim's computer</td></tr>
+                    <tr><td class="command-cell">Gui</td><td>Gui</td><td>Press WINDOWS on the victim's computer</td></tr>
                     <tr><td class="command-cell">AltF2</td><td>AltF2</td><td>Press ALT+F2 on the victim's computer</td></tr>
                     <tr><td class="command-cell">GuiSpace</td><td>GuiSpace</td><td>Press WINDOWS+SPACE on the victim's computer</td></tr>
                     <tr><td class="command-cell">Print</td><td>Print Hello World!</td><td>Prints a text on the victim's computer</td></tr>
-                    <tr><td class="command-cell">PrintLine</td><td>Printable Hello World!</td><td>Prints a text and presses the ENTER key on the victim's computer</td></tr>
+                    <tr><td class="command-cell">WinPrint</td><td>WinPrint Hello World!</td><td>Print a text on the victim's computer without knowing the layout (Windows only)</td></tr>
+                    <tr><td class="command-cell">PrintLine</td><td>PrintLine Hello World!</td><td>Prints a text and presses the ENTER key on the victim's computer</td></tr>
+                    <tr><td class="command-cell">WinPrintLine</td><td>WinPrintLine Hello World!</td><td>Prints a text and presses the ENTER key on the victim's computer without knowing the layout (Windows only)</td></tr>
                     <tr><td class="command-cell">Delay</td><td>Delay 5000</td><td>Delay in ms</td></tr>
                     <tr><td class="command-cell">Press</td><td>Press KEY_ENTER</td><td>Press a key or modifier on the victim's computer</td></tr>
                     <tr><td class="command-cell">PressRelease</td><td>PressRelease KEY_ENTER</td><td>Press and Release a key or modifier on the victim's computer</td></tr>

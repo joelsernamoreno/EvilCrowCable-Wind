@@ -34,6 +34,13 @@ const bool formatOnFail = true;
 String FileName;
 String FileList;
 String vendorID, productID, manufacturerName, productName;
+bool led_response_received = false;
+int led_event_count = 0;
+unsigned long led_event_time = 0;
+bool caps_status = false;
+bool num_status = false;
+bool scroll_status = false;
+bool numlock_checked = false;
 
 File fsUploadFile;
 WebServer controlserver(80);
@@ -152,6 +159,77 @@ std::map<String, uint8_t> keyMap = {
   { "KEY_F11", KEY_F11 },
   { "KEY_F12", KEY_F12 }
 };
+
+void usbEventCallback(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
+  if (event_base == ARDUINO_USB_HID_KEYBOARD_EVENTS) {
+    arduino_usb_hid_keyboard_event_data_t* data = (arduino_usb_hid_keyboard_event_data_t*)event_data;
+
+    if (event_id == ARDUINO_USB_HID_KEYBOARD_LED_EVENT) {
+      led_response_received = true;
+      led_event_count++;
+      led_event_time = millis();
+      caps_status = data->capslock;
+      num_status = data->numlock;
+      scroll_status = data->scrolllock;
+      numlock_checked = true;
+    }
+  }
+}
+
+void ensureNumLock() {
+  if (!numlock_checked) {
+    return;
+  }
+  if (!num_status) {
+    Keyboard.press(KEY_NUM_LOCK);
+    delay(100);
+    Keyboard.releaseAll();
+  }
+}
+
+const char* ascii_convert(char c) {
+  static char buffer[4];
+  if (c >= 32 && c <= 126) {
+    snprintf(buffer, sizeof(buffer), "%d", c);
+    return buffer;
+  }
+  return "000";
+}
+
+void writeLetterWindows(const char* asciiCode) {
+  Keyboard.press(KEY_LEFT_ALT);
+
+  for (int i = 0; asciiCode[i] != '\0'; i++) {
+    switch (asciiCode[i]) {
+      case '0': Keyboard.press(KEY_KP_0); delay(2); Keyboard.release(KEY_KP_0); break;
+      case '1': Keyboard.press(KEY_KP_1); delay(2); Keyboard.release(KEY_KP_1); break;
+      case '2': Keyboard.press(KEY_KP_2); delay(2); Keyboard.release(KEY_KP_2); break;
+      case '3': Keyboard.press(KEY_KP_3); delay(2); Keyboard.release(KEY_KP_3); break;
+      case '4': Keyboard.press(KEY_KP_4); delay(2); Keyboard.release(KEY_KP_4); break;
+      case '5': Keyboard.press(KEY_KP_5); delay(2); Keyboard.release(KEY_KP_5); break;
+      case '6': Keyboard.press(KEY_KP_6); delay(2); Keyboard.release(KEY_KP_6); break;
+      case '7': Keyboard.press(KEY_KP_7); delay(2); Keyboard.release(KEY_KP_7); break;
+      case '8': Keyboard.press(KEY_KP_8); delay(2); Keyboard.release(KEY_KP_8); break;
+      case '9': Keyboard.press(KEY_KP_9); delay(2); Keyboard.release(KEY_KP_9); break;
+    }
+  }
+  Keyboard.release(KEY_LEFT_ALT);
+  delay(5);
+}
+
+void writeLineWindows(const char* str) {
+  ensureNumLock();
+
+  while (*str) {
+    const char* code = ascii_convert(*str);
+    writeLetterWindows(code);
+    str++;
+    delay(2);
+  }
+  Keyboard.press(KEY_NUM_LOCK);
+  delay(100);
+  Keyboard.releaseAll();
+}
 
 void deleteFile(fs::FS &fs, const String &path) {
   if (fs.remove(path)) {
@@ -399,7 +477,7 @@ void payloadExec() {
   else if (cmd.startsWith("RunWin ")) {
     cmd.toCharArray(Command, cmd.length() + 1);
     Keyboard.press(KEY_LEFT_GUI);
-    Keyboard.print("r");
+    Keyboard.print('r');
     delay(100);
     Keyboard.releaseAll();
     delay(2000);
@@ -575,6 +653,12 @@ void payloadExec() {
     Keyboard.releaseAll();
   }
 
+  else if (cmd == "Gui") {
+    Keyboard.press(KEY_LEFT_GUI);
+    delay(100);
+    Keyboard.releaseAll();
+  }
+
   else if (cmd == "GuiSpace") {
     Keyboard.press(KEY_LEFT_GUI);
     Keyboard.press(KEY_SPACE);
@@ -587,9 +671,23 @@ void payloadExec() {
     Keyboard.println(Command + 10);
   }
 
+  else if (cmd.startsWith("WinPrintLine ")) {
+    cmd.toCharArray(Command, cmd.length() + 1);
+    writeLineWindows(Command + 13);
+    delay(10);
+    Keyboard.press(KEY_RETURN);
+    delay(100);
+    Keyboard.releaseAll();
+  }
+
   else if (cmd.startsWith("Print ")) {
     cmd.toCharArray(Command, cmd.length() + 1);
     Keyboard.print(Command + 6);
+  }
+
+  else if (cmd.startsWith("WinPrint ")) {
+    cmd.toCharArray(Command, cmd.length() + 1);
+    writeLineWindows(Command + 9);
   }
 
   else if (cmd.startsWith("Press ")) {

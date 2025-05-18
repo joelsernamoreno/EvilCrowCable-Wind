@@ -116,7 +116,10 @@ Evil Crow Cable Wind is pre-configured with English layout (EN_US), but is compa
 * SV_SE
 * SI_SI
 
-You can change the keyboard layout in real time from the web panel.
+You can change the keyboard layout in real time from the web panel. 
+
+Additionally, you can use WinPrint and WinPrintLine if you do not know the layout of the victim computer (Windows only).
+**Example:** WinPrintLine Hello World!@#/()-:,;0123456789
 
 **NOTE:** 
 
@@ -361,10 +364,13 @@ To develop Evil Crow Cable Wind payloads, you need to know the syntax of the int
 | `ShellMacCleanup` | `ShellMacCleanup` | Read the "Remote Shell" section for more information |
 | `RunMac` | `RunMac terminal` | Runs a command or a program on the victim's computer |
 | `GuiR` | `GuiR` | Press WINDOWS+R on the victim's computer |
+| `Gui` | `Gui` | Press WINDOWS on the victim's computer |
 | `AltF2` | `AltF2` | Press ALT+F2 on the victim's computer |
 | `GuiSpace` | `GuiSpace` | Press WINDOWS+SPACE on the victim's computer |
 | `Print` | `Print Hello World!` | Prints a text on the victim's computer |
+| `WinPrint` | `WinPrint Hello World!` | Print a text on the victim's computer without knowing the layout (Windows only) |
 | `PrintLine` | `PrintLine Hello World!` | Prints a text and presses the ENTER key on the victim's computer |
+| `WinPrintLine` | `WinPrintLine Hello World!` | Prints a text and presses the ENTER key on the victim's computer without knowing the layout (Windows only) |
 | `Delay` | `Delay 5000` | Delay in ms |
 | `Press` | `Press KEY_ENTER` | Press a key or modifier on the victim's computer |
 | `PressRelease` | `PressRelease KEY_ENTER` | Press and Release a key or modifier on the victim's computer |
