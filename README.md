@@ -12,7 +12,11 @@
 
 **Manufacturer and distributor:** April Brother (@aprbrother).
 
-**Distributor in the United Kingdom:** KSEC Worldwide (@KSEC_KC).
+**Distributor in the EU:** SAPSAN Cybersec & Military (@SAPSAN_CYBERSEC).
+
+**Distributor in the UK:** KSEC Worldwide (@KSEC_KC).
+
+**Distributor in the NA:** Tienda Espía (@TiendaEspiaMX).
 
 The developers and collaborators of this project do not earn any money from it. 
 You can invite me to a coffee to further develop low-cost hacking devices. If you don't invite me, no worries, I will keep developing devices
@@ -33,7 +37,7 @@ You can invite me to a coffee to further develop low-cost hacking devices. If yo
 	* Alibaba: https://www.alibaba.com/product-detail/Crow-Cable-wind-based-on-ESP32_1601269809241.html
 	* Aliexpress: https://www.aliexpress.com/item/1005007904610809.html
 
-**Available with SAPSAN Cybersec & Military (shipping from EU, Poland):**
+**Available with SAPSAN Cybersec & Military (shipping from EU):**
 
 * USB-A to USB-C:
 
@@ -43,7 +47,7 @@ You can invite me to a coffee to further develop low-cost hacking devices. If yo
 
 	* https://sapsan-sklep.pl/en/products/evil-crow-cable-wind-badusb-wifi
 
-**Available with KSEC Worldwide (shipping from the United Kingdom):**
+**Available with KSEC Worldwide (shipping from UK):**
 
 * USB-C to USB-C: https://labs.ksec.co.uk/product/evil-crow-wind-usb-c-wifi-enabled-badusb-device/
 
