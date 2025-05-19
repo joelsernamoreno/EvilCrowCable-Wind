@@ -15,6 +15,8 @@
 #include "config.h"
 #include "readfile.h"
 #include "listpayloads.h"
+#include "autoexecplanning.h"
+#include <ArduinoJson.h>
 #include <map>
 
 // Config default SSID, password and channel
@@ -1197,7 +1199,7 @@ void setup() {
       payloadExecuted = false;
     }
     controlserver.send(200, "text/plain", "Payload running...");
-  });
+  }); 
 
   controlserver.on("/runlivestartup", []() {
     String payload_startup = controlserver.arg("livepayload");
@@ -1295,6 +1297,79 @@ void setup() {
     }
   });
 
+  controlserver.on("/autoexecplanning", []() {
+      controlserver.send_P(200, "text/html", AutoExecPlanning);
+  });
+
+  controlserver.on("/listpayloadsdata", []() {
+      DynamicJsonDocument doc(4096);
+      JsonArray payloads = doc.to<JsonArray>();
+
+      File root = LittleFS.open("/payloads/");
+      if (root && root.isDirectory()) {
+          File file = root.openNextFile();
+          while (file) {
+              String fileName = file.name();
+              if (!fileName.endsWith(".meta")) {
+                  String filePath = "/payloads/" + fileName;
+                  String payloadName = readPayloadMetadata(filePath, true);
+                  String payloadDesc = readPayloadMetadata(filePath, false);
+
+                  JsonObject payload = payloads.createNestedObject();
+                  payload["path"] = filePath;
+                  payload["name"] = payloadName;
+                  payload["description"] = payloadDesc;
+                  payload["filename"] = fileName;
+              }
+              file = root.openNextFile();
+          }
+      }
+
+      String output;
+      serializeJson(doc, output);
+      controlserver.send(200, "application/json", output);
+  });
+
+  controlserver.on("/saveautoexecplan", HTTP_POST, []() {
+      String payload = controlserver.arg("plain");
+      DynamicJsonDocument doc(2048);
+      deserializeJson(doc, payload);
+
+      File file = LittleFS.open("/autoexec_plan.json", FILE_WRITE);
+      if (!file) {
+          controlserver.send(500, "application/json", "{\"success\":false}");
+          return;
+      }
+
+      serializeJson(doc, file);
+      file.close();
+      controlserver.send(200, "application/json", "{\"success\":true}");
+  });
+
+  controlserver.on("/getautoexecplan", []() {
+      if (!LittleFS.exists("/autoexec_plan.json")) {
+          controlserver.send(200, "application/json", "{}");
+          return;
+      }
+
+      File file = LittleFS.open("/autoexec_plan.json", FILE_READ);
+      if (!file) {
+          controlserver.send(500, "application/json", "{}");
+          return;
+      }
+
+      String content = file.readString();
+      file.close();
+      controlserver.send(200, "application/json", content);
+  });
+
+  controlserver.on("/clearautoexecplan", HTTP_POST, []() {
+      if (LittleFS.exists("/autoexec_plan.json")) {
+          LittleFS.remove("/autoexec_plan.json");
+      }
+      controlserver.send(200, "application/json", "{\"success\":true}");
+  });
+
   controlserver.on("/updatewifi", HTTP_POST, handleUpdateWiFi);
   controlserver.on("/layout", HTTP_POST, handleLayout);
   controlserver.on("/deletewificonfig", HTTP_POST, handleDeleteWiFiConfig);
@@ -1302,6 +1377,7 @@ void setup() {
   controlserver.on("/deleteusbconfig", HTTP_POST, handleDeleteUSBConfig);
   controlserver.on("/deletepayload", HTTP_POST, handleDeletePayload);
   controlserver.on("/getcurrentlayout", handleGetCurrentLayout);
+  
 
   httpUpdater.setup(&controlserver);
   controlserver.begin();
@@ -1312,34 +1388,62 @@ void loop() {
   delay(10);
   vTaskDelay(1);
 
+  // Check if we should auto-execute a payload
+  static bool autoExecChecked = false;
+  if (!autoExecChecked && LittleFS.exists("/autoexec_plan.json")) {
+      File file = LittleFS.open("/autoexec_plan.json", FILE_READ);
+      if (file) {
+          String content = file.readString();
+          file.close();
+          DynamicJsonDocument doc(2048);
+          deserializeJson(doc, content);
+          if (doc["enabled"] == true) {
+              onDetectOSRequested(); // Detect the OS
+              delay(5000); // Give time for detection
+              String osPayloadPath;
+              switch (detected_os) {
+                  case OS_WINDOWS: osPayloadPath = doc["windows"]["path"].as<String>(); break;
+                  case OS_LINUX:   osPayloadPath = doc["linux"]["path"].as<String>(); break;
+                  case OS_IOS:   osPayloadPath = doc["ios"]["path"].as<String>(); break;
+                  case OS_MACOS:   osPayloadPath = doc["macos"]["path"].as<String>(); break;
+                  case OS_ANDROID: osPayloadPath = doc["android"]["path"].as<String>(); break;
+                  default: break;
+              }
+              if (osPayloadPath && LittleFS.exists(osPayloadPath)) {
+                  readFile(LittleFS, osPayloadPath);
+                  payload_state = 1;
+                  payloadExecuted = false;
+              }
+          }
+      }
+      autoExecChecked = true;
+  }
+
+
   while (USBSerial.available()) {
-    String data = USBSerial.readString();
-    clientServer.print(data);
+      String data = USBSerial.readString();
+      clientServer.print(data);
   }
-
   while (clientServer.available()) {
-    String data = clientServer.readString();
-    USBSerial.print(data);
+      String data = clientServer.readString();
+      USBSerial.print(data);
   }
-
   if (payload_state == 1) {
-    char *splitlines;
-    int payloadlen = livepayload.length() + 1;
-    char request[payloadlen];
-    livepayload.toCharArray(request, payloadlen);
-    splitlines = strtok(request, "\r\n");
-
-    while (splitlines != NULL) {
-      cmd = splitlines;
-      payloadExec();
-      splitlines = strtok(NULL, "\r\n");
-      vTaskDelay(1);
-    }
-
-    payload_state = 0;
-    cmd = "";
-    livepayload = "";
-    payloadExecuted = true;
+      char *splitlines;
+      int payloadlen = livepayload.length() + 1;
+      char request[payloadlen];
+      livepayload.toCharArray(request, payloadlen);
+      splitlines = strtok(request, "\r\n");
+      while (splitlines != NULL) {
+          cmd = splitlines;
+          payloadExec();
+          splitlines = strtok(NULL, "\r\n");
+          vTaskDelay(1);
+      }
+      payload_state = 0;
+      cmd = "";
+      livepayload = "";
+      payloadExecuted = true;
   }
   vTaskDelay(1);
 }
