@@ -98,6 +98,15 @@ const char Configuration[] PROGMEM = R"=====(
         </form>
 
         <hr>
+        <hr>
+
+        <form id="hostnameForm">
+            <div class="form-group">
+                <label for="hostname">Device Hostname (URL):</label>
+                <input type="text" id="hostname" name="hostname" placeholder="cable-wind" required>
+            </div>
+            <button type="button" onclick="applyHostname()">Apply Hostname</button>
+        </form>
     </div>
 
     <script>
@@ -240,6 +249,39 @@ const char Configuration[] PROGMEM = R"=====(
             })
             .then(response => response.text())
         }
+
+        function applyHostname() {
+            const hostname = document.getElementById('hostname').value;
+
+            if (!hostname) {
+                showMessage('error', 'Hostname cannot be empty');
+                return;
+            }
+
+            fetch('/updatehostname', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({ hostname }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showMessage('success', 'Hostname updated successfully! Device will restart.');
+                    setTimeout(() => {
+                        window.location.href = `http://${hostname}.local`;
+                    }, 3000);
+                } else {
+                    showMessage('error', data.message || 'Error updating hostname');
+                }
+            })
+            .catch(error => {
+                showMessage('error', 'Error updating hostname');
+                console.error('Error:', error);
+            });
+        }
+
         
         // Function to load the current layout when the config page is loaded
         document.addEventListener('DOMContentLoaded', function() {
@@ -255,6 +297,14 @@ const char Configuration[] PROGMEM = R"=====(
                 })
                 .catch(error => {
                     console.error('Error fetching current layout:', error);
+                });
+            // Fetch current hostname
+            fetch('/gethostname')
+                .then(response => response.text())
+                .then(currentHostname => {
+                    if (currentHostname) {
+                        document.getElementById('hostname').value = currentHostname;
+                    }
                 });
         });
     </script>

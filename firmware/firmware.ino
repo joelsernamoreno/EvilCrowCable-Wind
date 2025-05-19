@@ -546,6 +546,41 @@ void handleStats() {
   controlserver.send(200, "application/json", json);
 }
 
+void handleUpdateHostname() {
+    if (controlserver.hasArg("hostname")) {
+        String newHostname = controlserver.arg("hostname");
+        
+        File fsUploadFile = LittleFS.open("/hostname_config.txt", FILE_WRITE);
+        if (!fsUploadFile) {
+            controlserver.send(500, "application/json", "{\"success\":false,\"message\":\"Failed to save hostname\"}");
+            return;
+        }
+        
+        fsUploadFile.println(newHostname);
+        fsUploadFile.close();
+        controlserver.send(200, "application/json", "{\"success\":true,\"message\":\"Hostname updated successfully! Device will restart.\"}");
+        delay(1000);
+        ESP.restart();
+    } else {
+        controlserver.send(400, "application/json", "{\"success\":false,\"message\":\"No hostname provided\"}");
+    }
+}
+
+void handleGetHostname() {
+    String currentHostname = "cable-wind"; // default
+    
+    if (LittleFS.exists("/hostname_config.txt")) {
+        File fsUploadFile = LittleFS.open("/hostname_config.txt", FILE_READ);
+        if (fsUploadFile) {
+            currentHostname = fsUploadFile.readStringUntil('\n');
+            currentHostname.trim();
+            fsUploadFile.close();
+        }
+    }
+    
+    controlserver.send(200, "text/plain", currentHostname);
+}
+
 // Function to get the currently selected layout
 String getCurrentLayout() {
   String currentLayout = "layout1"; // Default to EN_US
@@ -1118,10 +1153,20 @@ void setup() {
     delay(500);
   }
 
-  if (!MDNS.begin("cable-wind")) {
-    while (1) {
-      delay(1000);
-    }
+  String hostname = "cable-wind";
+  if (LittleFS.exists("/hostname_config.txt")) {
+      File fsUploadFile = LittleFS.open("/hostname_config.txt", FILE_READ);
+      if (fsUploadFile) {
+          hostname = fsUploadFile.readStringUntil('\n');
+          hostname.trim();
+          fsUploadFile.close();
+      }
+  }
+
+  if (!MDNS.begin(hostname.c_str())) {
+      while (1) {
+          delay(1000);
+      }
   }
 
   tcpServer.begin();
@@ -1377,6 +1422,8 @@ void setup() {
   controlserver.on("/deleteusbconfig", HTTP_POST, handleDeleteUSBConfig);
   controlserver.on("/deletepayload", HTTP_POST, handleDeletePayload);
   controlserver.on("/getcurrentlayout", handleGetCurrentLayout);
+  controlserver.on("/updatehostname", HTTP_POST, handleUpdateHostname);
+  controlserver.on("/gethostname", handleGetHostname);
   
 
   httpUpdater.setup(&controlserver);

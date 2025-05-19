@@ -733,6 +733,7 @@ button[name="deleteWifiButton"], button[name="deleteUSBButton"] {
 .payload-item-os {
     position: relative;
 }
+
 .payload-item.dragging {
     opacity: 0.5;
 }
@@ -757,24 +758,6 @@ button[name="deleteWifiButton"], button[name="deleteUSBButton"] {
     overflow-y: auto;
     margin: 20px 0;
 }
-.instructions {
-    background-color: rgba(51, 51, 51, 0.7);
-    border: 1px solid #555;
-    border-radius: 13px;
-    padding: 15px;
-    margin-bottom: 20px;
-}
-
-.instructions ol, 
-.instructions ul {
-    padding-left: 20px;
-    margin: 10px 0;
-}
-
-.instructions li {
-    margin-bottom: 8px;
-}
-
 .note {
     background-color: rgba(255, 235, 59, 0.1);
     border-left: 4px solid #FFEB3B;
@@ -788,7 +771,6 @@ button[name="deleteWifiButton"], button[name="deleteUSBButton"] {
         padding: 14px 20px;
     }
 }
-
 input[type="text"], textarea {
     width: 95%;
     padding: 12px 15px;

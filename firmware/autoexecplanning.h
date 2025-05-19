@@ -38,27 +38,7 @@ const char AutoExecPlanning[] PROGMEM = R"=====(
     </div>
 
     <div class="view-container">
-        <h3>Auto Execution Planning</h3>
-        <div class="instructions">
-            <p>Configure automatic payload execution when the device connects to specific operating systems:</p>
-
-            <ol>
-                <li><strong>Assign Payloads to OS Targets</strong>:
-                    <ul>
-                        <li><strong>Drag & Drop Method</strong>: Drag any payload from the list below and drop it onto the desired OS box (Windows, Linux, macOS, iOS, or Android)</li>
-                        <li><strong>Click Method</strong>: Click on any payload's blue button, then select the target OS from the dropdown menu</li>
-                    </ul>
-                </li>
-                <li><strong>Save Configuration or Clear Assignments</strong>: Selecting "Save & Enable AutoExec" will activate your automatic execution plan for all future USB connections while selecting "Clear All" will stop executions of selected payloads.</li>
-            </ol>
-
-            <p><strong>How It Works</strong>: When connected to a target device, the system will automatically detect its OS and execute the assigned payload.</p>
-
-            <div class="note">
-                <strong>Note</strong>: Only one payload can be assigned per OS. Assigning a new payload will replace any existing one.
-            </div>
-        </div>
-        
+        <h3>Auto Execution Planning</h3>       
         <div class="os-container">
             <div class="os-box" id="windowsBox" data-os="windows">
                 <h3>Windows</h3>
