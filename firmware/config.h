@@ -102,7 +102,7 @@ const char Configuration[] PROGMEM = R"=====(
 
         <form id="hostnameForm">
             <div class="form-group">
-                <label for="hostname">Device Hostname (URL):</label>
+                <label for="hostname">Device Hostname:</label>
                 <input type="text" id="hostname" name="hostname" placeholder="cable-wind" required>
             </div>
             <button type="button" onclick="applyHostname()">Apply Hostname</button>

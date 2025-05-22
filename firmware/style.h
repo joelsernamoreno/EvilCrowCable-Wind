@@ -605,7 +605,6 @@ label {
 .keys-table-container {
     padding: 0 15px 15px 15px;
 }
-
 input[type="submit"], button {
     -webkit-appearance: none;
     appearance: none;
@@ -622,7 +621,6 @@ input[type="submit"], button {
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
 }
-
 /* input[type="file"], input[type="submit"] { */
 input[type="file"] {
     display: block;
@@ -632,12 +630,10 @@ input[type="file"] {
     /* text-align: center; */
     width: fit-content;
 }
-
 button[name="deleteWifiButton"], button[name="deleteUSBButton"] {
     background-color: #FF3B30;
     color: white;
 }
-
 .button-container {
     display: flex;
     justify-content: flex-start;
@@ -645,7 +641,6 @@ button[name="deleteWifiButton"], button[name="deleteUSBButton"] {
     width: 100%;
     box-sizing: border-box;
 }
-
 .copy-button {
     background-color: #73879F;
     color: white;
@@ -662,11 +657,9 @@ button[name="deleteWifiButton"], button[name="deleteUSBButton"] {
     overflow: hidden;
     text-overflow: ellipsis;
 }
-
 .copy-button:hover {
     background-color: #55616F;
 }
-
 #metadataForm {
     background-color: rgba(51, 51, 51, 0.95);
     border: 1px solid #555;
@@ -676,11 +669,9 @@ button[name="deleteWifiButton"], button[name="deleteUSBButton"] {
     -webkit-backdrop-filter: saturate(180%) blur(20px);
     backdrop-filter: saturate(180%) blur(20px);
 }
-
 .button-container button {
     flex: 1;
 }
-
 .os-container {
     display: flex;
     flex-wrap: wrap;
@@ -716,8 +707,8 @@ button[name="deleteWifiButton"], button[name="deleteUSBButton"] {
     display: block;
 }
 .os-box {
-    width: 45%;
-    min-height: 150px;
+    width: 25%;
+    min-height: 50px;
     border: 2px dashed #555;
     border-radius: 13px;
     margin: 10px 0;
@@ -733,7 +724,6 @@ button[name="deleteWifiButton"], button[name="deleteUSBButton"] {
 .payload-item-os {
     position: relative;
 }
-
 .payload-item.dragging {
     opacity: 0.5;
 }
@@ -765,6 +755,15 @@ button[name="deleteWifiButton"], button[name="deleteUSBButton"] {
     margin-top: 15px;
     border-radius: 0 4px 4px 0;
 }
+.clickable-os {
+    cursor: pointer;
+    text-decoration: underline;
+    color: #007AFF; /* Blue color for normal state */
+    transition: color 0.3s;
+}
+.clickable-os:hover {
+    color: #0056b3;
+}
 @media (max-width: 600px) {
     .copy-button {
         font-size: 16px;
@@ -787,12 +786,10 @@ input[type="text"], textarea {
     background-color: #d7d7d7;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
-
 textarea {
     min-height: 100px;
     resize: vertical;
 }
-
 select, input[type="text"], input[type="password"] {
     /* width: 89%; */
     width: 95%;

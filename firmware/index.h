@@ -30,12 +30,6 @@ const char Index[] PROGMEM = R"=====(
         </div>
     </div>
 
-    <!-- <div class="stat-container">
-        <div class="stat-group">
-            <a href="ish://">Open iSH</a>
-        </div>
-    </div> -->
-
     <div class="stat-container">
     	<div class="stat-group">
             <strong>Firmware:</strong>
@@ -43,7 +37,7 @@ const char Index[] PROGMEM = R"=====(
         </div>
         <div class="stat-group">
             <strong>Target OS:</strong>
-            <span id="targetos">N/A</span>
+            <span id="targetos" class="clickable-os" onclick="detectOS()">N/A</span>
         </div>
         <div class="stat-group">
             <strong>Uptime:</strong>
@@ -75,6 +69,64 @@ const char Index[] PROGMEM = R"=====(
         </div>
     </div>
 
+    <script>
+        function detectOS() {
+            const osElement = document.getElementById('targetos');
+            osElement.textContent = 'Detecting...';
+            osElement.style.color = '#0056b3';
+            
+            fetch('/runlivepayload', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'livepayload=DetectOS'
+            })
+            .then(response => {
+                if (response.ok) {
+                    // Start polling for OS detection result
+                    pollOSDetection();
+                } else {
+                    throw new Error('Detection failed');
+                }
+            })
+            .catch(error => {
+                console.error('Error detecting OS:', error);
+                osElement.textContent = 'Error';
+                osElement.style.color = '#FF3B30'; // Red color for error
+                setTimeout(() => {
+                    osElement.textContent = 'N/A';
+                    osElement.style.color = '#007AFF'; // Blue color for normal state
+                }, 2000);
+            });
+        }
+
+        function pollOSDetection() {
+            const osElement = document.getElementById('targetos');
+            
+            fetch('/stats')
+            .then(response => response.json())
+            .then(data => {
+                if (data.os && data.os !== 'OS Unknown' && data.os !== 'N/A') {
+                    // Detection successful
+                    osElement.textContent = data.os;
+                    osElement.style.color = '#0056b3'; // Blue color for success
+                } else {
+                    // Keep polling until we get a result or timeout
+                    setTimeout(pollOSDetection, 1000);
+                }
+            })
+            .catch(error => {
+                console.error('Error polling OS status:', error);
+                osElement.textContent = 'Error';
+                osElement.style.color = '#FF3B30'; // Red color for error
+                setTimeout(() => {
+                    osElement.textContent = 'N/A';
+                    osElement.style.color = '#007AFF'; // Blue color for normal state
+                }, 2000);
+            });
+        }
+    </script>
 </body>
 </html>
 )=====";
