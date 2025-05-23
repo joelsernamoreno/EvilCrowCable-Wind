@@ -44,6 +44,7 @@ volatile bool caps_status = false;
 volatile bool num_status = false;
 volatile bool scroll_status = false;
 volatile bool numlock_checked = false;
+volatile bool os_detection_complete = false;
 unsigned long caps_sent_time = 0;
 unsigned long num_sent_time = 0;
 unsigned long scroll_sent_time = 0;
@@ -353,6 +354,7 @@ void printDetectedOS() {
       os = "OS Unknown";
       break;
   }
+  os_detection_complete = true;
 }
 
 void onDetectOSRequested() {
@@ -1437,35 +1439,71 @@ void loop() {
 
   // Check if we should auto-execute a payload
   static bool autoExecChecked = false;
+  static unsigned long osDetectionStartTime = 0;
+  static bool osDetectionInProgress = false;
+  static DynamicJsonDocument pendingAutoExecPlan(2048);
+  static bool hasPendingPlan = false;
+
   if (!autoExecChecked && LittleFS.exists("/autoexec_plan.json")) {
       File file = LittleFS.open("/autoexec_plan.json", FILE_READ);
       if (file) {
           String content = file.readString();
           file.close();
-          DynamicJsonDocument doc(2048);
-          deserializeJson(doc, content);
-          if (doc["enabled"] == true) {
-              onDetectOSRequested(); // Detect the OS
-              delay(5000); // Give time for detection
-              String osPayloadPath;
+          deserializeJson(pendingAutoExecPlan, content);
+
+          if (pendingAutoExecPlan["enabled"] == true) {
+              onDetectOSRequested(); // Start OS detection
+              osDetectionStartTime = millis();
+              osDetectionInProgress = true;
+              hasPendingPlan = true;
+              autoExecChecked = true; // Prevent re-checking
+          }
+      }
+  }
+
+  // Handle OS detection completion
+  if (osDetectionInProgress) {
+      if (os_detection_complete) {
+          // Detection complete, execute payload if available
+          if (hasPendingPlan) {
+              String osPayloadPath = "";
               switch (detected_os) {
-                  case OS_WINDOWS: osPayloadPath = doc["windows"]["path"].as<String>(); break;
-                  case OS_LINUX:   osPayloadPath = doc["linux"]["path"].as<String>(); break;
-                  case OS_IOS:   osPayloadPath = doc["ios"]["path"].as<String>(); break;
-                  case OS_MACOS:   osPayloadPath = doc["macos"]["path"].as<String>(); break;
-                  case OS_ANDROID: osPayloadPath = doc["android"]["path"].as<String>(); break;
-                  default: break;
+                  case OS_WINDOWS: 
+                      osPayloadPath = pendingAutoExecPlan["windows"]["path"].as<String>(); 
+                      break;
+                  case OS_LINUX:   
+                      osPayloadPath = pendingAutoExecPlan["linux"]["path"].as<String>(); 
+                      break;
+                  case OS_IOS:     
+                      osPayloadPath = pendingAutoExecPlan["ios"]["path"].as<String>(); 
+                      break;
+                  case OS_MACOS:   
+                      osPayloadPath = pendingAutoExecPlan["macos"]["path"].as<String>(); 
+                      break;
+                  case OS_ANDROID: 
+                      osPayloadPath = pendingAutoExecPlan["android"]["path"].as<String>(); 
+                      break;
+                  default: 
+                      break;
               }
-              if (osPayloadPath && LittleFS.exists(osPayloadPath)) {
+              
+              if (osPayloadPath.length() > 0 && LittleFS.exists(osPayloadPath)) {
                   readFile(LittleFS, osPayloadPath);
                   payload_state = 1;
                   payloadExecuted = false;
               }
           }
+          osDetectionInProgress = false;
+          hasPendingPlan = false;
+      } 
+      else if (millis() - osDetectionStartTime > 30000) {
+          // Timeout after 30 seconds if detection fails
+          os = "OS Unknown";
+          os_detection_complete = true;
+          osDetectionInProgress = false;
+          hasPendingPlan = false;
       }
-      autoExecChecked = true;
   }
-
 
   while (USBSerial.available()) {
       String data = USBSerial.readString();
