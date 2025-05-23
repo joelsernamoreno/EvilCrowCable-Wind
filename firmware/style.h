@@ -605,7 +605,6 @@ label {
 .keys-table-container {
     padding: 0 15px 15px 15px;
 }
-
 input[type="submit"], button {
     -webkit-appearance: none;
     appearance: none;
@@ -622,7 +621,6 @@ input[type="submit"], button {
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
 }
-
 /* input[type="file"], input[type="submit"] { */
 input[type="file"] {
     display: block;
@@ -632,12 +630,10 @@ input[type="file"] {
     /* text-align: center; */
     width: fit-content;
 }
-
 button[name="deleteWifiButton"], button[name="deleteUSBButton"] {
     background-color: #FF3B30;
     color: white;
 }
-
 .button-container {
     display: flex;
     justify-content: flex-start;
@@ -645,7 +641,6 @@ button[name="deleteWifiButton"], button[name="deleteUSBButton"] {
     width: 100%;
     box-sizing: border-box;
 }
-
 .copy-button {
     background-color: #73879F;
     color: white;
@@ -662,11 +657,9 @@ button[name="deleteWifiButton"], button[name="deleteUSBButton"] {
     overflow: hidden;
     text-overflow: ellipsis;
 }
-
 .copy-button:hover {
     background-color: #55616F;
 }
-
 #metadataForm {
     background-color: rgba(51, 51, 51, 0.95);
     border: 1px solid #555;
@@ -676,18 +669,107 @@ button[name="deleteWifiButton"], button[name="deleteUSBButton"] {
     -webkit-backdrop-filter: saturate(180%) blur(20px);
     backdrop-filter: saturate(180%) blur(20px);
 }
-
 .button-container button {
     flex: 1;
 }
-
+.os-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    margin: 20px 0;
+}
+.os-dropdown {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+}
+.os-dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: rgba(51, 51, 51, 0.95);
+    border: 1px solid #555;
+    border-radius: 13px;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 1000; /* Increased z-index to ensure it's above all other elements */
+}
+.os-dropdown-content a {
+    color: white;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+    cursor: pointer;
+}
+.os-dropdown-content a:hover {
+    background-color: rgba(0, 122, 255, 0.3);
+}
+.show-dropdown {
+    display: block;
+}
+.os-box {
+    width: 25%;
+    min-height: 50px;
+    border: 2px dashed #555;
+    border-radius: 13px;
+    margin: 10px 0;
+    padding: 10px;
+    background-color: rgba(51, 51, 51, 0.5);
+    text-align: center;
+    position: relative;
+}
+.os-box h3 {
+    margin-top: 0;
+    color: #007AFF;
+}
+.payload-item-os {
+    position: relative;
+}
+.payload-item.dragging {
+    opacity: 0.5;
+}
+.os-box.highlight {
+    border-color: #007AFF;
+    background-color: rgba(0, 122, 255, 0.1);
+}
+.payload-preview {
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 8px;
+    padding: 8px;
+    margin: 5px 0;
+    word-break: break-word;
+}
+.button-container-os {
+    display: flex;
+    justify-content: space-between;
+    margin: 20px 0;
+}
+#payloadList {
+    max-height: 300px;
+    overflow-y: auto;
+    margin: 20px 0;
+}
+.note {
+    background-color: rgba(255, 235, 59, 0.1);
+    border-left: 4px solid #FFEB3B;
+    padding: 10px;
+    margin-top: 15px;
+    border-radius: 0 4px 4px 0;
+}
+.clickable-os {
+    cursor: pointer;
+    text-decoration: underline;
+    color: #007AFF; /* Blue color for normal state */
+    transition: color 0.3s;
+}
+.clickable-os:hover {
+    color: #0056b3;
+}
 @media (max-width: 600px) {
     .copy-button {
         font-size: 16px;
         padding: 14px 20px;
     }
 }
-
 input[type="text"], textarea {
     width: 95%;
     padding: 12px 15px;
@@ -704,12 +786,10 @@ input[type="text"], textarea {
     background-color: #d7d7d7;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
-
 textarea {
     min-height: 100px;
     resize: vertical;
 }
-
 select, input[type="text"], input[type="password"] {
     /* width: 89%; */
     width: 95%;

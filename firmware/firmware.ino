@@ -15,6 +15,8 @@
 #include "config.h"
 #include "readfile.h"
 #include "listpayloads.h"
+#include "autoexecplanning.h"
+#include <ArduinoJson.h>
 #include <map>
 
 // Config default SSID, password and channel
@@ -42,6 +44,7 @@ volatile bool caps_status = false;
 volatile bool num_status = false;
 volatile bool scroll_status = false;
 volatile bool numlock_checked = false;
+volatile bool os_detection_complete = false;
 unsigned long caps_sent_time = 0;
 unsigned long num_sent_time = 0;
 unsigned long scroll_sent_time = 0;
@@ -351,6 +354,7 @@ void printDetectedOS() {
       os = "OS Unknown";
       break;
   }
+  os_detection_complete = true;
 }
 
 void onDetectOSRequested() {
@@ -542,6 +546,41 @@ void handleStats() {
   json += ",\"os\":\"" + os + "\"";  // <-- Aquí se agrega
   json += "}";
   controlserver.send(200, "application/json", json);
+}
+
+void handleUpdateHostname() {
+    if (controlserver.hasArg("hostname")) {
+        String newHostname = controlserver.arg("hostname");
+        
+        File fsUploadFile = LittleFS.open("/hostname_config.txt", FILE_WRITE);
+        if (!fsUploadFile) {
+            controlserver.send(500, "application/json", "{\"success\":false,\"message\":\"Failed to save hostname\"}");
+            return;
+        }
+        
+        fsUploadFile.println(newHostname);
+        fsUploadFile.close();
+        controlserver.send(200, "application/json", "{\"success\":true,\"message\":\"Hostname updated successfully! Device will restart.\"}");
+        delay(1000);
+        ESP.restart();
+    } else {
+        controlserver.send(400, "application/json", "{\"success\":false,\"message\":\"No hostname provided\"}");
+    }
+}
+
+void handleGetHostname() {
+    String currentHostname = "cable-wind"; // default
+    
+    if (LittleFS.exists("/hostname_config.txt")) {
+        File fsUploadFile = LittleFS.open("/hostname_config.txt", FILE_READ);
+        if (fsUploadFile) {
+            currentHostname = fsUploadFile.readStringUntil('\n');
+            currentHostname.trim();
+            fsUploadFile.close();
+        }
+    }
+    
+    controlserver.send(200, "text/plain", currentHostname);
 }
 
 // Function to get the currently selected layout
@@ -1116,10 +1155,20 @@ void setup() {
     delay(500);
   }
 
-  if (!MDNS.begin("cable-wind")) {
-    while (1) {
-      delay(1000);
-    }
+  String hostname = "cable-wind";
+  if (LittleFS.exists("/hostname_config.txt")) {
+      File fsUploadFile = LittleFS.open("/hostname_config.txt", FILE_READ);
+      if (fsUploadFile) {
+          hostname = fsUploadFile.readStringUntil('\n');
+          hostname.trim();
+          fsUploadFile.close();
+      }
+  }
+
+  if (!MDNS.begin(hostname.c_str())) {
+      while (1) {
+          delay(1000);
+      }
   }
 
   tcpServer.begin();
@@ -1197,7 +1246,7 @@ void setup() {
       payloadExecuted = false;
     }
     controlserver.send(200, "text/plain", "Payload running...");
-  });
+  }); 
 
   controlserver.on("/runlivestartup", []() {
     String payload_startup = controlserver.arg("livepayload");
@@ -1295,6 +1344,79 @@ void setup() {
     }
   });
 
+  controlserver.on("/autoexecplanning", []() {
+      controlserver.send_P(200, "text/html", AutoExecPlanning);
+  });
+
+  controlserver.on("/listpayloadsdata", []() {
+      DynamicJsonDocument doc(4096);
+      JsonArray payloads = doc.to<JsonArray>();
+
+      File root = LittleFS.open("/payloads/");
+      if (root && root.isDirectory()) {
+          File file = root.openNextFile();
+          while (file) {
+              String fileName = file.name();
+              if (!fileName.endsWith(".meta")) {
+                  String filePath = "/payloads/" + fileName;
+                  String payloadName = readPayloadMetadata(filePath, true);
+                  String payloadDesc = readPayloadMetadata(filePath, false);
+
+                  JsonObject payload = payloads.createNestedObject();
+                  payload["path"] = filePath;
+                  payload["name"] = payloadName;
+                  payload["description"] = payloadDesc;
+                  payload["filename"] = fileName;
+              }
+              file = root.openNextFile();
+          }
+      }
+
+      String output;
+      serializeJson(doc, output);
+      controlserver.send(200, "application/json", output);
+  });
+
+  controlserver.on("/saveautoexecplan", HTTP_POST, []() {
+      String payload = controlserver.arg("plain");
+      DynamicJsonDocument doc(2048);
+      deserializeJson(doc, payload);
+
+      File file = LittleFS.open("/autoexec_plan.json", FILE_WRITE);
+      if (!file) {
+          controlserver.send(500, "application/json", "{\"success\":false}");
+          return;
+      }
+
+      serializeJson(doc, file);
+      file.close();
+      controlserver.send(200, "application/json", "{\"success\":true}");
+  });
+
+  controlserver.on("/getautoexecplan", []() {
+      if (!LittleFS.exists("/autoexec_plan.json")) {
+          controlserver.send(200, "application/json", "{}");
+          return;
+      }
+
+      File file = LittleFS.open("/autoexec_plan.json", FILE_READ);
+      if (!file) {
+          controlserver.send(500, "application/json", "{}");
+          return;
+      }
+
+      String content = file.readString();
+      file.close();
+      controlserver.send(200, "application/json", content);
+  });
+
+  controlserver.on("/clearautoexecplan", HTTP_POST, []() {
+      if (LittleFS.exists("/autoexec_plan.json")) {
+          LittleFS.remove("/autoexec_plan.json");
+      }
+      controlserver.send(200, "application/json", "{\"success\":true}");
+  });
+
   controlserver.on("/updatewifi", HTTP_POST, handleUpdateWiFi);
   controlserver.on("/layout", HTTP_POST, handleLayout);
   controlserver.on("/deletewificonfig", HTTP_POST, handleDeleteWiFiConfig);
@@ -1302,6 +1424,9 @@ void setup() {
   controlserver.on("/deleteusbconfig", HTTP_POST, handleDeleteUSBConfig);
   controlserver.on("/deletepayload", HTTP_POST, handleDeletePayload);
   controlserver.on("/getcurrentlayout", handleGetCurrentLayout);
+  controlserver.on("/updatehostname", HTTP_POST, handleUpdateHostname);
+  controlserver.on("/gethostname", handleGetHostname);
+  
 
   httpUpdater.setup(&controlserver);
   controlserver.begin();
@@ -1312,34 +1437,98 @@ void loop() {
   delay(10);
   vTaskDelay(1);
 
+  // Check if we should auto-execute a payload
+  static bool autoExecChecked = false;
+  static unsigned long osDetectionStartTime = 0;
+  static bool osDetectionInProgress = false;
+  static DynamicJsonDocument pendingAutoExecPlan(2048);
+  static bool hasPendingPlan = false;
+
+  if (!autoExecChecked && LittleFS.exists("/autoexec_plan.json")) {
+      File file = LittleFS.open("/autoexec_plan.json", FILE_READ);
+      if (file) {
+          String content = file.readString();
+          file.close();
+          deserializeJson(pendingAutoExecPlan, content);
+
+          if (pendingAutoExecPlan["enabled"] == true) {
+              onDetectOSRequested(); // Start OS detection
+              osDetectionStartTime = millis();
+              osDetectionInProgress = true;
+              hasPendingPlan = true;
+              autoExecChecked = true; // Prevent re-checking
+          }
+      }
+  }
+
+  // Handle OS detection completion
+  if (osDetectionInProgress) {
+      if (os_detection_complete) {
+          // Detection complete, execute payload if available
+          if (hasPendingPlan) {
+              String osPayloadPath = "";
+              switch (detected_os) {
+                  case OS_WINDOWS: 
+                      osPayloadPath = pendingAutoExecPlan["windows"]["path"].as<String>(); 
+                      break;
+                  case OS_LINUX:   
+                      osPayloadPath = pendingAutoExecPlan["linux"]["path"].as<String>(); 
+                      break;
+                  case OS_IOS:     
+                      osPayloadPath = pendingAutoExecPlan["ios"]["path"].as<String>(); 
+                      break;
+                  case OS_MACOS:   
+                      osPayloadPath = pendingAutoExecPlan["macos"]["path"].as<String>(); 
+                      break;
+                  case OS_ANDROID: 
+                      osPayloadPath = pendingAutoExecPlan["android"]["path"].as<String>(); 
+                      break;
+                  default: 
+                      break;
+              }
+              
+              if (osPayloadPath.length() > 0 && LittleFS.exists(osPayloadPath)) {
+                  readFile(LittleFS, osPayloadPath);
+                  payload_state = 1;
+                  payloadExecuted = false;
+              }
+          }
+          osDetectionInProgress = false;
+          hasPendingPlan = false;
+      } 
+      else if (millis() - osDetectionStartTime > 30000) {
+          // Timeout after 30 seconds if detection fails
+          os = "OS Unknown";
+          os_detection_complete = true;
+          osDetectionInProgress = false;
+          hasPendingPlan = false;
+      }
+  }
+
   while (USBSerial.available()) {
-    String data = USBSerial.readString();
-    clientServer.print(data);
+      String data = USBSerial.readString();
+      clientServer.print(data);
   }
-
   while (clientServer.available()) {
-    String data = clientServer.readString();
-    USBSerial.print(data);
+      String data = clientServer.readString();
+      USBSerial.print(data);
   }
-
   if (payload_state == 1) {
-    char *splitlines;
-    int payloadlen = livepayload.length() + 1;
-    char request[payloadlen];
-    livepayload.toCharArray(request, payloadlen);
-    splitlines = strtok(request, "\r\n");
-
-    while (splitlines != NULL) {
-      cmd = splitlines;
-      payloadExec();
-      splitlines = strtok(NULL, "\r\n");
-      vTaskDelay(1);
-    }
-
-    payload_state = 0;
-    cmd = "";
-    livepayload = "";
-    payloadExecuted = true;
+      char *splitlines;
+      int payloadlen = livepayload.length() + 1;
+      char request[payloadlen];
+      livepayload.toCharArray(request, payloadlen);
+      splitlines = strtok(request, "\r\n");
+      while (splitlines != NULL) {
+          cmd = splitlines;
+          payloadExec();
+          splitlines = strtok(NULL, "\r\n");
+          vTaskDelay(1);
+      }
+      payload_state = 0;
+      cmd = "";
+      livepayload = "";
+      payloadExecuted = true;
   }
   vTaskDelay(1);
 }
