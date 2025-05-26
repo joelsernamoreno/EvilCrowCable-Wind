@@ -2,7 +2,7 @@ const char StaticListPayloads[] PROGMEM = R"=====(
 <!DOCTYPE HTML>
 <html>
 <head>
-    <title>Choose Payload</title>
+    <title>EvilCrowCable-Wind - Payloads</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -13,7 +13,7 @@ const char StaticListPayloads[] PROGMEM = R"=====(
 <body>
     <div id="global-toast" class="toast-container"></div>
     <nav id='menu'>
-        <input type='checkbox' id='responsive-menu' onclick='updatemenu()'><label></label>
+        <input type='checkbox' id='responsive-menu'><label for='responsive-menu'></label>
         <ul>
             <li><a href='/'>Home</a></li>
             <li><a href='/livepayload'>Live Payload</a></li>
@@ -24,12 +24,9 @@ const char StaticListPayloads[] PROGMEM = R"=====(
         </ul>
     </nav>
 
-    <div class="stat-container">
-        <div class="stat-group">
-            <strong>Connection Status: <span class="status-indicator"></span></strong>
-        </div>
-    </div>
+    <div class="cable-wind-logo">PAYLOAD LIST</div>
 
-    <h3>Choose Payload:</h3>
-    <div class="payload-list-container">
+    <div class="view-container">
+        <h3>Available Payloads:</h3>
+        <div class="payload-list-container">
 )=====";

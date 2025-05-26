@@ -3,9 +3,15 @@ const char Redirect[] PROGMEM = R"=====(
 function checkConnection() {
     fetch('/stats')
         .then(response => {
+            // Update all status indicators
             document.querySelectorAll('.status-indicator').forEach(indicator => {
                 indicator.classList.remove('status-offline');
                 indicator.classList.add('status-online');
+            });
+            // Update page title indicators
+            document.querySelectorAll('.cable-wind-logo').forEach(title => {
+                title.classList.remove('offline');
+                title.classList.add('online');
             });
             return response.json();
         })
@@ -14,6 +20,10 @@ function checkConnection() {
                 document.querySelectorAll('.status-indicator').forEach(indicator => {
                     indicator.classList.remove('status-online');
                     indicator.classList.add('status-offline');
+                });
+                document.querySelectorAll('.cable-wind-logo').forEach(title => {
+                    title.classList.remove('online');
+                    title.classList.add('offline');
                 });
             }
         })
@@ -137,13 +147,23 @@ function showMessage(type, text) {
     
     closeButton.onclick = () => {
         clearTimeout(timer);
-        toast.style.animation = 'toastFadeOut 0.3s ease-out';
+        toast.style.animation = 'toastFadeOut 0.3s ease-out';payload
+        
         setTimeout(() => toast.remove(), 300);
     };
 }
 
 document.addEventListener('gesturestart', function(e) {
     e.preventDefault();
+});
+
+document.addEventListener("DOMContentLoaded", function() {
+  const links = document.querySelectorAll("#menu a");
+  links.forEach(link => {
+    if (link.getAttribute("href") === window.location.pathname) {
+      link.classList.add("active");
+    }
+  });
 });
 
 // Prevent double-tap zoom on iOS

@@ -2,7 +2,7 @@ const char Index[] PROGMEM = R"=====(
 <!DOCTYPE HTML>
 <html>
 <head>
-    <title>Evil Crow Cable Wind</title>
+    <title>EvilCrowCable-Wind</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -13,7 +13,7 @@ const char Index[] PROGMEM = R"=====(
 <body>
     <div id="global-toast" class="toast-container"></div>
     <nav id='menu'>
-        <input type='checkbox' id='responsive-menu'><label></label>
+        <input type='checkbox' id='responsive-menu'><label for='responsive-menu'></label>
         <ul>
             <li><a href='/'>Home</a></li>
             <li><a href='/livepayload'>Live Payload</a></li>
@@ -24,56 +24,49 @@ const char Index[] PROGMEM = R"=====(
         </ul>
     </nav>
 
-    <div class="stat-container">
-        <div class="stat-group">
-            <strong>Connection Status: <span class="status-indicator"></span></strong>
-        </div>
-    </div>
+    <div class="cable-wind-logo">EvilCrowCable-Wind</div>
 
-    <div class="stat-container">
-    	<div class="stat-group">
-            <strong>Firmware:</strong>
-            <span id="firmware">v1.3</span>
-        </div>
-        <div class="stat-group">
-            <strong>Target OS:</strong>
-            <span id="targetos" class="clickable-os" onclick="detectOS()">N/A</span>
-        </div>
-        <div class="stat-group">
-            <strong>Uptime:</strong>
-            <span id="uptime"></span>
-        </div>
-        <div class="stat-group">
-            <strong>CPU Temperature:</strong>
-            <span id="temperature"></span>
-        </div>
-        <div class="stat-group">
-            <strong>CPU Core 0 Frequency:</strong>
-            <span id="cpu0"></span>
-        </div>
-        <div class="stat-group">
-            <strong>CPU Core 1 Frequency:</strong>
-            <span id="cpu1"></span>
-        </div>
-        <div class="stat-group">
-            <strong>Free SPIFFS Memory:</strong>
-            <span id="freespiffs"></span>
-        </div>
-        <div class="stat-group">
-            <strong>Total RAM:</strong>
-            <span id="totalram"></span>
-        </div>
-        <div class="stat-group">
-            <strong>Free RAM:</strong>
-            <span id="freeram"></span>
+    <div class="view-container">
+        <div class="stat-container">
+            <div class="stat-group">
+                <strong>Connection Status: <span class="status-indicator"></span></strong>
+            </div>
+            <div class="stat-group">
+                <strong>Firmware:</strong> <span id="firmware">v1.3</span>
+            </div>
+            <div class="stat-group">
+                <strong>Target OS:</strong> <span id="targetos" class="clickable-os" onclick="detectOS()">N/A</span>
+            </div>
+            <div class="stat-group">
+                <strong>Uptime:</strong> <span id="uptime"></span>
+            </div>
+            <div class="stat-group">
+                <strong>CPU Temperature:</strong> <span id="temperature"></span>
+            </div>
+            <div class="stat-group">
+                <strong>CPU Core 0 Frequency:</strong> <span id="cpu0"></span>
+            </div>
+            <div class="stat-group">
+                <strong>CPU Core 1 Frequency:</strong> <span id="cpu1"></span>
+            </div>
+            <div class="stat-group">
+                <strong>Free SPIFFS Memory:</strong> <span id="freespiffs"></span>
+            </div>
+            <div class="stat-group">
+                <strong>Total RAM:</strong> <span id="totalram"></span>
+            </div>
+            <div class="stat-group">
+                <strong>Free RAM:</strong> <span id="freeram"></span>
+            </div>
         </div>
     </div>
 
     <script>
+        // JavaScript
         function detectOS() {
             const osElement = document.getElementById('targetos');
             osElement.textContent = 'Detecting...';
-            osElement.style.color = '#0056b3';
+            osElement.style.color = '#00f2ff';
             
             fetch('/runlivepayload', {
                 method: 'POST',
@@ -84,7 +77,6 @@ const char Index[] PROGMEM = R"=====(
             })
             .then(response => {
                 if (response.ok) {
-                    // Start polling for OS detection result
                     pollOSDetection();
                 } else {
                     throw new Error('Detection failed');
@@ -93,10 +85,10 @@ const char Index[] PROGMEM = R"=====(
             .catch(error => {
                 console.error('Error detecting OS:', error);
                 osElement.textContent = 'Error';
-                osElement.style.color = '#FF3B30'; // Red color for error
+                osElement.style.color = '#ff0033';
                 setTimeout(() => {
                     osElement.textContent = 'N/A';
-                    osElement.style.color = '#007AFF'; // Blue color for normal state
+                    osElement.style.color = '#00f2ff';
                 }, 2000);
             });
         }
@@ -108,24 +100,56 @@ const char Index[] PROGMEM = R"=====(
             .then(response => response.json())
             .then(data => {
                 if (data.os && data.os !== 'OS Unknown' && data.os !== 'N/A') {
-                    // Detection successful
                     osElement.textContent = data.os;
-                    osElement.style.color = '#0056b3'; // Blue color for success
+                    osElement.style.color = '#00ff88';
                 } else {
-                    // Keep polling until we get a result or timeout
                     setTimeout(pollOSDetection, 1000);
                 }
             })
             .catch(error => {
                 console.error('Error polling OS status:', error);
                 osElement.textContent = 'Error';
-                osElement.style.color = '#FF3B30'; // Red color for error
+                osElement.style.color = '#ff0033';
                 setTimeout(() => {
                     osElement.textContent = 'N/A';
-                    osElement.style.color = '#007AFF'; // Blue color for normal state
+                    osElement.style.color = '#00f2ff';
                 }, 2000);
             });
         }
+
+        // Connection check
+        function checkConnection() {
+            fetch('/stats')
+                .then(response => {
+                    document.querySelectorAll('.status-indicator').forEach(indicator => {
+                        indicator.classList.remove('status-offline');
+                        indicator.classList.add('status-online');
+                    });
+                    return response.json();
+                })
+                .then(data => {
+                    if (document.location.pathname === '/') {
+                        document.getElementById('uptime').innerText = data.uptime + ' seconds';
+                        document.getElementById('cpu0').innerText = data.cpu0 + ' MHz';
+                        document.getElementById('cpu1').innerText = data.cpu1 + ' MHz';
+                        document.getElementById('freespiffs').innerText = data.freespiffs + ' bytes';
+                        document.getElementById('temperature').innerText = data.temperature + ' °C';
+                        document.getElementById('totalram').innerText = data.totalram + ' bytes';
+                        document.getElementById('freeram').innerText = data.freeram + ' bytes';
+                        document.getElementById("targetos").textContent = data.os || "N/A";
+                    }
+                })
+                .catch(error => {
+                    if (error.name !== 'AbortError') { 
+                        document.querySelectorAll('.status-indicator').forEach(indicator => {
+                            indicator.classList.remove('status-online');
+                            indicator.classList.add('status-offline');
+                        });
+                    }
+                });
+        }
+        setInterval(checkConnection, 5000);
+        checkConnection();
     </script>
 </body>
 </html>

@@ -2,7 +2,7 @@ const char StaticFileList[] PROGMEM = R"=====(
 <!DOCTYPE HTML>
 <html>
 <head>
-    <title>Payload</title>
+    <title>EvilCrowCable-Wind - Payload</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -13,7 +13,7 @@ const char StaticFileList[] PROGMEM = R"=====(
 <body>
     <div id="global-toast" class="toast-container"></div>
     <nav id='menu'>
-        <input type='checkbox' id='responsive-menu'><label></label>
+        <input type='checkbox' id='responsive-menu'><label for='responsive-menu'></label>
         <ul>
             <li><a href='/'>Home</a></li>
             <li><a href='/livepayload'>Live Payload</a></li>
@@ -24,40 +24,97 @@ const char StaticFileList[] PROGMEM = R"=====(
         </ul>
     </nav>
 
-    <div class="stat-container">
-        <div class="stat-group">
-            <strong>Connection Status: <span class="status-indicator"></span></strong>
-        </div>
-    </div>
+    <div class="cable-wind-logo">PAYLOAD VIEWER</div>
 
-    <h3>{{path}}:</h3>
-    <div class="payload-container">
-        <pre id="payloadContent">{{payloadContent}}</pre>
-    </div>
-
-    <div class="button-container">
-        <button type="button" onclick="copyPayloadContent()" class="copy-button">Copy Payload</button>
-    </div>
-
-    <div class="switch-container">
-        <div class="switch-group">
-            <span class="switch-label">Run Payload</span>
-            <label class="switch">
-                <input type="checkbox" id="runPayloadCheckbox">
-                <span class="slider round"></span>
-            </label>
+    <div class="view-container">
+        <h3>{{path}}:</h3>
+        <div class="form-group">
+            <textarea id="payloadContent" class="terminal-style" name="payloadContent" spellcheck="false">{{payloadContent}}</textarea>
         </div>
 
-        <div class="switch-group">
-            <span class="switch-label">Delete Payload</span>
-            <label class="switch">
-                <input type="checkbox" id="deletePayloadCheckbox">
-                <span class="slider round"></span>
-            </label>
+        <div class="button-container">
+            <button type="button" onclick="savePayloadChanges()">Save Changes</button>
+            <button type="button" onclick="runPayloadFromViewer()">Run Payload</button>
+            <button type="button" onclick="deletePayload()" style="background: linear-gradient(135deg, var(--error), #cc0022);">Delete Payload</button>
         </div>
     </div>
 
     <script>
+
+        function savePayloadChanges() {
+            const payloadContent = document.getElementById('payloadContent').value;
+            const path = '{{path}}'; // This comes from the server-side template
+        
+            fetch('/updatepayload', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json', // Changed to JSON
+                },
+                body: JSON.stringify({  // Send as JSON object
+                    path: path,
+                    content: payloadContent
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showMessage('success', 'Payload updated successfully!');
+                } else {
+                    showMessage('error', data.message || 'Failed to update payload');
+                }
+            })
+            .catch(error => {
+                showMessage('error', 'Error updating payload');
+                console.error('Error:', error);
+            });
+        }
+
+        function runPayloadFromViewer() {
+            const payloadContent = document.getElementById('payloadContent').value;
+            const path = '{{path}}';
+            
+            fetch('/runlivepayload', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `livepayload=${encodeURIComponent(payloadContent)}&configmodule=${encodeURIComponent(path)}`
+            })
+            .then(response => response.text())
+            .then(data => {
+                showMessage('success', 'Payload running...');
+            })
+            .catch(error => {
+                showMessage('error', 'Error executing payload');
+                console.error('Error:', error);
+            });
+        }
+    
+        function deletePayload() {
+            if (confirm('Are you sure you want to delete this payload?')) {
+                const path = '{{path}}';
+                
+                fetch('/deletepayload', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `configmodule=${encodeURIComponent(path)}`
+                })
+                .then(response => response.text())
+                .then(data => {
+                    showMessage('success', 'Payload deleted successfully');
+                    setTimeout(function() {
+                        window.location.href = '/listpayloads';
+                    }, 1000);
+                })
+                .catch(error => {
+                    showMessage('error', 'Error deleting payload');
+                    console.error('Error:', error);
+                });
+            }
+        }
+
         function showMessage(type, text) {
             const container = document.getElementById('global-toast');
             const toast = document.createElement('div');
@@ -78,11 +135,13 @@ const char StaticFileList[] PROGMEM = R"=====(
             toast.appendChild(closeButton);
             container.appendChild(toast);
 
+            // Auto-remove after 5 seconds
             const timer = setTimeout(() => {
                 toast.style.animation = 'toastFadeOut 0.3s ease-out';
                 setTimeout(() => toast.remove(), 300);
             }, 5000);
 
+            // Update close handler to also clear the timer
             closeButton.onclick = () => {
                 clearTimeout(timer);
                 toast.style.animation = 'toastFadeOut 0.3s ease-out';
@@ -90,34 +149,18 @@ const char StaticFileList[] PROGMEM = R"=====(
             };
         }
 
-        function copyPayloadContent() {
-            const payloadText = document.getElementById('payloadContent').textContent;
-
-            // Create a temporary textarea element
-            const tempTextArea = document.createElement('textarea');
-            tempTextArea.value = payloadText;
-            document.body.appendChild(tempTextArea);
-
-            // Select and copy the text
-            tempTextArea.select();
-            document.execCommand('copy');
-
-            // Remove the temporary element
-            document.body.removeChild(tempTextArea);
-        
-            if (payloadText.length > 0) {
-                showMessage('success', 'Payload copied to clipboard!');
-            } else {
-                showMessage('error', 'No payload to copy!');
-            }
-        }
-
         document.getElementById('runPayloadCheckbox').addEventListener('change', function() {
             handleToggle('/dopayload', this.checked);
         });
 
         document.getElementById('deletePayloadCheckbox').addEventListener('change', function() {
-            handleToggle('/deletepayload', this.checked);
+            if (this.checked) {
+                if (confirm('Are you sure you want to delete this payload?')) {
+                    handleDelete('/deletepayload', this.checked);
+                } else {
+                    this.checked = false;
+                }
+            }
         });
 
         async function handleToggle(url, checked) {
@@ -131,10 +174,22 @@ const char StaticFileList[] PROGMEM = R"=====(
 
                 setTimeout(function() {
                     document.getElementById('runPayloadCheckbox').checked = false;
-                    document.getElementById('deletePayloadCheckbox').checked = false;
                 }, 2000); 
-            } else {
-                showMessage('error', 'No action taken');
+            }
+        }
+
+        async function handleDelete(url, checked) {
+            if (checked) {
+                let response = await fetch(url, {
+                    method: 'POST',
+                    body: new URLSearchParams({configmodule:'{{path}}'})
+                });
+                let message = await response.text();
+                showMessage('success', message);
+
+                setTimeout(function() {
+                    window.location.href = '/listpayloads';
+                }, 1000);
             }
         }
     </script>

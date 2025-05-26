@@ -2,7 +2,7 @@ const char UploadPayload[] PROGMEM = R"=====(
 <!DOCTYPE HTML>
 <html>
 <head>
-    <title>Upload Payload</title>
+    <title>EvilCrowCable-Wind - Upload Payload</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -13,7 +13,7 @@ const char UploadPayload[] PROGMEM = R"=====(
 <body>
     <div id="global-toast" class="toast-container"></div>
     <nav id='menu'>
-        <input type='checkbox' id='responsive-menu'><label></label>
+        <input type='checkbox' id='responsive-menu'><label for='responsive-menu'></label>
         <ul>
             <li><a href='/'>Home</a></li>
             <li><a href='/livepayload'>Live Payload</a></li>
@@ -24,37 +24,32 @@ const char UploadPayload[] PROGMEM = R"=====(
         </ul>
     </nav>
 
-    <div class="stat-container">
-        <div class="stat-group">
-            <strong>Connection Status: <span class="status-indicator"></span></strong>
-        </div>
-    </div>
+    <div class="cable-wind-logo">UPLOAD PAYLOAD</div>
 
     <div class="view-container">
         <form id="uploadForm" method="POST" action="/upload" enctype="multipart/form-data" onsubmit="handleSubmit(event)">
             <div class="form-group">
                 <label for="payloadName">Payload Name:</label>
-                <input type="text" id="payloadName" name="payloadName" placeholder="Enter a descriptive name" required>
+                <input type="text" id="payloadName" name="payloadName" placeholder="Enter a descriptive name" required class="terminal-style">
             </div>
             <div class="form-group">
                 <label for="payloadDescription">Description:</label>
-                <textarea id="payloadDescription" name="payloadDescription" placeholder="Enter a brief description" rows="3"></textarea>
+                <textarea id="payloadDescription" name="payloadDescription" placeholder="Enter a brief description" rows="3" class="terminal-style"></textarea>
             </div>
             <div class="form-group">
                 <label for="uploadFile">Payload File (.txt only):</label>
-                <input type="file" id="uploadFile" name="uploadFile" required accept=".txt">
+                <input type="file" id="uploadFile" name="uploadFile" required accept=".txt" class="terminal-style single-line-input">
             </div>
-            <input type="submit" value="Upload">
+            <input type="submit" value="Upload Payload">
         </form>
     </div>
 
     <script>
         function handleSubmit(event) {
             event.preventDefault();
-            const form = document.getElementById('uploadForm');
-            const fileInput = form.querySelector('input[type="file"]');
-            const nameInput = form.querySelector('#payloadName');
-            const descInput = form.querySelector('#payloadDescription');
+            
+            const fileInput = document.getElementById('uploadFile');
+            const nameInput = document.getElementById('payloadName');
             const file = fileInput.files[0];
             const MAX_SIZE = 200 * 1024; // 200KB in bytes
         
@@ -79,39 +74,26 @@ const char UploadPayload[] PROGMEM = R"=====(
                 return;
             }
         
-            // Proceed with upload
-            const formData = new FormData(form);
-            const xhr = new XMLHttpRequest();
-        
-            xhr.upload.onprogress = function(e) {
-                if (e.lengthComputable) {
-                    const percent = Math.round((e.loaded / e.total) * 100);
-                    document.querySelector('.upload-progress').textContent = `Uploading: ${percent}%`;
-                }
-            };
-        
-            xhr.onload = function() {
-                if (xhr.status === 200) {
-                    const response = JSON.parse(xhr.responseText);
-                    showMessage('success', response.message);
-                    form.reset();
+            // Create FormData and submit
+            const formData = new FormData(document.getElementById('uploadForm'));
+            
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    showMessage('success', data.message);
+                    document.getElementById('uploadForm').reset();
                 } else {
-                    try {
-                        const response = JSON.parse(xhr.responseText);
-                        showMessage('error', response.message);
-                    } catch {
-                        showMessage('error', 'Upload failed');
-                    }
+                    showMessage('error', data.message);
                 }
-            };
-        
-            xhr.open('POST', '/upload', true);
-            xhr.send(formData);
-        
-            // Add progress element
-            const progressDiv = document.createElement('div');
-            progressDiv.className = 'upload-progress';
-            document.getElementById('uploadMessageContainer').appendChild(progressDiv);
+            })
+            .catch(error => {
+                showMessage('error', 'Error uploading file');
+                console.error('Error:', error);
+            });
         }
 
         function showMessage(type, text) {
@@ -134,11 +116,13 @@ const char UploadPayload[] PROGMEM = R"=====(
             toast.appendChild(closeButton);
             container.appendChild(toast);
 
+            // Auto-remove after 5 seconds
             const timer = setTimeout(() => {
                 toast.style.animation = 'toastFadeOut 0.3s ease-out';
                 setTimeout(() => toast.remove(), 300);
             }, 5000);
 
+            // Update close handler to also clear the timer
             closeButton.onclick = () => {
                 clearTimeout(timer);
                 toast.style.animation = 'toastFadeOut 0.3s ease-out';
