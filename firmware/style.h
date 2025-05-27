@@ -27,8 +27,8 @@ body {
   border-bottom: 1px solid var(--primary);
   box-shadow: 0 0 15px rgba(0, 242, 255, 0.3);
   padding: 10px 0;
-  position: sticky;
-  top: 0;
+  position: relative; /* Changed from sticky to relative */
+  top: auto; /* Remove sticky positioning */
   z-index: 100;
 }
 
@@ -94,18 +94,15 @@ body {
 }
 
 /* Hamburger menu - Mobile - Left side */
-#responsive-menu {
-  display: none;
-}
-
 #responsive-menu + label {
   display: block;
   cursor: pointer;
   padding: 25px 15px;
   position: absolute;
   top: 0;
-  left: 0; /* Changed from right: 0 */
+  left: 0;
   z-index: 101;
+  background: var(--darker); /* Add background to match menu */
 }
 
 #responsive-menu + label::before {
@@ -332,43 +329,69 @@ input[type="checkbox"] {
   background-color: rgba(10, 10, 10, 0.9); /* Darker than before */
 }
 
-/* Toast notifications */
+/* Toast notifications - Centered below menu */
 .toast-container {
   position: fixed;
-  top: 60px; /* Below the menu */
-  right: 20px;
+  top: 80px; /* Below the menu */
+  left: 0;
+  right: 0;
   z-index: 1000;
-  max-width: 350px;
+  width: 90%;
+  max-width: 400px;
+  margin: 0 auto;
+  text-align: center;
 }
 
 .toast-message {
   position: relative;
-  padding: 15px;
+  padding: 15px 20px;
   margin-bottom: 10px;
   border-radius: 4px;
   color: white;
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
-  animation: toastSlideIn 0.3s ease-out;
+  animation: toastSlideDown 0.3s ease-out;
   pointer-events: auto;
   display: flex;
   justify-content: space-between;
   align-items: center;
   background-color: var(--darker);
-  border-left: 4px solid;
+  border-top: 3px solid; /* Changed from border-left to border-top */
+}
+
+@keyframes toastSlideDown {
+  from { 
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes toastFadeOut {
+  from { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to { 
+    opacity: 0;
+    transform: translateY(-30px);
+  }
 }
 
 .toast-message.success {
-  border-left-color: var(--success);
+  border-top-color: var(--success); /* Changed from border-left */
   color: var(--success);
 }
 
 .toast-message.error {
-  border-left-color: var(--error);
+  border-top-color: var(--error); /* Changed from border-left */
   color: var(--error);
 }
 
 .toast-message.warning {
-  border-left-color: var(--warning);
+  border-top-color: var(--warning); /* Changed from border-left */
   color: var(--warning);
 }
 
@@ -377,16 +400,6 @@ input[type="checkbox"] {
   margin-left: 12px;
   font-size: 1.1em;
   color: inherit;
-}
-
-@keyframes toastFadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes toastFadeOut {
-    from { opacity: 1; transform: translateY(0); }
-    to { opacity: 0; transform: translateY(20px); }
 }
 
 /* OS boxes for autoexec - Mobile optimized */
