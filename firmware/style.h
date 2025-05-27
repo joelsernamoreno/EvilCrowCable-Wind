@@ -5,47 +5,20 @@ const char Style[] PROGMEM = R"=====(
   --accent: #ff00aa;
   --dark: #0a0a12;
   --darker: #050508;
-  --light: #e0e0ff;
+  --light: #f0f0ff; /* Changed from #e0e0ff */
   --success: #00ff88;
   --error: #ff0033;
   --warning: #ffaa00;
 }
 
 body {
-  background-color: var(--dark);
+  background-color: #000000; /* Pure black */
   color: var(--light);
   font-family: 'Courier New', monospace;
   margin: 0;
   padding: 0;
-  background-image: 
-    linear-gradient(rgba(0, 242, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 242, 255, 0.03) 1px, transparent 1px);
-  background-size: 20px 20px;
   overflow-x: hidden;
   line-height: 1.6;
-}
-
-/* Cable animation */
-body::before {
-  content: "";
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: 
-    linear-gradient(135deg, transparent 45%, var(--primary) 45%, var(--primary) 55%, transparent 55%),
-    linear-gradient(-135deg, transparent 45%, var(--primary) 45%, var(--primary) 55%, transparent 55%);
-  background-size: 40px 40px;
-  opacity: 0.1;
-  pointer-events: none;
-  z-index: -1;
-  animation: cableMove 60s linear infinite;
-}
-
-@keyframes cableMove {
-  0% { background-position: 0 0; }
-  100% { background-position: 1000px 1000px; }
 }
 
 /* Header/Navigation - Mobile First */
@@ -80,11 +53,13 @@ body::before {
   display: block;
   transition: all 0.3s;
   position: relative;
+  touch-action: manipulation; /* Disable double-tap zoom */
 }
 
 #menu a:hover {
   color: var(--primary);
   background: rgba(0, 242, 255, 0.1);
+  will-change: width; 
 }
 
 #menu a::after {
@@ -126,7 +101,7 @@ body::before {
 #responsive-menu + label {
   display: block;
   cursor: pointer;
-  padding: 10px 15px;
+  padding: 25px 15px;
   position: absolute;
   top: 0;
   right: 0;
@@ -212,7 +187,9 @@ button:hover::after {
 }
 
 button[name="deleteWifiButton"], 
-button[name="deleteUSBButton"] {
+button[name="deleteUSBButton"],
+button[name="deleteBackupWifiButton"],
+button[name="clearCacheButton"] {
   background: linear-gradient(135deg, var(--error), #cc0022);
 }
 
@@ -286,12 +263,12 @@ input[type="checkbox"] {
 }
 
 .payload-item, .payload-item-os {
-  background: rgba(0, 0, 0, 0.3);
   border: 1px solid var(--primary);
   border-radius: 3px;
   padding: 12px;
   transition: all 0.3s;
   position: relative;
+  background-color: rgba(10, 10, 10, 0.9); /* Darker than before */
 }
 
 .payload-item:hover, .payload-item-os:hover {
@@ -324,7 +301,6 @@ input[type="checkbox"] {
 
 /* Terminal style elements */
 .terminal-style, .payload-container pre, textarea.payload-input {
-  background: rgba(0, 0, 0, 0.7);
   border: 1px solid var(--primary);
   color: var(--secondary);
   padding: 12px;
@@ -339,6 +315,7 @@ input[type="checkbox"] {
   white-space: pre-wrap;
   word-wrap: break-word;
   box-sizing: border-box;
+  background-color: rgba(10, 10, 10, 0.9); /* Darker than before */
 }
 
 /* Toast notifications */
@@ -623,11 +600,11 @@ hr {
 
 .stat-group {
   flex: 1 1 180px;
-  background: rgba(51, 51, 51, 0.3);
   border: 1px solid var(--primary);
   border-radius: 5px;
   padding: 12px;
   min-width: 0;
+  background-color: rgba(10, 10, 10, 0.9); /* Darker than before */
 }
 
 /* Form containers */

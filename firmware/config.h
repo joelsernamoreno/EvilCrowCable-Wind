@@ -61,13 +61,26 @@ const char Configuration[] PROGMEM = R"=====(
                 <label for="ssid">Wi-Fi SSID:</label>
                 <input type="text" id="ssid" name="ssid" required class="terminal-style single-line-input">
             </div>
-
             <div class="form-group">
                 <label for="password">Wi-Fi Password:</label>
                 <input type="password" id="password" name="password" required class="terminal-style single-line-input">
             </div>
             <button type="button" onclick="applyWiFi()">Apply Wi-Fi</button>
             <button type="button" name="deleteWifiButton" onclick="deleteWiFiConfig()">Delete Wi-Fi Config</button>
+
+            <hr>
+
+            <div class="form-group">
+                <label for="backup_ssid">Backup Wi-Fi SSID:</label>
+                <input type="text" id="backup_ssid" name="backup_ssid" class="terminal-style single-line-input">
+            </div>
+            <div class="form-group">
+                <label for="backup_password">Backup Wi-Fi Password:</label>
+                <input type="password" id="backup_password" name="backup_password" class="terminal-style single-line-input">
+            </div>
+            <button type="button" onclick="applyBackupWiFi()">Apply Backup Wi-Fi</button>
+            <button type="button" name="deleteBackupWifiButton" onclick="deleteBackupWiFiConfig()">Delete Backup Wi-Fi Config</button>
+
         </form>
 
         <hr>
@@ -102,6 +115,9 @@ const char Configuration[] PROGMEM = R"=====(
             </div>
             <button type="button" onclick="applyHostname()">Apply Hostname</button>
         </form>
+        <hr>
+        <button type="button" name="clearCacheButton" onclick="clearCache()">Clear Device Cache</button>
+        <p class="payload-desc">Forces reload of CSS/JS files if they were cached.</p>
     </div>
 
     <script>
@@ -164,6 +180,32 @@ const char Configuration[] PROGMEM = R"=====(
             });
         }
 
+        function applyBackupWiFi() {
+            const ssid = document.getElementById('backup_ssid').value;
+            const password = document.getElementById('backup_password').value;
+            if (!ssid || !password) {
+                showMessage('error', 'Backup SSID and password are required.');
+                return;
+            }
+            fetch('/updatebackupwifi', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ ssid, password }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    showMessage('success', data.message);
+                } else {
+                    showMessage('error', data.message);
+                }
+            })
+            .catch(error => {
+                showMessage('error', 'Error applying backup Wi-Fi settings.');
+                console.error('Error:', error);
+            });
+        }
+
         function deleteWiFiConfig() {
             fetch('/deletewificonfig', {
                 method: 'POST',
@@ -177,6 +219,21 @@ const char Configuration[] PROGMEM = R"=====(
                 console.error('Error:', error);
             });
         }
+
+        function deleteBackupWiFiConfig() {
+            fetch('/deletebackupwificonfig', {
+                method: 'POST',
+            })
+            .then(response => response.text())
+            .then(data => {
+                showMessage('success', 'Backup Wi-Fi Configuration successfully deleted!');
+            })
+            .catch(error => {
+                showMessage('error', 'Error deleting Backup Wi-Fi Configuration.');
+                console.error('Error:', error);
+            });
+        }
+
 
         function applyUSB() {
             const vendorID = document.getElementById('vendorID').value;
@@ -239,6 +296,22 @@ const char Configuration[] PROGMEM = R"=====(
                 showMessage('error', 'Error updating hostname');
                 console.error('Error:', error);
             });
+        }
+
+        function clearCache() {
+          // Force reload CSS/JS with cache-busting query strings
+          const links = document.querySelectorAll('link[rel="stylesheet"], script[src]');
+          links.forEach(link => {
+            const url = new URL(link.href || link.src);
+            url.searchParams.set('nocache', Date.now());
+            link.href = url.toString();
+          });
+
+          // Show confirmation
+          showMessage('success', 'Cache cleared! Refreshing page...');
+
+          // Reload after a delay
+          setTimeout(() => location.reload(true), 1000);
         }
 
         // Function to load the current layout when the config page is loaded

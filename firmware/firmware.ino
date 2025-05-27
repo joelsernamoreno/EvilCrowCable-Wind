@@ -538,7 +538,9 @@ void handleStats() {
   json += ",\"temperature\":" + String(temperatureRead());
   json += ",\"totalram\":" + String(ESP.getHeapSize());
   json += ",\"freeram\":" + String(ESP.getFreeHeap());
-  json += ",\"os\":\"" + os + "\"";  // <-- Aquí se agrega
+  json += ",\"os\":\"" + os + "\"";
+  json += ",\"ssid\":\"" + WiFi.SSID() + "\"";
+  json += ",\"ipaddress\":\"" + WiFi.localIP().toString() + "\"";
   json += "}";
   controlserver.send(200, "application/json", json);
 }
@@ -1001,6 +1003,27 @@ void handleUpdateWiFi() {
   }
 }
 
+void handleUpdateBackupWiFi() {
+  if (controlserver.hasArg("ssid") && controlserver.hasArg("password")) {
+    String ssid = controlserver.arg("ssid");
+    String password = controlserver.arg("password");
+    File file = LittleFS.open("/wifi_backup_config.txt", FILE_WRITE);
+    if (!file) {
+      controlserver.send(500, "application/json", "{\"status\":\"error\",\"message\":\"Failed to save backup Wi-Fi config\"}");
+      return;
+    }
+    file.println(ssid);
+    file.println(password);
+    file.close();
+    controlserver.send(200, "application/json", "{\"status\":\"success\",\"message\":\"Backup Wi-Fi config saved. Device will restart.\"}");
+    delay(1000);
+    ESP.restart();
+  } else {
+    controlserver.send(400, "application/json", "{\"status\":\"error\",\"message\":\"Missing SSID or password\"}");
+  }
+}
+
+
 void handleDeleteWiFiConfig() {
   if (LittleFS.exists("/wifi_config.txt")) {
     if (LittleFS.remove("/wifi_config.txt")) {
@@ -1014,6 +1037,21 @@ void handleDeleteWiFiConfig() {
     controlserver.send(500, "application/json", "{\"status\":\"error\",\"message\":\"File does not exist\"}");
   }
 }
+
+void handleDeleteBackupWiFiConfig() {
+  if (LittleFS.exists("/wifi_backup_config.txt")) {
+    if (LittleFS.remove("/wifi_backup_config.txt")) {
+      controlserver.send(200, "application/json", "{\"status\":\"success\",\"message\":\"Backup Wi-Fi config deleted successfully\"}");
+      delay(1000);
+      ESP.restart();
+    } else {
+      controlserver.send(500, "application/json", "{\"status\":\"error\",\"message\":\"Failed to delete backup Wi-Fi config\"}");
+    }
+  } else {
+    controlserver.send(500, "application/json", "{\"status\":\"error\",\"message\":\"Backup Wi-Fi config does not exist\"}");
+  }
+}
+
 
 void handleUpdateUSB() {
   if (controlserver.hasArg("vendorID") && controlserver.hasArg("productID") && controlserver.hasArg("productName") && controlserver.hasArg("manufacturerName")) {
@@ -1161,8 +1199,10 @@ void setup() {
   }
 
   WiFi.begin(ssid.c_str(), password.c_str());
+  unsigned long startAttemptTime = millis();
 
-  while (WiFi.status() != WL_CONNECTED) {
+  // Try primary WiFi for 10 seconds
+  while (WiFi.status() != WL_CONNECTED && millis() - startAttemptTime < 10000) {
     delay(500);
   }
 
@@ -1180,6 +1220,41 @@ void setup() {
       while (1) {
           delay(1000);
       }
+  }
+
+  // If primary WiFi failed, try backup WiFi if it exists
+  if (WiFi.status() != WL_CONNECTED && LittleFS.exists("/wifi_backup_config.txt")) {
+    File file = LittleFS.open("/wifi_backup_config.txt", FILE_READ);
+    if (file) {
+      String backupSSID = file.readStringUntil('\n'); 
+      backupSSID.trim();
+      String backupPassword = file.readStringUntil('\n'); 
+      backupPassword.trim();
+      file.close();
+
+      WiFi.begin(backupSSID.c_str(), backupPassword.c_str());
+      startAttemptTime = millis();
+
+      // Try backup WiFi for 10 seconds
+      while (WiFi.status() != WL_CONNECTED && millis() - startAttemptTime < 10000) {
+        delay(500);
+      }
+    }
+    String hostname = "cable-wind";
+    if (LittleFS.exists("/hostname_config.txt")) {
+        File fsUploadFile = LittleFS.open("/hostname_config.txt", FILE_READ);
+        if (fsUploadFile) {
+            hostname = fsUploadFile.readStringUntil('\n');
+            hostname.trim();
+            fsUploadFile.close();
+        }
+    }
+
+    if (!MDNS.begin(hostname.c_str())) {
+        while (1) {
+            delay(1000);
+        }
+    }
   }
 
   tcpServer.begin();
@@ -1235,10 +1310,20 @@ void setup() {
   });
 
   controlserver.on("/style.css", []() {
+    if (controlserver.hasArg("nocache")) {
+      controlserver.sendHeader("Cache-Control", "no-store, must-revalidate");
+    } else {
+      controlserver.sendHeader("Cache-Control", "public, max-age=604800");
+    }
     controlserver.send_P(200, "text/css", Style);
-  });
+  }); 
 
   controlserver.on("/javascript.js", []() {
+    if (controlserver.hasArg("nocache")) {
+      controlserver.sendHeader("Cache-Control", "no-store, must-revalidate");
+    } else {
+      controlserver.sendHeader("Cache-Control", "public, max-age=604800");
+    }
     controlserver.send_P(200, "application/javascript", Redirect);
   });
 
@@ -1475,7 +1560,8 @@ void setup() {
   controlserver.on("/getcurrentlayout", handleGetCurrentLayout);
   controlserver.on("/updatehostname", HTTP_POST, handleUpdateHostname);
   controlserver.on("/gethostname", handleGetHostname);
-  
+  controlserver.on("/updatebackupwifi", HTTP_POST, handleUpdateBackupWiFi);
+  controlserver.on("/deletebackupwificonfig", HTTP_POST, handleDeleteBackupWiFiConfig);
 
   httpUpdater.setup(&controlserver);
   controlserver.begin();

@@ -35,6 +35,12 @@ const char Index[] PROGMEM = R"=====(
                 <strong>Firmware:</strong> <span id="firmware">v1.3</span>
             </div>
             <div class="stat-group">
+                <strong>Connected to:</strong> <span id="ssid"></span>
+            </div>
+            <div class="stat-group">
+                <strong>IP Address:</strong> <span id="ipaddress"></span>
+            </div>
+            <div class="stat-group">
                 <strong>Target OS:</strong> <span id="targetos" class="clickable-os" onclick="detectOS()">N/A</span>
             </div>
             <div class="stat-group">
@@ -67,7 +73,7 @@ const char Index[] PROGMEM = R"=====(
             const osElement = document.getElementById('targetos');
             osElement.textContent = 'Detecting...';
             osElement.style.color = '#00f2ff';
-            
+
             fetch('/runlivepayload', {
                 method: 'POST',
                 headers: {
@@ -95,7 +101,7 @@ const char Index[] PROGMEM = R"=====(
 
         function pollOSDetection() {
             const osElement = document.getElementById('targetos');
-            
+
             fetch('/stats')
             .then(response => response.json())
             .then(data => {
@@ -136,6 +142,8 @@ const char Index[] PROGMEM = R"=====(
                         document.getElementById('temperature').innerText = data.temperature + ' °C';
                         document.getElementById('totalram').innerText = data.totalram + ' bytes';
                         document.getElementById('freeram').innerText = data.freeram + ' bytes';
+                        document.getElementById('ssid').innerText = data.ssid || "Not connected";
+                        document.getElementById('ipaddress').innerText = data.ipaddress || "N/A";
                         document.getElementById("targetos").textContent = data.os || "N/A";
                     }
                 })

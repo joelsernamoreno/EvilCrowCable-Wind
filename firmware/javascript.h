@@ -114,6 +114,15 @@ function handleSubmit(event) {
     });
 }
 
+function debounce(func, wait) {
+  let timeout;
+  return function() {
+    const context = this, args = arguments;
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(context, args), wait);
+  };
+}
+
 function showMessage(type, text) {
     const container = document.getElementById('global-toast') || document.createElement('div');
     if (!container.id) {
@@ -153,6 +162,13 @@ function showMessage(type, text) {
     };
 }
 
+// Prevent double-tap zoom on iOS
+document.addEventListener('touchstart', function(event) {
+    if (event.touches.length > 1) {
+        event.preventDefault();
+    }
+}, { passive: false });
+
 document.addEventListener('gesturestart', function(e) {
     e.preventDefault();
 });
@@ -163,13 +179,49 @@ document.addEventListener("DOMContentLoaded", function() {
     if (link.getAttribute("href") === window.location.pathname) {
       link.classList.add("active");
     }
+    // Debounced click handler
+    link.addEventListener('click', debounce(function(e) {
+      // Prevent default only if not already active
+      if (this.classList.contains('active')) {
+        e.preventDefault();
+        return;
+      }
+
+      // Show loading indicator
+      document.body.classList.add('page-loading');
+
+      // Force connection initiation
+      fetch('/stats', {cache: "no-store"})
+        .then(() => {
+          window.location.href = this.href;
+        });
+    }, 300)); // 300ms debounce time
   });
 });
 
-// Prevent double-tap zoom on iOS
-document.addEventListener('touchstart', function(event) {
-    if (event.touches.length > 1) {
-        event.preventDefault();
+// Loading indicator
+document.write(`
+  <style>
+    .page-loading::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.7);
+      z-index: 9999;
     }
-}, { passive: false });
+    .page-loading::after {
+      content: 'Loading...';
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #00f2ff;
+      font-size: 1.5em;
+      z-index: 10000;
+    }
+  </style>
+`);
 )=====";
