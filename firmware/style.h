@@ -93,7 +93,7 @@ body {
   width: 70%;
 }
 
-/* Hamburger menu - Mobile */
+/* Hamburger menu - Mobile - Left side */
 #responsive-menu {
   display: none;
 }
@@ -104,7 +104,7 @@ body {
   padding: 25px 15px;
   position: absolute;
   top: 0;
-  right: 0;
+  left: 0; /* Changed from right: 0 */
   z-index: 101;
 }
 
@@ -120,6 +120,20 @@ body {
 
 #responsive-menu:checked ~ ul {
   display: flex;
+  flex-direction: column;
+  align-items: center; /* Center menu items */
+  text-align: center; /* Center text */
+  padding-top: 60px; /* Make space for hamburger */
+}
+
+/* Adjust menu items for centered layout */
+#responsive-menu:checked ~ ul li {
+  width: 100%;
+  text-align: center;
+}
+
+#responsive-menu:checked ~ ul a {
+  justify-content: center;
 }
 
 /* Main content */
