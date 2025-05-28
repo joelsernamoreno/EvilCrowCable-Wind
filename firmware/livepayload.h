@@ -343,7 +343,7 @@ const char LivePayload[] PROGMEM = R"=====(
                 if (textarea.value === '') {
                     textarea.value = command;
                 } else {
-                    if (textarea.value.slice(-1) !== '\n') {
+                    if (textarea.value.slice(-1) !== '\n') { 
                         textarea.value += '\n';
                     }
                     textarea.value += command;

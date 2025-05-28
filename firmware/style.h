@@ -97,7 +97,7 @@ body {
 #responsive-menu + label {
   display: block;
   cursor: pointer;
-  padding: 25px 15px;
+  padding: 5px 15px;
   position: absolute;
   top: 0;
   left: 0;
@@ -495,7 +495,7 @@ input[type="checkbox"] {
   margin: 25px 0 15px 0; /* Increased top margin */
   font-size: 2em;
   text-transform: uppercase;
-  letter-spacing: 2px;
+  letter-spacing: 1px;
   color: var(--primary);
   text-shadow: 0 0 8px var(--primary);
   position: relative;
@@ -684,22 +684,47 @@ a.pyaloadButton:hover {
   }
 }
 
+/* Hide only the hamburger menu checkbox (not other inputs) */
+#responsive-menu {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 @media (min-width: 768px) {
   /* Show regular menu on desktop */
   #menu ul {
-    display: flex;
+    display: flex !important; /* Important to override the checked state */
     flex-direction: row;
     justify-content: center;
     flex-wrap: wrap;
   }
-  
+
   #menu li {
     margin: 0 15px;
   }
   
   /* Hide hamburger menu on desktop */
+  #responsive-menu,
   #responsive-menu + label {
-    display: none;
+    display: none !important;
+  }
+
+  /* Force menu to always be visible on desktop */
+  #menu ul {
+    display: flex !important;
+    flex-direction: row;
+  }
+
+  /* Hide hamburger menu on desktop */
+  #responsive-menu {
+    display: none !important;
   }
   
   /* Adjust container sizes for desktop */
