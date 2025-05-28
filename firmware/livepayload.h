@@ -9,33 +9,6 @@ const char LivePayload[] PROGMEM = R"=====(
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <link rel="stylesheet" href="style.css">
     <script src="javascript.js"></script>
-    <style>
-        .command-reference, .keys-reference {
-            background: rgba(10, 10, 18, 0.8);
-            border: 1px solid var(--primary);
-            border-radius: 5px;
-            margin: 20px 0;
-            overflow: hidden;
-        }
-        .command-reference-toggle, .keys-reference-toggle {
-            padding: 15px;
-            cursor: pointer;
-            background: rgba(0, 0, 0, 0.3);
-            color: var(--primary);
-            font-weight: bold;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .command-reference-toggle:hover, .keys-reference-toggle:hover {
-            background: rgba(0, 242, 255, 0.1);
-        }
-        .command-table-container, .keys-table-container {
-            padding: 0 15px 15px;
-            max-height: 300px;
-            overflow-y: auto;
-        }
-    </style>
 </head>
 <body>
     <div id="global-toast" class="toast-container"></div>

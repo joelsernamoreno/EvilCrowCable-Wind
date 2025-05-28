@@ -1310,20 +1310,16 @@ void setup() {
   });
 
   controlserver.on("/style.css", []() {
-    if (controlserver.hasArg("nocache")) {
-      controlserver.sendHeader("Cache-Control", "no-store, must-revalidate");
-    } else {
-      controlserver.sendHeader("Cache-Control", "public, max-age=604800");
-    }
+    // Set aggressive caching for CSS
+    controlserver.sendHeader("Cache-Control", "public, max-age=31536000"); // Cache for 1 year
+    controlserver.sendHeader("ETag", "\"v1.0\""); // Add ETag for cache validation
     controlserver.send_P(200, "text/css", Style);
   }); 
 
   controlserver.on("/javascript.js", []() {
-    if (controlserver.hasArg("nocache")) {
-      controlserver.sendHeader("Cache-Control", "no-store, must-revalidate");
-    } else {
-      controlserver.sendHeader("Cache-Control", "public, max-age=604800");
-    }
+    // Set aggressive caching for JavaScript
+    controlserver.sendHeader("Cache-Control", "public, max-age=31536000"); // Cache for 1 year
+    controlserver.sendHeader("ETag", "\"v1.0\""); // Add ETag for cache validation
     controlserver.send_P(200, "application/javascript", Redirect);
   });
 
