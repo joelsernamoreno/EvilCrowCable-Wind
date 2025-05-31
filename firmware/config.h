@@ -79,7 +79,7 @@ const char Configuration[] PROGMEM = R"=====(
                 <input type="password" id="backup_password" name="backup_password" class="terminal-style single-line-input">
             </div>
             <button type="button" onclick="applyBackupWiFi()">Apply Backup Wi-Fi</button>
-            <button type="button" name="deleteBackupWifiButton" onclick="deleteBackupWiFiConfig()">Delete Backup Wi-Fi</button>
+            <button type="button" name="deleteBackupWifiButton" onclick="deleteBackupWiFiConfig()">Delete Backup Wi-Fi Config</button>
 
         </form>
 

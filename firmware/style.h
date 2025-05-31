@@ -162,7 +162,7 @@ button, input[type="submit"], input[type="button"] {
   background: linear-gradient(135deg, var(--primary), var(--secondary));
   color: var(--darker);
   border: none;
-  padding: 10px 10px;
+  padding: 10px 20px;
   font-weight: bold;
   border-radius: 3px;
   cursor: pointer;
@@ -172,7 +172,7 @@ button, input[type="submit"], input[type="button"] {
   position: relative;
   overflow: hidden;
   font-family: 'Courier New', monospace;
-  font-size: 12px;
+  font-size: 14px;
   margin: 5px;
   min-height: 44px;
 }
