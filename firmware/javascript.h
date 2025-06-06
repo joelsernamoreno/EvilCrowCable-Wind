@@ -203,28 +203,35 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 
 // Loading indicator
-document.write(`
-  <style>
-    .page-loading::before {
-      content: '';
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.7);
-      z-index: 9999;
-    }
-    .page-loading::after {
-      content: 'Loading...';
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      color: #00f2ff;
-      font-size: 1.5em;
-      z-index: 10000;
-    }
-  </style>
+document.write(`    <style>
+        .page-loading::before {
+          content: '';
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(0,0,0,0.7);
+          z-index: 9999;
+        }
+        .page-loading::after {
+          content: 'Loading...';
+          position: fixed;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          color: #00f2ff;
+          font-size: 1.5em;
+          z-index: 10000;
+        }
+        .validation-text {
+          font-size: 0.75em;
+        }
+        @media (max-width: 768px) {
+          .validation-text {
+            font-size: 0.7em;
+          }
+        }
+      </style>
 `);
 )=====";

@@ -28,8 +28,11 @@ const char LivePayload[] PROGMEM = R"=====(
 
     <div class="view-container">
         <div class="form-group">
-            <label for="livepayload">Payload Editor:</label>
-            <textarea id="livePayloadInput" class="terminal-style" name="livepayload" spellcheck="false"></textarea>
+            <label for="livePayloadInput">Payload Editor: <span id="validationStatus"></span></label>
+            <div class="payload-editor-container">
+                <div id="lineNumbers" class="line-numbers"></div>
+                <textarea id="livePayloadInput" class="terminal-style" name="livepayload" spellcheck="false"></textarea>
+            </div>
         </div>
 
         <div class="button-container">
@@ -68,6 +71,7 @@ const char LivePayload[] PROGMEM = R"=====(
                         </tr>
                     </thead>
                     <tbody>
+                        <tr><td class="command-cell"># Layout:</td><td># Layout: EN_US</td><td>Set keyboard layout for the payload. Must be the first line.</td></tr>
                         <tr><td class="command-cell">ServerConnect</td><td>ServerConnect IP</td><td>Read the "Remote Shell" section for more information</td></tr>
                         <tr><td class="command-cell">DetectOS</td><td>DetectOS</td><td>Detect the operating system</td></tr>
                         <tr><td class="command-cell">RunWin</td><td>RunWin cmd</td><td>Runs a command or a program on the victim's computer</td></tr>
@@ -166,6 +170,93 @@ const char LivePayload[] PROGMEM = R"=====(
     </div>
 
     <script>
+        // Global variables for autocomplete
+        let commandSuggestions = {};
+        let currentSuggestion = null;
+        let suggestionElement = null;
+        
+        // Global commands list
+        const commands = [
+            // Special configuration commands
+            '# Layout:',  // Special command for keyboard layout configuration
+            // Main commands
+            'ServerConnect',
+            'DetectOS',
+            'RunWin',
+            'RunPowershellAdmin',
+            'RunCmdAdmin',
+            'ShellWin',
+            'RunNix',
+            'RunLauncher',
+            'CtrlAltT',
+            'ShellNix',
+            'ShellMac',
+            'ShellMacCleanup',
+            'RunMac',
+            'GuiR',
+            'Gui',
+            'AltF2',
+            'GuiSpace',
+            'Print',
+            'WinPrint',
+            'PrintLine',
+            'WinPrintLine',
+            'Delay',
+            'Press',
+            'PressRelease',
+            'Release',
+            // Key constants for Press/PressRelease
+            'KEY_LEFT_ALT',
+            'KEY_LEFT_GUI',
+            'KEY_LEFT_CTRL',
+            'KEY_LEFT_SHIFT',
+            'KEY_RIGHT_ALT',
+            'KEY_RIGHT_GUI',
+            'KEY_RIGHT_CTRL',
+            'KEY_RIGHT_SHIFT',
+            'KEY_ENTER',
+            'KEY_UP_ARROW',
+            'KEY_DOWN_ARROW',
+            'KEY_LEFT_ARROW',
+            'KEY_RIGHT_ARROW',
+            'KEY_BACKSPACE',
+            'KEY_TAB',
+            'KEY_PAUSE',
+            'KEY_INSERT',
+            'KEY_DELETE',
+            'KEY_PAGE_UP',
+            'KEY_PAGE_DOWN',
+            'KEY_ESC',
+            'KEY_SPACE',
+            'KEY_HOME',
+            'KEY_END',
+            'KEY_CAPS_LOCK',
+            'KEY_PRINT_SCREEN',
+            'KEY_SCROLL_LOCK',
+            'KEY_NUM_LOCK',
+            'KEY_MENU',
+            'LED_NUMLOCK',
+            'LED_CAPSLOCK',
+            'LED_SCROLLLOCK',
+            'LED_COMPOSE',
+            'LED_KANA',
+            'KEY_F1',
+            'KEY_F2',
+            'KEY_F3',
+            'KEY_F4',
+            'KEY_F5',
+            'KEY_F6',
+            'KEY_F7',
+            'KEY_F8',
+            'KEY_F9',
+            'KEY_F10',
+            'KEY_F11',
+            'KEY_F12'
+        ];
+        
+        // Generate suggestions on load
+        commandSuggestions = generateCommandSuggestions(commands);
+        
         // Toggle section visibility
         function toggleSection(element) {
             const container = element.parentElement;
@@ -183,6 +274,392 @@ const char LivePayload[] PROGMEM = R"=====(
 
         let toggleIntervals = {};
 
+        function validatePayload() {
+            const payloadInput = document.getElementById('livePayloadInput');
+            const validationStatus = document.getElementById('validationStatus');
+            const lines = payloadInput.value.split('\n');
+            let errors = [];
+
+            // Clear previous validation
+            validationStatus.className = '';
+            validationStatus.textContent = '';
+
+            // Check each line for valid commands
+            lines.forEach((line, index) => {
+                line = line.trim();
+                if (!line) return; // Skip empty lines
+
+                // Split command and arguments
+                const parts = line.split(/\s+/);
+                const command = parts[0];
+                const args = parts.slice(1).join(' ');
+
+                // Validate known commands
+                if (!isValidCommand(command, args, index + 1)) {
+                    errors.push(`Line ${index + 1}: Invalid command "${command}"`);
+                }
+            });
+
+            // Display validation results
+            if (errors.length > 0) {
+                validationStatus.className = 'validation-error validation-text';
+                validationStatus.textContent = `${errors.length} error(s) found`;
+                validationStatus.title = errors.join('\n');
+            } else {
+                validationStatus.className = 'validation-ok validation-text';
+                validationStatus.textContent = 'Valid payload';
+            }
+        }
+
+        function isValidCommand(command, args, lineNumber) {
+            // Enhanced command validation with specific rules
+            const commandRules = {
+                '# Layout:': {
+                    validate: args => {
+                        // Valid layouts from firmware.ino
+                        const validLayouts = [
+                            'EN_US', 'ES_ES', 'FR_FR', 'IT_IT', 'DA_DK', 
+                            'DE_DE', 'HR_HR', 'HU_HU', 'PT_PT', 'PT_BR', 
+                            'BE_BE', 'BR_BR', 'CA_CA', 'CA_FR', 'SK_SK', 
+                            'CZ_CZ', 'SV_SE', 'SI_SI'
+                        ];
+                        return validLayouts.includes(args.trim());
+                    },
+                    message: 'requires valid keyboard layout code (e.g., EN_US, SI_SI)'
+                },
+                'ServerConnect': {
+                    validate: args => args.length > 0,
+                    message: 'requires IP address/hostname'
+                },
+                'DetectOS': {
+                    validate: args => args.length === 0,
+                    message: 'takes no arguments'
+                },
+                'RunWin': {
+                    validate: args => args.length > 0,
+                    message: 'requires command to run'
+                },
+                'RunPowershellAdmin': {
+                    validate: args => true, // Can have optional arguments
+                    message: 'optional: command to run'
+                },
+                'RunCmdAdmin': {
+                    validate: args => true, // Can have optional arguments
+                    message: 'optional: command to run'
+                },
+                'ShellWin': {
+                    validate: args => args.length > 0,
+                    message: 'requires IP address'
+                },
+                'RunNix': {
+                    validate: args => args.length > 0,
+                    message: 'requires command to run'
+                },
+                'RunLauncher': {
+                    validate: args => args.length > 0,
+                    message: 'requires application name'
+                },
+                'CtrlAltT': {
+                    validate: args => args.length === 0,
+                    message: 'takes no arguments'
+                },
+                'ShellNix': {
+                    validate: args => args.length > 0,
+                    message: 'requires IP address'
+                },
+                'ShellMac': {
+                    validate: args => args.length > 0,
+                    message: 'requires IP address'
+                },
+                'ShellMacCleanup': {
+                    validate: args => args.length === 0,
+                    message: 'takes no arguments'
+                },
+                'RunMac': {
+                    validate: args => args.length > 0,
+                    message: 'requires command or application name'
+                },
+                'GuiR': {
+                    validate: args => args.length === 0,
+                    message: 'takes no arguments'
+                },
+                'Gui': {
+                    validate: args => args.length === 0,
+                    message: 'takes no arguments'
+                },
+                'AltF2': {
+                    validate: args => args.length === 0,
+                    message: 'takes no arguments'
+                },
+                'GuiSpace': {
+                    validate: args => args.length === 0,
+                    message: 'takes no arguments'
+                },
+                'Print': {
+                    validate: args => args.length > 0,
+                    message: 'requires text to print'
+                },
+                'WinPrint': {
+                    validate: args => args.length > 0,
+                    message: 'requires text to print'
+                },
+                'PrintLine': {
+                    validate: args => args.length > 0,
+                    message: 'requires text to print'
+                },
+                'WinPrintLine': {
+                    validate: args => args.length > 0,
+                    message: 'requires text to print'
+                },
+                'Delay': {
+                    validate: args => {
+                        const num = parseInt(args);
+                        return args.trim() !== '' && !isNaN(num) && num > 0;
+                    },
+                    message: 'requires positive number (milliseconds)'
+                },
+                'Press': {
+                    validate: isValidKey,
+                    message: 'requires valid key name'
+                },
+                'PressRelease': {
+                    validate: isValidKey,
+                    message: 'requires valid key name'
+                },
+                'Release': {
+                    validate: args => args.length === 0,
+                    message: 'takes no arguments'
+                },
+                // Key constants don't need validation as they're used as arguments to Press/PressRelease
+                'KEY_LEFT_ALT': { validate: args => false, message: 'not a command but a key parameter' },
+                'KEY_LEFT_GUI': { validate: args => false, message: 'not a command but a key parameter' },
+                'KEY_LEFT_CTRL': { validate: args => false, message: 'not a command but a key parameter' },
+                'KEY_LEFT_SHIFT': { validate: args => false, message: 'not a command but a key parameter' },
+                'KEY_RIGHT_ALT': { validate: args => false, message: 'not a command but a key parameter' },
+                'KEY_RIGHT_GUI': { validate: args => false, message: 'not a command but a key parameter' },
+                'KEY_RIGHT_CTRL': { validate: args => false, message: 'not a command but a key parameter' },
+                'KEY_RIGHT_SHIFT': { validate: args => false, message: 'not a command but a key parameter' },
+                'KEY_ENTER': { validate: args => false, message: 'not a command but a key parameter' },
+                'KEY_UP_ARROW': { validate: args => false, message: 'not a command but a key parameter' },
+                'KEY_DOWN_ARROW': { validate: args => false, message: 'not a command but a key parameter' },
+                'KEY_LEFT_ARROW': { validate: args => false, message: 'not a command but a key parameter' },
+                'KEY_RIGHT_ARROW': { validate: args => false, message: 'not a command but a key parameter' },
+                'KEY_BACKSPACE': { validate: args => false, message: 'not a command but a key parameter' },
+                'KEY_TAB': { validate: args => false, message: 'not a command but a key parameter' },
+                'KEY_PAUSE': { validate: args => false, message: 'not a command but a key parameter' },
+                'KEY_INSERT': { validate: args => false, message: 'not a command but a key parameter' },
+                'KEY_DELETE': { validate: args => false, message: 'not a command but a key parameter' },
+                'KEY_PAGE_UP': { validate: args => false, message: 'not a command but a key parameter' },
+                'KEY_PAGE_DOWN': { validate: args => false, message: 'not a command but a key parameter' },
+                'KEY_ESC': { validate: args => false, message: 'not a command but a key parameter' },
+                'KEY_SPACE': { validate: args => false, message: 'not a command but a key parameter' },
+                'KEY_HOME': { validate: args => false, message: 'not a command but a key parameter' },
+                'KEY_END': { validate: args => false, message: 'not a command but a key parameter' },
+                'KEY_CAPS_LOCK': { validate: args => false, message: 'not a command but a key parameter' },
+                'KEY_PRINT_SCREEN': { validate: args => false, message: 'not a command but a key parameter' },
+                'KEY_SCROLL_LOCK': { validate: args => false, message: 'not a command but a key parameter' },
+                'KEY_NUM_LOCK': { validate: args => false, message: 'not a command but a key parameter' },
+                'KEY_MENU': { validate: args => false, message: 'not a command but a key parameter' },
+                'LED_NUMLOCK': { validate: args => false, message: 'not a command but a key parameter' },
+                'LED_CAPSLOCK': { validate: args => false, message: 'not a command but a key parameter' },
+                'LED_SCROLLLOCK': { validate: args => false, message: 'not a command but a key parameter' },
+                'LED_COMPOSE': { validate: args => false, message: 'not a command but a key parameter' },
+                'LED_KANA': { validate: args => false, message: 'not a command but a key parameter' },
+                'KEY_F1': { validate: args => false, message: 'not a command but a key parameter' },
+                'KEY_F2': { validate: args => false, message: 'not a command but a key parameter' },
+                'KEY_F3': { validate: args => false, message: 'not a command but a key parameter' },
+                'KEY_F4': { validate: args => false, message: 'not a command but a key parameter' },
+                'KEY_F5': { validate: args => false, message: 'not a command but a key parameter' },
+                'KEY_F6': { validate: args => false, message: 'not a command but a key parameter' },
+                'KEY_F7': { validate: args => false, message: 'not a command but a key parameter' },
+                'KEY_F8': { validate: args => false, message: 'not a command but a key parameter' },
+                'KEY_F9': { validate: args => false, message: 'not a command but a key parameter' },
+                'KEY_F10': { validate: args => false, message: 'not a command but a key parameter' },
+                'KEY_F11': { validate: args => false, message: 'not a command but a key parameter' },
+                'KEY_F12': { validate: args => false, message: 'not a command but a key parameter' }
+            };
+
+            // Handle empty lines or commands
+            if (!command || command === '') {
+                return { valid: true }; // Empty lines are valid (allows for comments or spacing)
+            }
+
+            // Check if the command exists in our rules
+            if (!commandRules[command]) {
+                return { valid: false, message: `Unknown command "${command}"` };
+            }
+
+            const validation = commandRules[command];
+            if (!validation.validate(args)) {
+                return { valid: false, message: `${command} ${validation.message}` };
+            }
+
+            return { valid: true };
+        }
+
+        function isValidKey(key) {
+            // Trim whitespace and convert to uppercase for consistent comparison
+            key = key.trim().toUpperCase();
+
+            // Check if it's a single printable character (not control characters)
+            if (key.length === 1 && key.charCodeAt(0) >= 32 && key.charCodeAt(0) <= 126) {
+                return true;
+            }
+
+            // Check against our master commands list (already contains all KEY_* constants)
+            return commands.some(cmd => 
+                cmd.toUpperCase() === key && 
+                (cmd.startsWith('KEY_') || cmd.startsWith('LED_'))
+            );
+        }
+
+        function generateCommandSuggestions(commands) {
+            const suggestions = {};
+            commands.forEach(cmd => {
+                for (let i = 2; i <= cmd.length; i++) {
+                    const prefix = cmd.substring(0, i);
+                    const remaining = cmd.substring(i);
+                    if (!suggestions[prefix] || remaining.length < suggestions[prefix].length) {
+                        suggestions[prefix] = remaining;
+                    }
+                }
+            });
+            return suggestions;
+        }
+
+        function updateLineNumbers() {
+            const textarea = document.getElementById('livePayloadInput');
+            const lineNumbers = document.getElementById('lineNumbers');
+            const lines = textarea.value.split('\n');
+
+            lineNumbers.innerHTML = lines.map((_, i) => `<div>${i + 1}</div>`).join('');
+            lineNumbers.scrollTop = textarea.scrollTop;
+        }
+
+        function validateCurrentLine(e) {
+            // Only validate on certain input events
+            const shouldValidate = e.inputType === 'insertLineBreak' || 
+                                e.inputType === 'insertText' || 
+                                e.inputType === 'deleteContentBackward';
+            
+            const textarea = document.getElementById('livePayloadInput');
+            const lines = textarea.value.split('\n');
+            const currentLineNumber = textarea.value.substr(0, textarea.selectionStart).split('\n').length;
+            const currentLine = lines[currentLineNumber - 1].trim();
+            
+            // Always handle auto-suggestion on any input
+            handleAutoSuggestion();
+            
+            if (!shouldValidate) return;
+            
+            const validationStatus = document.getElementById('validationStatus');
+            
+            // First validate the current line
+            if (currentLine) {
+                const validationResult = isValidCommandLine(currentLine);
+                if (!validationResult.valid) {
+                    const errorMsg = `Error in line ${currentLineNumber}: ${validationResult.message}`;
+                    validationStatus.className = 'validation-error validation-text';
+                    validationStatus.textContent = errorMsg;
+                    validationStatus.title = errorMsg;
+                    return;
+                }
+            }
+            
+            // If the current line is valid, check for errors in any line of the payload
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue; // Skip empty lines
+                
+                const validationResult = isValidCommandLine(line);
+                if (!validationResult.valid) {
+                    const errorMsg = `Error in line ${i + 1}: ${validationResult.message}`;
+                    validationStatus.className = 'validation-error validation-text';
+                    validationStatus.textContent = errorMsg;
+                    validationStatus.title = errorMsg;
+                    return;
+                }
+            }
+            
+            // If we get here, the entire payload is valid
+            validationStatus.className = 'validation-ok validation-text';
+            validationStatus.textContent = 'Valid';
+            validationStatus.title = '';
+        }
+
+        function isValidCommandLine(line) {
+            // Special handling for "# Layout:" command
+            if (line.startsWith('# Layout:')) {
+                const args = line.substring('# Layout:'.length).trim();
+                return isValidCommand('# Layout:', args, 0);
+            }
+            
+            // Normal command handling
+            const parts = line.split(/\s+/);
+            const command = parts[0];
+            const args = parts.slice(1).join(' ');
+
+            // Get the line number (for error reporting)
+            const textarea = document.getElementById('livePayloadInput');
+            const lines = textarea.value.split('\n');
+            const currentLineNumber = textarea.value.substr(0, textarea.selectionStart).split('\n').length;
+            
+            // Pass command, args, and line number to the validator
+            return isValidCommand(command, args, currentLineNumber);
+        }
+
+        function handleAutoSuggestion() {
+            const textarea = document.getElementById('livePayloadInput');
+            const cursorPos = textarea.selectionStart;
+            const textBeforeCursor = textarea.value.substring(0, cursorPos);
+            const currentLine = textBeforeCursor.split('\n').pop().trim();
+
+            // Clear any previous suggestion
+            currentSuggestion = null;
+            
+            // Find matching suggestion without showing visual hint
+            for (const [prefix, suggestion] of Object.entries(commandSuggestions)) {
+                if (currentLine === prefix) {
+                    currentSuggestion = suggestion;
+                    return;
+                }
+            }
+        }
+
+        // No longer showing visual suggestion element
+        // This simplifies the editor experience while still enabling Tab completion
+        
+        function handleTabCompletion(e) {
+            if (e.key === 'Tab') {
+                // Always prevent default tab behavior in the textarea
+                e.preventDefault();
+                
+                // Only apply autocompletion if we have a suggestion
+                if (currentSuggestion) {
+                    const textarea = document.getElementById('livePayloadInput');
+                    const cursorPos = textarea.selectionStart;
+                    const textBeforeCursor = textarea.value.substring(0, cursorPos);
+                    const textAfterCursor = textarea.value.substring(cursorPos);
+            
+                    // Insert the suggestion
+                    textarea.value = textBeforeCursor + currentSuggestion + textAfterCursor;
+            
+                    // Move cursor to end of completed command
+                    const newCursorPos = cursorPos + currentSuggestion.length;
+                    textarea.setSelectionRange(newCursorPos, newCursorPos);
+            
+                    // Clean up
+                    currentSuggestion = null;
+            
+                    // Trigger input event
+                    const event = new Event('input');
+                    textarea.dispatchEvent(event);
+                }
+                // If no suggestion exists, the cursor simply stays where it is
+            }
+        }
+
+
         function checkPayloadStatus(endpoint, toggleId) {
             fetch(endpoint)
             .then(response => response.json())
@@ -196,7 +673,13 @@ const char LivePayload[] PROGMEM = R"=====(
         }
 
         function runPayload() {
-            const toggle = document.getElementById('togglePayload');
+            const validationStatus = document.getElementById('validationStatus');
+        
+            // Check if there are validation errors
+            if (validationStatus.classList.contains('validation-error')) {
+                showMessage('error', 'Please fix validation errors before running the payload');
+                return;
+            }
             const payloadContent = document.getElementById('livePayloadInput').value;
 
             if (!payloadContent) {
@@ -307,32 +790,59 @@ const char LivePayload[] PROGMEM = R"=====(
             };
         }
 
-        // Command cell click handlers
-        document.querySelectorAll('.command-cell').forEach(cell => {
-            cell.addEventListener('click', function() {
-                const textarea = document.getElementById('livePayloadInput');
-                const command = this.textContent;
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            updateLineNumbers();
 
-                if (textarea.value === '') {
-                    textarea.value = command;
-                } else {
-                    if (textarea.value.slice(-1) !== '\n') { 
-                        textarea.value += '\n';
+            // Command cell click handlers
+            document.querySelectorAll('.command-cell').forEach(cell => {
+                cell.addEventListener('click', function() {
+                    const textarea = document.getElementById('livePayloadInput');
+                    const command = this.textContent;
+
+                    if (textarea.value === '') {
+                        textarea.value = command;
+                    } else {
+                        if (textarea.value.slice(-1) !== '\n') { 
+                            textarea.value += '\n';
+                        }
+                        textarea.value += command;
                     }
-                    textarea.value += command;
-                }
 
-                textarea.focus();
-                textarea.scrollTop = textarea.scrollHeight;
+                    textarea.focus();
+                    textarea.scrollTop = textarea.scrollHeight;
 
-                this.style.backgroundColor = 'rgba(0, 242, 255, 0.3)';
-                setTimeout(() => {
-                    this.style.backgroundColor = '';
-                }, 300);
+                    this.style.backgroundColor = 'rgba(0, 242, 255, 0.3)';
+                    setTimeout(() => {
+                        this.style.backgroundColor = '';
+                    }, 300);
+                });
+
+                cell.style.cursor = 'pointer';
             });
 
-            cell.style.cursor = 'pointer';
+            // Setup text area event handlers
+            const payloadInput = document.getElementById('livePayloadInput');
+            
+            // Input event for content changes, validation, and line numbers
+            payloadInput.addEventListener('input', function(e) {
+                updateLineNumbers();
+                validateCurrentLine(e);
+                handleAutoSuggestion();
+            });
+            
+            // Key events for tab completion
+            payloadInput.addEventListener('keydown', handleTabCompletion);
+            
+            // Scroll event for line number sync
+            payloadInput.addEventListener('scroll', updateLineNumbers);
+            
+            // Clear current suggestion on blur
+            payloadInput.addEventListener('blur', function() {
+                currentSuggestion = null;
+            });
         });
+
     </script>
 </body>
 </html>

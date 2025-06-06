@@ -162,7 +162,7 @@ button, input[type="submit"], input[type="button"] {
   background: linear-gradient(135deg, var(--primary), var(--secondary));
   color: var(--darker);
   border: none;
-  padding: 10px 20px;
+  padding: 5px 5px;
   font-weight: bold;
   border-radius: 3px;
   cursor: pointer;
@@ -172,7 +172,7 @@ button, input[type="submit"], input[type="button"] {
   position: relative;
   overflow: hidden;
   font-family: 'Courier New', monospace;
-  font-size: 14px;
+  font-size: 12px;
   margin: 5px;
   min-height: 44px;
 }
@@ -891,6 +891,90 @@ a.pyaloadButton:hover {
   .stat-group {
     flex: 1 1 100%;
   }
+}
+
+#validationStatus {
+    font-size: 0.7em;  /* Reduced font size from 0.8em to 0.7em */
+    margin-left: 10px;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+@media (max-width: 480px) {
+    #validationStatus {
+        font-size: 0.6em;  /* Even smaller on mobile */
+    }
+}
+
+.validation-ok {
+    color: var(--success);
+}
+
+.validation-error {
+    color: var(--error);
+}
+
+.payload-editor-container {
+    display: flex;
+    position: relative;
+    height: 20em;
+    background-color: rgba(10, 10, 10, 0.9);
+    border: 1px solid var(--primary);
+    border-radius: 3px;
+    overflow: hidden; /* Add this to contain children */
+}
+
+.line-numbers {
+    width: 30px;
+    padding: 12px 5px 12px 10px;
+    background-color: rgba(5, 5, 8, 0.7);
+    color: #666;
+    font-family: 'Courier New', monospace;
+    font-size: 0.8em;
+    text-align: right;
+    user-select: none;
+    overflow-y: hidden;
+    border: none !important; /* Remove any borders */
+}
+
+#livePayloadInput {
+    flex: 1;
+    border: none;
+    border-radius: 0 3px 3px 0;
+    padding: 12px;
+    background-color: transparent;
+    color: var(--secondary);
+    line-height: 1.5;
+    resize: none;
+    white-space: pre;
+    overflow-x: auto;
+}
+
+.autocomplete-suggestion {
+    position: absolute;
+    color: var(--primary);
+    pointer-events: none;
+    font-family: 'Courier New', monospace;
+    background-color: rgba(0, 0, 0, 0.9);
+    padding: 2px 6px;
+    border-radius: 3px;
+    border: 1px solid var(--secondary);
+    box-shadow: 0 0 5px rgba(0, 242, 255, 0.5);
+    z-index: 1000;
+    white-space: pre;
+    font-weight: bold;
+}
+
+@media (max-width: 768px) {
+    .payload-editor-container {
+        height: 15em;
+        font-size: 14px;
+    }
+    
+    .line-numbers {
+        width: 25px;
+        padding: 8px 3px 8px 5px;
+    }
 }
 
 /* Command Reference Styles */
