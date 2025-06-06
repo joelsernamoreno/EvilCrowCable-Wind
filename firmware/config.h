@@ -2,7 +2,7 @@ const char Configuration[] PROGMEM = R"=====(
 <!DOCTYPE HTML>
 <html>
 <head>
-    <title>Configuration</title>
+    <title>EvilCrowCable-Wind - Configuration</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -13,48 +13,45 @@ const char Configuration[] PROGMEM = R"=====(
 <body>
     <div id="global-toast" class="toast-container"></div>
     <nav id='menu'>
-        <input type='checkbox' id='responsive-menu'><label></label>
+        <input type='checkbox' id='responsive-menu'><label for='responsive-menu'></label>
         <ul>
-            <li><a href='/'>Home</a></li>
+            <li><a href='/'><span class="usb-icon"></span>Home</a></li>
             <li><a href='/livepayload'>Live Payload</a></li>
             <li><a href='/uploadpayload'>Upload Payload</a></li>
             <li><a href='/listpayloads'>List Payloads</a></li>
+            <li><a href='/autoexecplanning'>AutoExec Planning</a></li>
             <li><a href='/config'>Config</a></li>
         </ul>
     </nav>
 
-    <div class="stat-container">
-        <div class="stat-group">
-            <strong>Connection Status: <span class="status-indicator"></span></strong>
-        </div>
-    </div>
+    <div class="cable-wind-logo">CONFIGURATION</div>
 
     <div class="view-container">
         <form id="layoutForm">
             <div class="form-group">
                 <label for="layout">Keyboard Layout:</label>
                 <select id="layout" name="layout-select">
-                    <option value="layout1">EN_US</option>
-                    <option value="layout2">ES_ES</option>
-                    <option value="layout3">FR_FR</option>
-                    <option value="layout4">IT_IT</option>
-                    <option value="layout5">DA_DK</option>
-                    <option value="layout6">DE_DE</option>
-                    <option value="layout7">HR_HR</option>
-                    <option value="layout8">HU_HU</option>
-                    <option value="layout9">PT_PT</option>
-                    <option value="layout10">PT_BR</option>
-                    <option value="layout11">BE_BE</option>
-                    <option value="layout12">BR_BR</option>
-                    <option value="layout13">CA_CA</option>
-                    <option value="layout14">CA_FR</option>
-                    <option value="layout15">SK_SK</option>
-                    <option value="layout16">CZ_CZ</option>
-                    <option value="layout17">SV_SE</option>
-                    <option value="layout18">SI_SI</option>
+                    <option value="EN_US">EN_US</option>
+                    <option value="ES_ES">ES_ES</option>
+                    <option value="FR_FR">FR_FR</option>
+                    <option value="IT_IT">IT_IT</option>
+                    <option value="DA_DK">DA_DK</option>
+                    <option value="DE_DE">DE_DE</option>
+                    <option value="HR_HR">HR_HR</option>
+                    <option value="HU_HU">HU_HU</option>
+                    <option value="PT_PT">PT_PT</option>
+                    <option value="PT_BR">PT_BR</option>
+                    <option value="BE_BE">BE_BE</option>
+                    <option value="BR_BR">BR_BR</option>
+                    <option value="CA_CA">CA_CA</option>
+                    <option value="CA_FR">CA_FR</option>
+                    <option value="SK_SK">SK_SK</option>
+                    <option value="CZ_CZ">CZ_CZ</option>
+                    <option value="SV_SE">SV_SE</option>
+                    <option value="SI_SI">SI_SI</option>
                 </select>
             </div>
-            <button type="button" onclick="applyLayout()">Apply</button>
+            <button type="button" onclick="applyLayout()">Apply Layout</button>
         </form>
 
         <hr>
@@ -62,15 +59,28 @@ const char Configuration[] PROGMEM = R"=====(
         <form id="wifiForm">
             <div class="form-group">
                 <label for="ssid">Wi-Fi SSID:</label>
-                <input type="text" id="ssid" name="ssid" required>
+                <input type="text" id="ssid" name="ssid" required class="terminal-style single-line-input">
             </div>
-
             <div class="form-group">
                 <label for="password">Wi-Fi Password:</label>
-                <input type="password" id="password" name="password" required>
+                <input type="password" id="password" name="password" required class="terminal-style single-line-input">
             </div>
-            <button type="button" onclick="applyWiFi()">Apply</button>
-            <button type="button" name="deleteWifiButton" onclick="deleteWiFiConfig()">Delete Wi-Fi Configuration</button>
+            <button type="button" onclick="applyWiFi()">Apply Wi-Fi</button>
+            <button type="button" name="deleteWifiButton" onclick="deleteWiFiConfig()">Delete Wi-Fi Config</button>
+
+            <hr>
+
+            <div class="form-group">
+                <label for="backup_ssid">Backup Wi-Fi SSID:</label>
+                <input type="text" id="backup_ssid" name="backup_ssid" class="terminal-style single-line-input">
+            </div>
+            <div class="form-group">
+                <label for="backup_password">Backup Wi-Fi Password:</label>
+                <input type="password" id="backup_password" name="backup_password" class="terminal-style single-line-input">
+            </div>
+            <button type="button" onclick="applyBackupWiFi()">Apply Backup Wi-Fi</button>
+            <button type="button" name="deleteBackupWifiButton" onclick="deleteBackupWiFiConfig()">Delete Backup Wi-Fi</button>
+
         </form>
 
         <hr>
@@ -78,64 +88,39 @@ const char Configuration[] PROGMEM = R"=====(
         <form id="usbForm">
             <div class="form-group">
                 <label for="vendorID">Vendor ID:</label>
-                <input type="text" id="vendorID" name="vendorID" required>
+                <input type="text" id="vendorID" name="vendorID" required class="terminal-style">
             </div>
             <div class="form-group">
                 <label for="productID">Product ID:</label>
-                <input type="text" id="productID" name="productID" required>
+                <input type="text" id="productID" name="productID" required class="terminal-style">
             </div>
             <div class="form-group">
                 <label for="productName">Product Name:</label>
-                <input type="text" id="productName" name="productName" required>
+                <input type="text" id="productName" name="productName" required class="terminal-style">
             </div>
             <div class="form-group">
                 <label for="manufacturerName">Manufacturer Name:</label>
-                <input type="text" id="manufacturerName" name="manufacturerName" required>
+                <input type="text" id="manufacturerName" name="manufacturerName" required class="terminal-style">
             </div>
-            <button type="button" onclick="applyUSB()">Apply USB Configuration</button>
-            <button type="button" name="deleteUSBButton" onclick="deleteUSBConfig()">Delete USB Configuration</button>
+            <button type="button" onclick="applyUSB()">Apply USB Config</button>
+            <button type="button" name="deleteUSBButton" onclick="deleteUSBConfig()">Delete USB Config</button>
         </form>
 
         <hr>
+
+        <form id="hostnameForm">
+            <div class="form-group">
+                <label for="hostname">Device Hostname:</label>
+                <input type="text" id="hostname" name="hostname" placeholder="cable-wind" required class="terminal-style">
+            </div>
+            <button type="button" onclick="applyHostname()">Apply Hostname</button>
+        </form>
+        <hr>
+        <button type="button" name="clearCacheButton" onclick="clearCache()">Clear Device Cache</button>
+        <p class="payload-desc">Forces reload of CSS/JS files if they were cached.</p>
     </div>
 
     <script>
-        function showMessage(type, text) {
-            const container = document.getElementById('global-toast');
-            const toast = document.createElement('div');
-            toast.className = `toast-message ${type}`;
-            
-            // Message content
-            const messageSpan = document.createElement('span');
-            messageSpan.textContent = text;
-            
-            // Close button
-            const closeButton = document.createElement('span');
-            closeButton.className = 'toast-close';
-            closeButton.innerHTML = '&times;';
-            closeButton.onclick = () => {
-                toast.style.animation = 'toastFadeOut 0.3s ease-out';
-                setTimeout(() => toast.remove(), 300);
-            };
-            
-            toast.appendChild(messageSpan);
-            toast.appendChild(closeButton);
-            container.appendChild(toast);
-            
-            // Auto-remove after delay
-            const timer = setTimeout(() => {
-                toast.style.animation = 'toastFadeOut 0.3s ease-out';
-                setTimeout(() => toast.remove(), 300);
-            }, 5000);
-            
-            // Clear timer if manually closed
-            closeButton.onclick = () => {
-                clearTimeout(timer);
-                toast.style.animation = 'toastFadeOut 0.3s ease-out';
-                setTimeout(() => toast.remove(), 300);
-            };
-        }
-
         function applyLayout() {
             const layoutSelect = document.getElementById('layout');
             const selectedLayout = layoutSelect.value;
@@ -195,6 +180,32 @@ const char Configuration[] PROGMEM = R"=====(
             });
         }
 
+        function applyBackupWiFi() {
+            const ssid = document.getElementById('backup_ssid').value;
+            const password = document.getElementById('backup_password').value;
+            if (!ssid || !password) {
+                showMessage('error', 'Backup SSID and password are required.');
+                return;
+            }
+            fetch('/updatebackupwifi', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ ssid, password }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    showMessage('success', data.message);
+                } else {
+                    showMessage('error', data.message);
+                }
+            })
+            .catch(error => {
+                showMessage('error', 'Error applying backup Wi-Fi settings.');
+                console.error('Error:', error);
+            });
+        }
+
         function deleteWiFiConfig() {
             fetch('/deletewificonfig', {
                 method: 'POST',
@@ -208,6 +219,21 @@ const char Configuration[] PROGMEM = R"=====(
                 console.error('Error:', error);
             });
         }
+
+        function deleteBackupWiFiConfig() {
+            fetch('/deletebackupwificonfig', {
+                method: 'POST',
+            })
+            .then(response => response.text())
+            .then(data => {
+                showMessage('success', 'Backup Wi-Fi Configuration successfully deleted!');
+            })
+            .catch(error => {
+                showMessage('error', 'Error deleting Backup Wi-Fi Configuration.');
+                console.error('Error:', error);
+            });
+        }
+
 
         function applyUSB() {
             const vendorID = document.getElementById('vendorID').value;
@@ -239,25 +265,114 @@ const char Configuration[] PROGMEM = R"=====(
             })
             .then(response => response.text())
         }
-        
+
+        function applyHostname() {
+            const hostname = document.getElementById('hostname').value;
+
+            if (!hostname) {
+                showMessage('error', 'Hostname cannot be empty');
+                return;
+            }
+
+            fetch('/updatehostname', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({ hostname }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showMessage('success', 'Hostname updated successfully! Device will restart.');
+                    setTimeout(() => {
+                        window.location.href = `http://${hostname}.local`;
+                    }, 3000);
+                } else {
+                    showMessage('error', data.message || 'Error updating hostname');
+                }
+            })
+            .catch(error => {
+                showMessage('error', 'Error updating hostname');
+                console.error('Error:', error);
+            });
+        }
+
+        function clearCache() {
+          // Force reload CSS/JS with cache-busting query strings
+          const links = document.querySelectorAll('link[rel="stylesheet"], script[src]');
+          links.forEach(link => {
+            const url = new URL(link.href || link.src);
+            url.searchParams.set('nocache', Date.now());
+            link.href = url.toString();
+          });
+
+          // Show confirmation
+          showMessage('success', 'Cache cleared! Refreshing page...');
+
+          // Reload after a delay
+          setTimeout(() => location.reload(true), 1000);
+        }
+
         // Function to load the current layout when the config page is loaded
         document.addEventListener('DOMContentLoaded', function() {
             // Fetch the current layout from the server
             fetch('/getcurrentlayout')
+            .then(response => response.text())
+            .then(currentLayout => {
+                // Set the select dropdown to the current layout
+                const layoutSelect = document.getElementById('layout');
+                if (layoutSelect && currentLayout) {
+                    layoutSelect.value = currentLayout;
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching current layout:', error);
+            });
+            // Fetch current hostname
+            fetch('/gethostname')
                 .then(response => response.text())
-                .then(currentLayout => {
-                    // Set the select dropdown to the current layout
-                    const layoutSelect = document.getElementById('layout');
-                    if (layoutSelect && currentLayout) {
-                        layoutSelect.value = currentLayout;
+                .then(currentHostname => {
+                    if (currentHostname) {
+                        document.getElementById('hostname').value = currentHostname;
                     }
-                })
-                .catch(error => {
-                    console.error('Error fetching current layout:', error);
                 });
         });
-    </script>
 
+        function showMessage(type, text) {
+            const container = document.getElementById('global-toast');
+            const toast = document.createElement('div');
+            toast.className = `toast-message ${type}`;
+
+            const messageSpan = document.createElement('span');
+            messageSpan.textContent = text;
+
+            const closeButton = document.createElement('span');
+            closeButton.className = 'toast-close';
+            closeButton.innerHTML = '&times;';
+            closeButton.onclick = () => {
+                toast.style.animation = 'toastFadeOut 0.3s ease-out';
+                setTimeout(() => toast.remove(), 300);
+            };
+
+            toast.appendChild(messageSpan);
+            toast.appendChild(closeButton);
+            container.appendChild(toast);
+
+            // Auto-remove after 5 seconds
+            const timer = setTimeout(() => {
+                toast.style.animation = 'toastFadeOut 0.3s ease-out';
+                setTimeout(() => toast.remove(), 300);
+            }, 5000);
+
+            // Update close handler to also clear the timer
+            closeButton.onclick = () => {
+                clearTimeout(timer);
+                toast.style.animation = 'toastFadeOut 0.3s ease-out';
+                setTimeout(() => toast.remove(), 300);
+            };
+        }
+    </script>
 </body>
 </html>
 )=====";
