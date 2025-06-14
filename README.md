@@ -300,6 +300,8 @@ The screenshot below shows the AutoExec settings for different operating systems
 
 ![AutoExec](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/autoexec-config.png)
 
+**Demo:** [AutoExec Planning](https://www.youtube.com/watch?v=2BlDNNnZgoM)
+
 ## Config
 
 The Config page allows you to change the Keyboard Layout, Wi-Fi configuration or USB configuration.
@@ -320,7 +322,7 @@ SSID and password of your Wi-Fi access point. Wi-Fi configuration changes are st
 
 * **Set Backup Wi-Fi Config:**
 
-You can configure a secondary Wi-Fi access point. Evil Crow Cable Wind will connect to whichever access point it detects first:
+You can configure a secondary Wi-Fi access point. WiFi and backup WiFi are configured so that it always tries to connect to the primary WiFi first. If the primary is not found, it will connect to the backup. If the primary is found but the connection fails, it will then try the backup as well.
 
 ![Config](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/set-wifi-backup.png)
 
