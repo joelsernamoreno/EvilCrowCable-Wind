@@ -67,9 +67,12 @@ You can invite me to a coffee to further develop low-cost hacking devices. If yo
 	* First steps with Evil Crow Cable Wind
 	* Home
 	* Live Payload
+	* Payload and Syntax Checker
 	* Detect OS
 	* Upload Payload
 	* List Payloads
+	* Payload Viewer
+	* AutoExec Planning
 	* Config
 	* Debug messages
 	* HTTP Update
@@ -155,10 +158,11 @@ You can check that the flash mode is correct with the following image:
 3. Download and Install the Arduino IDE: https://www.arduino.cc/en/main/software
 4. Download Evil Crow Cable Wind repository: git clone https://github.com/joelsernamoreno/EvilCrowCable-Wind.git
 5. Copy and unzip the USB library included in this repository (EvilCrowCable-Wind/modified-libraries/) to your Arduino library directory
-6. Open Arduino IDE
-7. Go to File - Preferences. Locate the field "Additional Board Manager URLs:" Add "https://espressif.github.io/arduino-esp32/package_esp32_index.json" without quotes. Click "Ok"
-8. Select Tools - Board - Boards Manager. Search for "esp32". Install "esp32 by Espressif system version 3.2.0"
-9. Flash firmware.ino:
+6. Download the ArduinoJson library and place it in your Arduino libraries directory: git clone https://github.com/bblanchon/ArduinoJson.git
+7. Open Arduino IDE
+8. Go to File - Preferences. Locate the field "Additional Board Manager URLs:" Add "https://espressif.github.io/arduino-esp32/package_esp32_index.json" without quotes. Click "Ok"
+9. Select Tools - Board - Boards Manager. Search for "esp32". Install "esp32 by Espressif system version 3.2.0"
+10. Flash firmware.ino:
 	* Connect active end of the cable with a magnet to the computer
 	* Open EvilCrowCable-Wind/firmware/firmware.ino in Arduino IDE
 	* Select Tools:
@@ -207,34 +211,44 @@ The Home page shows interesting information about the device.
 The Live Payload page allows you to run payloads or save payloads:
 
 * You can use the "Run Payload" option to run the payload.
-* You can use the "Startup exec payload" option to save the payload in memory and run it every time Evil Crow Cable Wind is connected to a computer.
 * You can use the "Save Payload" option to save the payload in memory. Optionally, you can add a descriptive name and a brief explanation of what the payload does.
+* You can find the syntax for commands and modifier keys in the web panel.
 
 ![LivePayload](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/livepayload.png)
 
 ![LivePayload](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/livepayload2.png)
 
-**Run Payload example:**
+![LivePayload](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/livepayload3.png)
 
-![RunPayloadExample](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/run-payload-example.png)
+## Payload and Syntax Checker
 
-**Startup exec payload example:** You have to include the keyboard layout in the payload
+Livepayload includes a payload and syntax checker that lets you verify whether your payload is valid or not:
 
-![ExecExample](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/startup-exec-example.png)
+![PayloadChecker](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/payload-valid.png)
 
-To remove the automatic exec, delete the payload-startup.txt payload from the List Payloads option.
+![PayloadChecker](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/payload-error.png)
 
-![DelStartup](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/del-startup.png)
+Additionally, the payload and syntax checker helps you write payloads by providing suggestions. You can use the TAB key to autocomplete some commands. Example:
 
-**Save Payload example:** You have to include the file name
+* Type Pri
+* TAB (autocompletes to Print)
+* TAB (autocompletes to PrintLine)
 
-![SaveExample](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/save-payload-example.png)
+Finally, it also includes a syntax checker. If you type a command that's incomplete or incorrect, it will provide guidance on the correct syntax:
+
+![PayloadChecker](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/syntax-printline.png)
+
+![PayloadChecker](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/syntax-delay.png)
 
 ## Detect OS
 
 Evil Crow Cable Wind can detect the operating system and display it on the home screen of the web panel.
 
 ![DetectOS](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/detectos-na.png)
+
+You can detect the victim's operating system by clicking on the 'N/A' label:
+
+![DetectOS](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/detectos-detect.png)
 
 Use the DetectOS command from livepayload to get the victim's operating system:
 
@@ -260,11 +274,31 @@ The Upload Payload page allows you to upload and store payloads in memory.
 
 ## List Payloads
 
-The List Payload page allows you to run or delete payloads stored in memory.
+The Payload List page allows you to view the payloads stored in memory.
 
 ![Payloads](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/payloads.png)
 
-![ListPayloads](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/list-payloads-example.png)
+## Payload viewer
+
+ist Payload includes a payload viewer and editor that lets you view, edit, delete, or execute payloads stored in memory:
+
+![PayloadViewer](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/payload-viewer.png)
+
+## AutoExec Planning
+
+AutoExec Planning lets you configure multiple payloads to run automatically based on the detected operating system.
+
+First, upload the payloads in the “Upload Payload” section (one for each operating system). Then, assign a payload to each OS here:
+
+![AutoExec](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/autoexec.png)
+
+Click the 'Select OS' button to assign a payload to a specific operating system:
+
+![AutoExec](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/autoexec-selectos.png)
+
+The screenshot below shows the AutoExec settings for different operating systems:
+
+![AutoExec](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/autoexec-config.png)
 
 ## Config
 
@@ -284,11 +318,19 @@ SSID and password of your Wi-Fi access point. Wi-Fi configuration changes are st
 
 ![Config](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/set-wifi.png)
 
-* **Delete Wi-Fi Config:**
+* **Set Backup Wi-Fi Config:**
 
-Delete Wi-Fi configuration file. Evil Crow Cable Wind will restart and connect to the default Wi-Fi access point (SSID: Evil Crow Cable Wind / Password: 123456789).
+You can configure a secondary Wi-Fi access point. Evil Crow Cable Wind will connect to whichever access point it detects first:
+
+![Config](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/set-wifi-backup.png)
+
+* **Delete Wi-Fi Config and Backup Wi-Fi Config:**
+
+Delete Wi-Fi and Backup configuration file. Evil Crow Cable Wind will restart and connect to the default Wi-Fi access point (SSID: Evil Crow Cable Wind / Password: 123456789).
 
 ![Config](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/delete-configwifi.png)
+
+![Config](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/delete-configwifi-backup.png)
 
 * **Set USB Config:**
 
@@ -306,6 +348,18 @@ Delete USB configuration file. Evil Crow Cable Wind will restart and configure i
 
 ![Config](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/delete-usb.png)
 
+* **Set Hostname Config:**
+
+Change the hostname to access the web panel with another name:
+
+![Config](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/set-hostname.png)
+
+* **Forces reload of CSS/JS files:**
+
+Forces reload of CSS/JS files if they were cached:
+
+![Config](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/css-js-files.png)
+
 ## Debug messages
 
 Debug messages will be displayed for each feature in the web panel:
@@ -315,8 +369,6 @@ Debug messages will be displayed for each feature in the web panel:
 ![Debug](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/debug-layout.png)
 
 ![Debug](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/debug-save.png)
-
-![Debug](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/debug-startup.png)
 
 ## HTTP Update
 
@@ -340,6 +392,8 @@ This will create the binaries:
 
 ![Update](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/update.png)
 
+**NOTE:** The compiled firmware is located in the EvilCrowCable-Wind/compiled/ folder.
+
 # Add a new Keyboard Layout
 
 If you want to add a new keyboard layout:
@@ -359,8 +413,6 @@ If you want to add a new keyboard layout:
 ![Firmware Layout](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/firmware-layout.png)
 
 ![Firmware Layout](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/firmware-layout1.png)
-
-![Firmware Layout](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/firmware-layout2.png)
 
 4. Modify config.h in firmware.ino to change to your new layout from the web panel.
 
