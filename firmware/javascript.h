@@ -3,10 +3,19 @@ const char Redirect[] PROGMEM = R"=====(
 function checkConnection() {
     fetch('/stats')
         .then(response => {
+            // Update ALL status indicators (including home page stats)
             document.querySelectorAll('.status-indicator').forEach(indicator => {
                 indicator.classList.remove('status-offline');
                 indicator.classList.add('status-online');
             });
+
+            // Only update title indicators on NON-home pages
+            if (window.location.pathname !== '/') {
+                document.querySelectorAll('.cable-wind-logo').forEach(title => {
+                    title.classList.remove('offline');
+                    title.classList.add('online');
+                });
+            }
             return response.json();
         })
         .catch(error => {
@@ -15,21 +24,25 @@ function checkConnection() {
                     indicator.classList.remove('status-online');
                     indicator.classList.add('status-offline');
                 });
+
+                if (window.location.pathname !== '/') {
+                    document.querySelectorAll('.cable-wind-logo').forEach(title => {
+                        title.classList.remove('online');
+                        title.classList.add('offline');
+                    });
+                }
             }
         })
         .then(data => {
             if (document.location.pathname === '/') {
+                // Update home page stats (connection status remains here)
                 document.getElementById('uptime').innerText = data.uptime + ' seconds';
                 document.getElementById('cpu0').innerText = data.cpu0 + ' MHz';
-                document.getElementById('cpu1').innerText = data.cpu1 + ' MHz';
-                document.getElementById('freespiffs').innerText = data.freespiffs + ' bytes';
-                document.getElementById('temperature').innerText = data.temperature + ' °C';
-                document.getElementById('totalram').innerText = data.totalram + ' bytes';
-                document.getElementById('freeram').innerText = data.freeram + ' bytes';
-                document.getElementById("targetos").textContent = data.os || "N/A";
+                // ... keep all other stat updates ...
             }
         });
 }
+
 setInterval(checkConnection, 5000);
 checkConnection();
 
@@ -104,6 +117,15 @@ function handleSubmit(event) {
     });
 }
 
+function debounce(func, wait) {
+  let timeout;
+  return function() {
+    const context = this, args = arguments;
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(context, args), wait);
+  };
+}
+
 function showMessage(type, text) {
     const container = document.getElementById('global-toast') || document.createElement('div');
     if (!container.id) {
@@ -137,14 +159,11 @@ function showMessage(type, text) {
     
     closeButton.onclick = () => {
         clearTimeout(timer);
-        toast.style.animation = 'toastFadeOut 0.3s ease-out';
+        toast.style.animation = 'toastFadeOut 0.3s ease-out';payload
+        
         setTimeout(() => toast.remove(), 300);
     };
 }
-
-document.addEventListener('gesturestart', function(e) {
-    e.preventDefault();
-});
 
 // Prevent double-tap zoom on iOS
 document.addEventListener('touchstart', function(event) {
@@ -152,4 +171,67 @@ document.addEventListener('touchstart', function(event) {
         event.preventDefault();
     }
 }, { passive: false });
+
+document.addEventListener('gesturestart', function(e) {
+    e.preventDefault();
+});
+
+document.addEventListener("DOMContentLoaded", function() {
+  const links = document.querySelectorAll("#menu a");
+  links.forEach(link => {
+    if (link.getAttribute("href") === window.location.pathname) {
+      link.classList.add("active");
+    }
+    // Debounced click handler
+    link.addEventListener('click', debounce(function(e) {
+      // Prevent default only if not already active
+      if (this.classList.contains('active')) {
+        e.preventDefault();
+        return;
+      }
+
+      // Show loading indicator
+      document.body.classList.add('page-loading');
+
+      // Force connection initiation
+      fetch('/stats', {cache: "no-store"})
+        .then(() => {
+          window.location.href = this.href;
+        });
+    }, 300)); // 300ms debounce time
+  });
+});
+
+// Loading indicator
+document.write(`    <style>
+        .page-loading::before {
+          content: '';
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(0,0,0,0.7);
+          z-index: 9999;
+        }
+        .page-loading::after {
+          content: 'Loading...';
+          position: fixed;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          color: #00f2ff;
+          font-size: 1.5em;
+          z-index: 10000;
+        }
+        .validation-text {
+          font-size: 0.75em;
+        }
+        @media (max-width: 768px) {
+          .validation-text {
+            font-size: 0.7em;
+          }
+        }
+      </style>
+`);
 )=====";
