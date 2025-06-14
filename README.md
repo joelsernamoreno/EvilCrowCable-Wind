@@ -230,7 +230,7 @@ Livepayload includes a payload and syntax checker that lets you verify whether y
 
 Additionally, the payload and syntax checker helps you write payloads by providing suggestions. You can use the TAB key to autocomplete some commands. Example:
 
-* Type Pri
+* Type Pri in the input field
 * TAB (autocompletes to Print)
 * TAB (autocompletes to PrintLine)
 
@@ -280,7 +280,7 @@ The Payload List page allows you to view the payloads stored in memory.
 
 ## Payload viewer
 
-ist Payload includes a payload viewer and editor that lets you view, edit, delete, or execute payloads stored in memory:
+List Payload includes a payload viewer and editor that lets you view, edit, delete, or execute payloads stored in memory:
 
 ![PayloadViewer](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/payload-viewer.png)
 
