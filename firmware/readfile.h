@@ -148,9 +148,59 @@ const char StaticFileList[] PROGMEM = R"=====(
                 setTimeout(() => toast.remove(), 300);
             };
         }
-
         document.getElementById('runPayloadCheckbox').addEventListener('change', function() {
             handleToggle('/dopayload', this.checked);
+        });
+
+<<<<<<< HEAD
+        document.getElementById('runPayloadCheckbox').addEventListener('change', function() {
+            handleToggle('/dopayload', this.checked);
+=======
+        document.getElementById('deletePayloadCheckbox').addEventListener('change', function() {
+            if (this.checked) {
+                if (confirm('Are you sure you want to delete this payload?')) {
+                    handleDelete('/deletepayload', this.checked);
+                } else {
+                    this.checked = false;
+                }
+            }
+        });
+
+        async function handleToggle(url, checked) {
+            if (checked) {
+                let response = await fetch(url, {
+                    method: 'POST',
+                    body: new URLSearchParams({configmodule:'{{path}}'})
+                });
+                let message = await response.text();
+                showMessage('success', message);
+
+                setTimeout(function() {
+                    document.getElementById('runPayloadCheckbox').checked = false;
+                }, 2000); 
+            }
+        }
+
+        async function handleDelete(url, checked) {
+            if (checked) {
+                let response = await fetch(url, {
+                    method: 'POST',
+                    body: new URLSearchParams({configmodule:'{{path}}'})
+                });
+                let message = await response.text();
+                showMessage('success', message);
+
+                setTimeout(function() {
+                    window.location.href = '/listpayloads';
+                }, 1000);
+            }
+        }
+        
+        // Initialize with description collapsed
+        document.addEventListener('DOMContentLoaded', function() {
+            const descriptionContent = document.getElementById('payloadDescriptionContent');
+            descriptionContent.style.maxHeight = '0';
+>>>>>>> fc723c5 (Fixed payload description bug. In payload list it only prints two lines of description text to preserve container size. When payload is selected, there is new payload description container which can be expanded to see complete saved description content. Currently indentations, new lines and white space is stripped when displaying full description content. So formatting is not yet possible. - added missing code blocks)
         });
 
         document.getElementById('deletePayloadCheckbox').addEventListener('change', function() {
