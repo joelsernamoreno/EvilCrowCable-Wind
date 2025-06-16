@@ -273,6 +273,34 @@ input[type="checkbox"] {
   margin: 15px 0;
 }
 
+.payload-item {
+    border: 1px solid var(--primary);
+    border-radius: 3px;
+    padding: 12px;
+    margin-bottom: 12px;
+    background-color: rgba(10, 10, 10, 0.9);
+}
+
+.payload-desc {
+    color: #aaa;
+    font-size: 0.85em;
+    margin: 8px 0;
+    line-height: 1.4;
+    max-height: 2.8em; /* 2 lines */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    white-space: pre-line;
+}
+
+.payload-filename {
+    color: #666;
+    font-size: 0.75em;
+    font-family: monospace;
+}
+
 .payload-item, .payload-item-os {
   border: 1px solid var(--primary);
   border-radius: 3px;
@@ -298,10 +326,60 @@ input[type="checkbox"] {
   background: linear-gradient(to bottom, var(--primary), var(--secondary));
 }
 
-.payload-desc {
-  color: #aaa;
-  font-size: 13px;
-  margin: 6px 0;
+.payload-description-content {
+    padding: 15px;
+    white-space: pre-wrap;
+    text-align: left;
+    font-size: 0.9em;
+    line-height: 1.5;
+    margin: 0;
+    text-indent: 0;
+}
+
+.payload-description-header {
+    text-align: center;
+    padding: 12px;
+    cursor: pointer;
+    background: rgba(5, 5, 8, 0.7);
+    border-bottom: 1px solid var(--primary);
+}
+
+/* Payload Description Styles */
+.payload-description-container {
+    border: 1px solid var(--primary);
+    border-radius: 5px;
+    margin: 15px 0;
+    overflow: hidden;
+    background: rgba(10, 10, 18, 0.8);
+}
+
+.payload-description-header {
+    padding: 12px 15px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--primary);
+    font-weight: bold;
+    transition: all 0.3s;
+    background: rgba(5, 5, 8, 0.7);
+}
+
+.payload-description-header:hover {
+    background: rgba(0, 242, 255, 0.1);
+}
+
+.payload-description-content.expanded {
+    padding: 15px;
+    max-height: 500px;
+    overflow-y: auto;
+    white-space: normal;
+}
+
+.toggle-icon {
+    font-size: 0.8em;
+    transition: transform 0.3s;
+    margin-left: 10px;
 }
 
 .payload-filename {
