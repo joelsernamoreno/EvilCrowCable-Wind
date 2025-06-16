@@ -29,5 +29,4 @@ const char StaticListPayloads[] PROGMEM = R"=====(
     <div class="view-container">
         <h3>Available Payloads:</h3>
         <div class="payload-list-container">
-            <!-- Payloads will be inserted here dynamically -->
 )=====";
