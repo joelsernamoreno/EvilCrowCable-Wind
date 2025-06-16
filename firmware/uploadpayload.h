@@ -34,7 +34,9 @@ const char UploadPayload[] PROGMEM = R"=====(
             </div>
             <div class="form-group">
                 <label for="payloadDescription">Description:</label>
-                <textarea id="payloadDescription" name="payloadDescription" placeholder="Enter a brief description" rows="3" class="terminal-style"></textarea>
+                <textarea id="payloadDescription" name="payloadDescription" 
+                          placeholder="Enter a detailed description (supports multiple lines)" 
+                          rows="5" class="terminal-style"></textarea>
             </div>
             <div class="form-group">
                 <label for="uploadFile">Payload File (.txt only):</label>
