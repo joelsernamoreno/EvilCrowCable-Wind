@@ -27,7 +27,16 @@ const char StaticListPayloads[] PROGMEM = R"=====(
     <div class="cable-wind-logo">PAYLOAD LIST</div>
 
     <div class="view-container">
-        <h3>Available Payloads:</h3>
+        <div class="payload-header">
+            <h3 style="margin: 0;">Available Payloads:</h3>
+            <select id="os-filter" class="select-os-btn">
+                <option value="all">ALL</option>
+                <option value="windows">Windows</option>
+                <option value="android">Android</option>
+                <option value="ios">iOS</option>
+                <option value="macos">MacOS</option>
+            </select>
+        </div>
         <div class="payload-list-container">
             <!-- Payloads will be inserted here dynamically -->
 )=====";

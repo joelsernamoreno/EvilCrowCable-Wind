@@ -39,6 +39,17 @@ const char UploadPayload[] PROGMEM = R"=====(
                           rows="5" class="terminal-style"></textarea>
             </div>
             <div class="form-group">
+                <label for="payloadOS">Target OS:</label>
+                <select id="payloadOS" class="styled-select" name="payloadOS" required>
+                  <option value="unknown">Select OS</option>
+                  <option value="windows">Windows</option>
+                  <option value="linux">Linux</option>
+                  <option value="android">Android</option>
+                  <option value="macos">macOS</option>
+                  <option value="ios">iOS</option>
+                </select>
+            </div>
+            <div class="form-group">
                 <label for="uploadFile">Payload File (.txt only):</label>
                 <input type="file" id="uploadFile" name="uploadFile" required accept=".txt" class="terminal-style single-line-input">
             </div>

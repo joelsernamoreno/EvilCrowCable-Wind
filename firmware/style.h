@@ -327,7 +327,7 @@ input[type="checkbox"] {
 }
 
 .payload-description-content {
-    padding: 15px;
+    padding: 0 15px;
     white-space: pre-wrap;
     text-align: left;
     font-size: 0.9em;
@@ -370,10 +370,9 @@ input[type="checkbox"] {
 }
 
 .payload-description-content.expanded {
-    padding: 15px;
     max-height: 500px;
     overflow-y: auto;
-    white-space: normal;
+    /* white-space: normal; to remove multiple lines*/
 }
 
 .toggle-icon {
@@ -1084,4 +1083,38 @@ a.pyaloadButton:hover {
     max-height: 300px;
     overflow-y: auto;
 }
+
+/* OS selector*/
+.styled-select {
+  background-color: rgba(10, 10, 10, 0.9); /* igual que tu .view-container */
+  border: 1px solid var(--primary);
+  color: var(--light);
+  padding: 8px 12px;
+  border-radius: 3px;
+  width: 100%;
+  font-family: 'Courier New', monospace;
+  font-size: 16px;
+  margin-bottom: 12px;
+  transition: all 0.3s;
+  box-sizing: border-box;
+
+  /* Eliminar apariencia nativa */
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  /* Ícono de flecha */
+  background-image: url("data:image/svg+xml,%3Csvg fill='%2300f2ff' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px 16px;
+  padding-right: 36px; /* Espacio para flecha */
+}
+
+.styled-select:focus {
+  outline: none;
+  border-color: var(--secondary);
+  box-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+}
+
 )=====";

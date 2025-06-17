@@ -41,7 +41,6 @@ const char StaticFileList[] PROGMEM = R"=====(
         }
         .payload-description-content.expanded {
             max-height: 500px;
-            padding: 15px;
             overflow-y: auto;
         }
         .toggle-icon {
