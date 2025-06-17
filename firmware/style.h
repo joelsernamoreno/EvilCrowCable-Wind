@@ -273,6 +273,34 @@ input[type="checkbox"] {
   margin: 15px 0;
 }
 
+.payload-item {
+    border: 1px solid var(--primary);
+    border-radius: 3px;
+    padding: 12px;
+    margin-bottom: 12px;
+    background-color: rgba(10, 10, 10, 0.9);
+}
+
+.payload-desc {
+    color: #aaa;
+    font-size: 0.85em;
+    margin: 8px 0;
+    line-height: 1.4;
+    max-height: 2.8em; /* 2 lines */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    white-space: pre-line;
+}
+
+.payload-filename {
+    color: #666;
+    font-size: 0.75em;
+    font-family: monospace;
+}
+
 .payload-item, .payload-item-os {
   border: 1px solid var(--primary);
   border-radius: 3px;
@@ -298,10 +326,59 @@ input[type="checkbox"] {
   background: linear-gradient(to bottom, var(--primary), var(--secondary));
 }
 
-.payload-desc {
-  color: #aaa;
-  font-size: 13px;
-  margin: 6px 0;
+.payload-description-content {
+    padding: 0 15px;
+    white-space: pre-wrap;
+    text-align: left;
+    font-size: 0.9em;
+    line-height: 1.5;
+    margin: 0;
+    text-indent: 0;
+}
+
+.payload-description-header {
+    text-align: center;
+    padding: 12px;
+    cursor: pointer;
+    background: rgba(5, 5, 8, 0.7);
+    border-bottom: 1px solid var(--primary);
+}
+
+/* Payload Description Styles */
+.payload-description-container {
+    border: 1px solid var(--primary);
+    border-radius: 5px;
+    margin: 15px 0;
+    overflow: hidden;
+    background: rgba(10, 10, 18, 0.8);
+}
+
+.payload-description-header {
+    padding: 12px 15px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--primary);
+    font-weight: bold;
+    transition: all 0.3s;
+    background: rgba(5, 5, 8, 0.7);
+}
+
+.payload-description-header:hover {
+    background: rgba(0, 242, 255, 0.1);
+}
+
+.payload-description-content.expanded {
+    max-height: 500px;
+    overflow-y: auto;
+    /* white-space: normal; to remove multiple lines*/
+}
+
+.toggle-icon {
+    font-size: 0.8em;
+    transition: transform 0.3s;
+    margin-left: 10px;
 }
 
 .payload-filename {
@@ -1006,4 +1083,38 @@ a.pyaloadButton:hover {
     max-height: 300px;
     overflow-y: auto;
 }
+
+/* OS selector*/
+.styled-select {
+  background-color: rgba(10, 10, 10, 0.9); /* igual que tu .view-container */
+  border: 1px solid var(--primary);
+  color: var(--light);
+  padding: 8px 12px;
+  border-radius: 3px;
+  width: 100%;
+  font-family: 'Courier New', monospace;
+  font-size: 16px;
+  margin-bottom: 12px;
+  transition: all 0.3s;
+  box-sizing: border-box;
+
+  /* Eliminar apariencia nativa */
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  /* Ícono de flecha */
+  background-image: url("data:image/svg+xml,%3Csvg fill='%2300f2ff' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px 16px;
+  padding-right: 36px; /* Espacio para flecha */
+}
+
+.styled-select:focus {
+  outline: none;
+  border-color: var(--secondary);
+  box-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+}
+
 )=====";
