@@ -114,7 +114,7 @@ const char AutoExecPlanning[] PROGMEM = R"=====(
                             showOSModal();
                         });
 
-                        payloadList.appendChild(payloadItem);
+                        payloadList.appendChild(payloadItem)
                     });
                 });
         }

@@ -29,14 +29,60 @@ const char StaticListPayloads[] PROGMEM = R"=====(
     <div class="view-container">
         <div class="payload-header">
             <h3 style="margin: 0;">Available Payloads:</h3>
-            <select id="os-filter" class="select-os-btn">
-                <option value="all">ALL</option>
-                <option value="windows">Windows</option>
-                <option value="android">Android</option>
-                <option value="ios">iOS</option>
-                <option value="macos">MacOS</option>
-            </select>
+            <button class="select-os-btn" onclick="showOSFilterModal()">Filter OS</button>
+            <span id="selected-os-label">ALL</span>
         </div>
         <div class="payload-list-container">
+            <div id="os-filter-modal" class="os-modal" style="display: none;">
+                <div class="os-modal-content">
+                    <h3>Select OS Filter</h3>
+                    <div class="os-options">
+                        <button data-os="all">ALL</button>
+                        <button data-os="windows">Windows</button>
+                        <button data-os="linux">Linux</button>
+                        <button data-os="ios">iOS</button>
+                        <button data-os="macos">macOS</button>
+                        <button data-os="android">Android</button>
+                    </div>
+                    <button class="close-modal" onclick="hideOSFilterModal()">Cancel</button>
+                </div>
+            </div>
+            <script>
+                function showOSFilterModal() {
+                    document.getElementById('os-filter-modal').style.display = 'flex';
+
+                    document.querySelectorAll('#os-filter-modal .os-options button').forEach(btn => {
+                        btn.onclick = function () {
+                            const selectedOS = this.dataset.os;
+                            document.getElementById('selected-os-label').textContent = selectedOS.toUpperCase();
+                            document.getElementById('os-filter-modal').style.display = 'none';
+                            filterPayloadsByOS(selectedOS);
+                        };
+                    });
+                }
+
+                function hideOSFilterModal() {
+                    document.getElementById('os-filter-modal').style.display = 'none';
+                }
+
+                function filterPayloadsByOS(os) {
+                    const payloadItems = document.querySelectorAll('.payload-item');
+                    payloadItems.forEach(item => {
+                        const itemOS = item.dataset.os || 'all';
+                        if (os === 'all' || itemOS === os) {
+                            item.style.display = '';
+                        } else {
+                            item.style.display = 'none';
+                        }
+                    });
+                }
+
+                // Optional: Default filter to 'all'
+                document.addEventListener('DOMContentLoaded', () => {
+                    filterPayloadsByOS('all');
+                });
+            </script>
+
+
             <!-- Payloads will be inserted here dynamically -->
 )=====";

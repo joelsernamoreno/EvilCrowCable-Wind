@@ -414,6 +414,8 @@ void readFile(fs::FS &fs, const String &path) {
   // Set layout based on payload content
   setLayoutFromPayload(payloadContent);
 
+  livepayload = payloadContent;
+  
   FileList = StaticFileList;
   FileList.replace("{{path}}", path);
   FileList.replace("{{payloadContent}}", payloadContent);
