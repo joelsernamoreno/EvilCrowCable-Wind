@@ -176,30 +176,55 @@ document.addEventListener('gesturestart', function(e) {
     e.preventDefault();
 });
 
-document.addEventListener("DOMContentLoaded", function() {
-  const links = document.querySelectorAll("#menu a");
-  links.forEach(link => {
-    if (link.getAttribute("href") === window.location.pathname) {
-      link.classList.add("active");
-    }
-    // Debounced click handler
-    link.addEventListener('click', debounce(function(e) {
-      // Prevent default only if not already active
-      if (this.classList.contains('active')) {
-        e.preventDefault();
-        return;
-      }
+document.addEventListener("DOMContentLoaded", function () {
+    // --- Highlight the active navigation link ---
+    const links = document.querySelectorAll("#menu a");
+    links.forEach(link => {
+        if (link.getAttribute("href") === window.location.pathname) {
+            link.classList.add("active");
+        }
 
-      // Show loading indicator
-      document.body.classList.add('page-loading');
+        // Debounced click handler to prevent double reloads
+        link.addEventListener('click', debounce(function (e) {
+            if (this.classList.contains('active')) {
+                e.preventDefault();
+                return;
+            }
 
-      // Force connection initiation
-      fetch('/stats', {cache: "no-store"})
-        .then(() => {
-          window.location.href = this.href;
+            // Show loading overlay
+            document.body.classList.add('page-loading');
+
+            // Trigger connection check before navigating
+            fetch('/stats', { cache: "no-store" })
+                .then(() => {
+                    window.location.href = this.href;
+                });
+        }, 300));
+    });
+
+    // --- OS-based payload filter ---
+    const select = document.getElementById("os-filter");
+    if (select) {
+        function filterPayloads(os) {
+            const payloads = document.querySelectorAll(".payload-item");
+            payloads.forEach(el => {
+                const itemOS = el.getAttribute("data-os") || "all";
+                el.style.display = (os === "all" || itemOS === os) ? "" : "none";
+            });
+        }
+
+        // Load saved filter option from localStorage
+        const savedOS = localStorage.getItem("selectedOS") || "all";
+        select.value = savedOS;
+        filterPayloads(savedOS);
+
+        // Save new selection and re-filter
+        select.addEventListener("change", function () {
+            const selected = this.value.toLowerCase();
+            localStorage.setItem("selectedOS", selected);
+            filterPayloads(selected);
         });
-    }, 300)); // 300ms debounce time
-  });
+    }
 });
 
 // Loading indicator

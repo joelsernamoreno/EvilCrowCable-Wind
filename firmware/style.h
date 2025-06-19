@@ -327,7 +327,7 @@ input[type="checkbox"] {
 }
 
 .payload-description-content {
-    padding: 15px;
+    padding: 0 15px;
     white-space: pre-wrap;
     text-align: left;
     font-size: 0.9em;
@@ -370,10 +370,9 @@ input[type="checkbox"] {
 }
 
 .payload-description-content.expanded {
-    padding: 15px;
     max-height: 500px;
     overflow-y: auto;
-    white-space: normal;
+    /* white-space: normal; to remove multiple lines*/
 }
 
 .toggle-icon {
@@ -999,7 +998,17 @@ a.pyaloadButton:hover {
     background-color: rgba(10, 10, 10, 0.9);
     border: 1px solid var(--primary);
     border-radius: 3px;
-    overflow: hidden; /* Add this to contain children */
+    overflow: hidden;
+}
+
+.payload-editor-container {
+    display: flex;
+    position: relative;
+    height: 20em;
+    background-color: rgba(10, 10, 10, 0.9);
+    border: 1px solid var(--primary);
+    border-radius: 3px;
+    overflow: hidden;
 }
 
 .line-numbers {
@@ -1011,8 +1020,13 @@ a.pyaloadButton:hover {
     font-size: 0.8em;
     text-align: right;
     user-select: none;
-    overflow-y: hidden;
-    border: none !important; /* Remove any borders */
+    overflow-y: scroll;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+    border: none;
+    line-height: 22px;
+    height: 100%;
+    box-sizing: border-box;
 }
 
 #livePayloadInput {
@@ -1022,10 +1036,36 @@ a.pyaloadButton:hover {
     padding: 12px;
     background-color: transparent;
     color: var(--secondary);
-    line-height: 1.5;
+    line-height: 22px;
     resize: none;
     white-space: pre;
     overflow-x: auto;
+    overflow-y: auto;
+    height: 100%;
+    box-sizing: border-box;
+    font-family: 'Courier New', monospace;
+    font-size: 0.95em;
+}
+
+/* Mobile styles remain exactly the same */
+@media (max-width: 768px) {
+    .payload-editor-container {
+        height: 15em;
+    }
+    
+    .line-numbers, #livePayloadInput {
+        font-size: 14px;
+        line-height: 1.4em;
+    }
+    
+    .line-numbers {
+        width: 25px;
+        padding: 12px 3px 8px 5px;
+    }
+}
+
+.line-numbers::-webkit-scrollbar {
+    display: none;
 }
 
 .autocomplete-suggestion {
@@ -1041,18 +1081,6 @@ a.pyaloadButton:hover {
     z-index: 1000;
     white-space: pre;
     font-weight: bold;
-}
-
-@media (max-width: 768px) {
-    .payload-editor-container {
-        height: 15em;
-        font-size: 14px;
-    }
-    
-    .line-numbers {
-        width: 25px;
-        padding: 8px 3px 8px 5px;
-    }
 }
 
 /* Command Reference Styles */
@@ -1084,4 +1112,38 @@ a.pyaloadButton:hover {
     max-height: 300px;
     overflow-y: auto;
 }
+
+/* OS selector*/
+.styled-select {
+  background-color: rgba(10, 10, 10, 0.9); /* igual que tu .view-container */
+  border: 1px solid var(--primary);
+  color: var(--light);
+  padding: 8px 12px;
+  border-radius: 3px;
+  width: 100%;
+  font-family: 'Courier New', monospace;
+  font-size: 16px;
+  margin-bottom: 12px;
+  transition: all 0.3s;
+  box-sizing: border-box;
+
+  /* Eliminar apariencia nativa */
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  /* Ícono de flecha */
+  background-image: url("data:image/svg+xml,%3Csvg fill='%2300f2ff' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px 16px;
+  padding-right: 36px; /* Espacio para flecha */
+}
+
+.styled-select:focus {
+  outline: none;
+  border-color: var(--secondary);
+  box-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+}
+
 )=====";

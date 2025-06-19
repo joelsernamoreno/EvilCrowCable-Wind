@@ -70,6 +70,12 @@ enum HostOS {
   OS_ANDROID
 };
 
+enum MetadataField {
+    META_NAME,
+    META_DESCRIPTION,
+    META_OS
+};
+
 HostOS detected_os = OS_UNKNOWN;
 
 extern const unsigned char en_us[128];
@@ -388,7 +394,7 @@ void deleteFile(fs::FS &fs, const String &path) {
 
 void readFile(fs::FS &fs, const String &path) {
   String payloadContent = "";
-  String payloadDescription = readPayloadMetadata(path, false);
+  String payloadDescription = readPayloadMetadata(path, META_DESCRIPTION);
 
   File file = fs.open(path);
   if (!file || file.isDirectory()) {
@@ -408,6 +414,8 @@ void readFile(fs::FS &fs, const String &path) {
   // Set layout based on payload content
   setLayoutFromPayload(payloadContent);
 
+  livepayload = payloadContent;
+  
   FileList = StaticFileList;
   FileList.replace("{{path}}", path);
   FileList.replace("{{payloadContent}}", payloadContent);
@@ -416,7 +424,7 @@ void readFile(fs::FS &fs, const String &path) {
 
 
 // Helper function to save payload metadata - UPDATED to handle multi-line
-void savePayloadMetadata(const String &filename, const String &name, const String &description) {
+void savePayloadMetadata(const String &filename, const String &name, const String &description, const String &os) {
   String metaPath = filename + ".meta";
   File metaFile = LittleFS.open(metaPath, FILE_WRITE);
   if (metaFile) {
@@ -425,9 +433,14 @@ void savePayloadMetadata(const String &filename, const String &name, const Strin
     trimmedName.trim();
     metaFile.println(trimmedName);
 
+    // Write osType - to filter the listpayloads
+    String trimmedOS = os;
+    trimmedOS.trim();
+    metaFile.println(trimmedOS);
+
     // Write description - preserve formatting but clean up whitespace
     String cleanDesc = description;
-    cleanDesc.replace("\r\n", "\n");
+    // cleanDesc.replace("\r\n", "\n");
     cleanDesc.trim();
     metaFile.print(cleanDesc);
 
@@ -436,57 +449,68 @@ void savePayloadMetadata(const String &filename, const String &name, const Strin
 }
 
 // Helper function to read payload metadata - UPDATED for multi-line
-String readPayloadMetadata(const String &filename, bool getName) {
-  String metaPath = filename + ".meta";
+String readPayloadMetadata(const String &filename, MetadataField field) {
+    String metaPath = filename + ".meta";
 
-  if (!LittleFS.exists(metaPath)) {
-    if (getName) {
-      int lastSlash = filename.lastIndexOf('/');
-      return filename.substring(lastSlash + 1);
+    if (!LittleFS.exists(metaPath)) {
+        if (field == META_NAME) {
+            int lastSlash = filename.lastIndexOf('/');
+            return filename.substring(lastSlash + 1);
+        } else if (field == META_DESCRIPTION) {
+            return "No description";
+        } else {
+            return "unknown";
+        }
     }
-    return "No description available";
-  }
 
-  File metaFile = LittleFS.open(metaPath, FILE_READ);
-  if (!metaFile) {
-    if (getName) {
-      int lastSlash = filename.lastIndexOf('/');
-      return filename.substring(lastSlash + 1);
+    File metaFile = LittleFS.open(metaPath, FILE_READ);
+    if (!metaFile) {
+        if (field == META_NAME) {
+            int lastSlash = filename.lastIndexOf('/');
+            return filename.substring(lastSlash + 1);
+        } else if (field == META_DESCRIPTION) {
+            return "No description";
+        } else {
+            return "unknown";
+        }
     }
-    return "No description available";
-  }
 
-  // Read name (first line)
-  String name = metaFile.readStringUntil('\n');
-  name.trim();
+    String lines[3];  // name, os, description
+    for (int i = 0; i < 3 && metaFile.available(); i++) {
+        // save the rest of the file (the description) in cell 3
+        if (i == 2){
+          while (metaFile.available()) {
+            lines[i] += metaFile.readString();
+          }
+          // Trim description to remote \n \r at the start and end of the string
+          lines[i].trim();
+          // ensure first line has no indentation
+          int firstNewline = lines[i].indexOf('\n');
+          if (firstNewline != -1) {
+            String firstLine = lines[i].substring(0, firstNewline);
+            firstLine.trim(); // Trim just the first line
+            lines[i] = firstLine + lines[i].substring(firstNewline);
+          }
+          // Normalize line endings
+          lines[i].replace("\r\n", "\n");
+        }else{
+          lines[i] = metaFile.readStringUntil('\n');
+          lines[i].trim();
+        }
+    }
 
-  if (getName) {
     metaFile.close();
-    return name.length() > 0 ? name : filename.substring(filename.lastIndexOf('/') + 1);
-  }
 
-  // Read description (rest of file)
-  String description;
-  while (metaFile.available()) {
-    description += metaFile.readString();
-  }
-  metaFile.close();
-
-  // Clean up the description
-  description.trim(); // First trim the entire string
-
-  // Then ensure first line has no indentation
-  int firstNewline = description.indexOf('\n');
-  if (firstNewline != -1) {
-    String firstLine = description.substring(0, firstNewline);
-    firstLine.trim(); // Trim just the first line
-    description = firstLine + description.substring(firstNewline);
-  }
-
-  // Normalize line endings
-  description.replace("\r\n", "\n");
-  
-  return description.length() > 0 ? description : "No description available";
+    switch (field) {
+        case META_NAME:
+            return lines[0].length() > 0 ? lines[0] : filename.substring(filename.lastIndexOf('/') + 1);
+        case META_OS:
+            return lines[1].length() > 0 ? lines[1] : "unknown";
+        case META_DESCRIPTION:
+            return lines[2].length() > 0 ? lines[2] : "No description";
+        default:
+            return "";
+    }
 }
 
 // Updated handleFileUpload to properly handle multi-line descriptions
@@ -494,12 +518,13 @@ void handleFileUpload() {
   HTTPUpload &upload = controlserver.upload();
   static const uint32_t MAX_FILE_SIZE = 204800;  // 200KB limit
   static uint32_t totalUploaded = 0;
-  static String payloadName, payloadDescription, fileName;
+  static String payloadName, payloadDescription, fileName, payloadOS;
 
   if (upload.status == UPLOAD_FILE_START) {
     totalUploaded = 0;
     payloadName = controlserver.arg("payloadName");
     payloadDescription = controlserver.arg("payloadDescription");
+    payloadOS = controlserver.arg("payloadOS");
 
     // Get filename from upload, not from args
     fileName = upload.filename;
@@ -538,7 +563,7 @@ void handleFileUpload() {
     if (fsUploadFile) {
       fsUploadFile.close();
       // Save metadata with complete description
-      savePayloadMetadata(fileName, payloadName, payloadDescription);
+      savePayloadMetadata(fileName, payloadName, payloadDescription, payloadOS);
     }
   } else {
     if (fsUploadFile) {
@@ -569,9 +594,10 @@ void listDir(fs::FS &fs, const char *dirname, uint8_t levels) {
       continue;
     }
 
-    String payloadName = readPayloadMetadata(fileName, true);
-    String payloadDesc = readPayloadMetadata(fileName, false);
-
+    String payloadName = readPayloadMetadata(fileName, META_NAME);
+    String osType = readPayloadMetadata(fileName, META_OS);
+    String payloadDesc = readPayloadMetadata(fileName, META_DESCRIPTION);
+    
     // Truncate description to first two lines or 120 characters
     int newlinePos = payloadDesc.indexOf('\n');
     if (newlinePos != -1) {
@@ -583,10 +609,10 @@ void listDir(fs::FS &fs, const char *dirname, uint8_t levels) {
       payloadDesc = payloadDesc.substring(0, 120) + "...";
     }
 
-    FileList += "<div class='payload-item'>";
+    FileList += "<div class='payload-item' data-os='" + osType + "'>";
     FileList += "<a class=\"pyaloadButton\" href=\"/showpayload?payload=" + fileName + "\">" + payloadName + "</a>";
     FileList += "<div class='payload-desc'>" + payloadDesc + "</div>";
-    FileList += "<div class='payload-filename'>" + String(file.name()) + "</div>";
+    FileList += "<div class='payload-filename'>" + String(file.name()) + " - OS Type: "+ osType +"</div>";
     FileList += "</div>";
 
     file = root.openNextFile();
@@ -1435,6 +1461,7 @@ void setup() {
     String payload_save = controlserver.arg("livepayload");
     String payloadName = controlserver.arg("payloadName");
     String payloadDesc = controlserver.arg("payloadDescription");
+    String payloadOS = controlserver.arg("payloadOS");
     String fileName;
 
     // Set layout based on payload content if specified
@@ -1475,7 +1502,7 @@ void setup() {
     fsUploadFile.close();
 
     // Save metadata
-    savePayloadMetadata(filePath, payloadName, payloadDesc);
+    savePayloadMetadata(filePath, payloadName, payloadDesc, payloadOS);
 
     payloadExecuted = true;
     controlserver.send(200, "text/plain", "Payload saved");
@@ -1523,8 +1550,8 @@ void setup() {
         String fileName = file.name();
         if (!fileName.endsWith(".meta")) {
           String filePath = "/payloads/" + fileName;
-          String payloadName = readPayloadMetadata(filePath, true);
-          String payloadDesc = readPayloadMetadata(filePath, false);
+          String payloadName = readPayloadMetadata(filePath, META_NAME);
+          String payloadDesc = readPayloadMetadata(filePath, META_DESCRIPTION);
 
           JsonObject payload = payloads.createNestedObject();
           payload["path"] = filePath;

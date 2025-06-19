@@ -50,6 +50,17 @@ const char LivePayload[] PROGMEM = R"=====(
                 <label for="payloadDescription">Description:</label>
                 <textarea id="payloadDescription" name="payloadDescription" placeholder="Enter a brief description" rows="3" class="terminal-style"></textarea>
             </div>
+            <div class="form-group">
+                <label for="payloadOS">Target OS:</label>
+                <select id="payloadOS" class="styled-select" name="payloadOS" required>
+                  <option value="unknown">Select OS</option>
+                  <option value="windows">Windows</option>
+                  <option value="linux">Linux</option>
+                  <option value="android">Android</option>
+                  <option value="macos">macOS</option>
+                  <option value="ios">iOS</option>
+                </select>
+            </div>
             <div class="button-container">
                 <button type="button" onclick="confirmSavePayload()">Confirm Save</button>
                 <button type="button" onclick="cancelSavePayload()" style="background: linear-gradient(135deg, var(--error), #cc0022);">Cancel</button>
@@ -532,7 +543,21 @@ const char LivePayload[] PROGMEM = R"=====(
             const lineNumbers = document.getElementById('lineNumbers');
             const lines = textarea.value.split('\n');
 
-            lineNumbers.innerHTML = lines.map((_, i) => `<div>${i + 1}</div>`).join('');
+            // Get computed styles for accurate measurements
+            const textareaStyle = getComputedStyle(textarea);
+            const lineHeight = parseFloat(textareaStyle.lineHeight);
+            const paddingTop = parseFloat(textareaStyle.paddingTop);
+            const paddingBottom = parseFloat(textareaStyle.paddingBottom);
+
+            // Calculate total height needed
+            const totalHeight = lines.length * lineHeight + paddingTop + paddingBottom;
+
+            // Generate line numbers HTML
+            lineNumbers.innerHTML = Array(lines.length).fill().map((_, i) => 
+                `<div style="height: ${lineHeight}px; line-height: ${lineHeight}px">${i + 1}</div>`
+            ).join('');
+
+            // Sync scroll positions
             lineNumbers.scrollTop = textarea.scrollTop;
         }
 
@@ -625,9 +650,6 @@ const char LivePayload[] PROGMEM = R"=====(
                 }
             }
         }
-
-        // No longer showing visual suggestion element
-        // This simplifies the editor experience while still enabling Tab completion
         
         function handleTabCompletion(e) {
             if (e.key === 'Tab') {
@@ -730,11 +752,14 @@ const char LivePayload[] PROGMEM = R"=====(
             const payloadContent = document.getElementById('livePayloadInput').value;
             const payloadName = document.getElementById('payloadName').value;
             const payloadDesc = document.getElementById('payloadDescription').value;
-            
+            const payloadOS = document.getElementById('payloadOS').value;
+
             const formData = new FormData();
             formData.append('livepayload', payloadContent);
             formData.append('payloadName', payloadName || 'Unnamed Payload');
             formData.append('payloadDescription', payloadDesc || 'No description provided');
+            formData.append('payloadOS', payloadOS || 'unKnown');
+            
 
             fetch('/runlivesave', {
                 method: 'POST',
@@ -749,6 +774,7 @@ const char LivePayload[] PROGMEM = R"=====(
                 document.getElementById('metadataForm').style.display = 'none';
                 document.getElementById('payloadName').value = '';
                 document.getElementById('payloadDescription').value = '';
+                document.getElementById('payloadOS').value = '';
             })
             .catch(error => {
                 showMessage('error', 'Error saving payload.');
@@ -794,6 +820,33 @@ const char LivePayload[] PROGMEM = R"=====(
         document.addEventListener('DOMContentLoaded', function() {
             updateLineNumbers();
 
+            setTimeout(() => {
+                updateLineNumbers();
+            }, 100);
+
+            // Setup text area event handlers
+            const payloadInput = document.getElementById('livePayloadInput');
+
+            // Input event for content changes, validation, and line numbers
+            payloadInput.addEventListener('input', function(e) {
+                updateLineNumbers();
+                validateCurrentLine(e);
+                handleAutoSuggestion();
+            });
+
+            // Key events for tab completion
+            payloadInput.addEventListener('keydown', handleTabCompletion);
+
+            // Scroll event for line number sync - improved
+            payloadInput.addEventListener('scroll', function() {
+                const lineNumbers = document.getElementById('lineNumbers');
+                lineNumbers.scrollTop = this.scrollTop;
+            });
+            // Clear current suggestion on blur
+            payloadInput.addEventListener('blur', function() {
+                currentSuggestion = null;
+            });
+
             // Command cell click handlers
             document.querySelectorAll('.command-cell').forEach(cell => {
                 cell.addEventListener('click', function() {
@@ -819,27 +872,6 @@ const char LivePayload[] PROGMEM = R"=====(
                 });
 
                 cell.style.cursor = 'pointer';
-            });
-
-            // Setup text area event handlers
-            const payloadInput = document.getElementById('livePayloadInput');
-            
-            // Input event for content changes, validation, and line numbers
-            payloadInput.addEventListener('input', function(e) {
-                updateLineNumbers();
-                validateCurrentLine(e);
-                handleAutoSuggestion();
-            });
-            
-            // Key events for tab completion
-            payloadInput.addEventListener('keydown', handleTabCompletion);
-            
-            // Scroll event for line number sync
-            payloadInput.addEventListener('scroll', updateLineNumbers);
-            
-            // Clear current suggestion on blur
-            payloadInput.addEventListener('blur', function() {
-                currentSuggestion = null;
             });
         });
 
