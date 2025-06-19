@@ -37,11 +37,12 @@ const char StaticFileList[] PROGMEM = R"=====(
             overflow: hidden;
             transition: max-height 0.3s ease-out;
             padding: 0 15px;
-            white-space: pre-wrap;
+            white-space: pre-line;
         }
         .payload-description-content.expanded {
             max-height: 500px;
             overflow-y: auto;
+            white-space: pre-line;
         }
         .toggle-icon {
             transition: transform 0.3s;

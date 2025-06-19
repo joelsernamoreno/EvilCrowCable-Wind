@@ -328,11 +328,17 @@ input[type="checkbox"] {
 
 .payload-description-content {
     padding: 0 15px;
-    white-space: pre-wrap;
     text-align: left;
     font-size: 0.9em;
     line-height: 1.5;
     margin: 0;
+    text-indent: 0;
+    white-space: pre-line;
+}
+
+.payload-description-content p:first-child,
+.payload-description-content div:first-child {
+    margin-top: 0;
     text-indent: 0;
 }
 
@@ -372,7 +378,7 @@ input[type="checkbox"] {
 .payload-description-content.expanded {
     max-height: 500px;
     overflow-y: auto;
-    /* white-space: normal; to remove multiple lines*/
+    white-space: pre-line;
 }
 
 .toggle-icon {

@@ -438,11 +438,11 @@ void savePayloadMetadata(const String &filename, const String &name, const Strin
     trimmedOS.trim();
     metaFile.println(trimmedOS);
 
-    // Write description - preserve formatting but clean up whitespace
+    // Write description - trim and clean up line endings
     String cleanDesc = description;
-    // cleanDesc.replace("\r\n", "\n");
-    cleanDesc.trim();
-    metaFile.print(cleanDesc);
+    cleanDesc.trim(); // Trim both ends
+    cleanDesc.replace("\r\n", "\n"); // Normalize line endings
+    metaFile.print(cleanDesc); // Don't add extra newline at end
 
     metaFile.close();
   }
@@ -477,25 +477,16 @@ String readPayloadMetadata(const String &filename, MetadataField field) {
 
     String lines[3];  // name, os, description
     for (int i = 0; i < 3 && metaFile.available(); i++) {
-        // save the rest of the file (the description) in cell 3
-        if (i == 2){
-          while (metaFile.available()) {
-            lines[i] += metaFile.readString();
-          }
-          // Trim description to remote \n \r at the start and end of the string
-          lines[i].trim();
-          // ensure first line has no indentation
-          int firstNewline = lines[i].indexOf('\n');
-          if (firstNewline != -1) {
-            String firstLine = lines[i].substring(0, firstNewline);
-            firstLine.trim(); // Trim just the first line
-            lines[i] = firstLine + lines[i].substring(firstNewline);
-          }
-          // Normalize line endings
-          lines[i].replace("\r\n", "\n");
-        }else{
-          lines[i] = metaFile.readStringUntil('\n');
-          lines[i].trim();
+        if (i == 2) { // Description field
+            String desc;
+            while (metaFile.available()) {
+                desc += metaFile.readString();
+            }
+            desc.trim(); // Ensure no leading/trailing whitespace
+            lines[i] = desc;
+        } else {
+            lines[i] = metaFile.readStringUntil('\n');
+            lines[i].trim();
         }
     }
 
