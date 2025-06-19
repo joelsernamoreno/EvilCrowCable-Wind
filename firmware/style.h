@@ -1151,5 +1151,25 @@ a.pyaloadButton:hover {
   border-color: var(--secondary);
   box-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
 }
-
+.page-loading::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+    z-index: 9999;
+    will-change: opacity; /* Optimize for iOS */
+}
+.page-loading::after {
+    content: 'Loading...';
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #00f2ff;
+    font-size: 1.5em;
+    z-index: 10000;
+}
 )=====";

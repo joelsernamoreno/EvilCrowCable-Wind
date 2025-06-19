@@ -1,8 +1,13 @@
 const char Redirect[] PROGMEM = R"=====(
 
 function checkConnection() {
-    fetch('/stats')
+    if (isNavigating) return;
+    // AbortController to prevent hanging
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 1000); // 1s timeout
+    fetch('/stats', { signal: controller.signal })
         .then(response => {
+            clearTimeout(timeoutId);
             // Update ALL status indicators (including home page stats)
             document.querySelectorAll('.status-indicator').forEach(indicator => {
                 indicator.classList.remove('status-offline');
@@ -19,6 +24,7 @@ function checkConnection() {
             return response.json();
         })
         .catch(error => {
+            clearTimeout(timeoutId);
             if (error.name !== 'AbortError') { 
                 document.querySelectorAll('.status-indicator').forEach(indicator => {
                     indicator.classList.remove('status-online');
@@ -177,29 +183,19 @@ document.addEventListener('gesturestart', function(e) {
 });
 
 document.addEventListener("DOMContentLoaded", function () {
+    let isNavigating = false;
     // --- Highlight the active navigation link ---
     const links = document.querySelectorAll("#menu a");
     links.forEach(link => {
-        if (link.getAttribute("href") === window.location.pathname) {
-            link.classList.add("active");
-        }
-
-        // Debounced click handler to prevent double reloads
-        link.addEventListener('click', debounce(function (e) {
+        link.addEventListener('click', function(e) {
             if (this.classList.contains('active')) {
                 e.preventDefault();
                 return;
             }
-
-            // Show loading overlay
+            isNavigating = true;
             document.body.classList.add('page-loading');
-
-            // Trigger connection check before navigating
-            fetch('/stats', { cache: "no-store" })
-                .then(() => {
-                    window.location.href = this.href;
-                });
-        }, 300));
+            window.location.href = this.href;
+        });
     });
 
     // --- OS-based payload filter ---
@@ -212,51 +208,24 @@ document.addEventListener("DOMContentLoaded", function () {
                 el.style.display = (os === "all" || itemOS === os) ? "" : "none";
             });
         }
-
-        // Load saved filter option from localStorage
-        const savedOS = localStorage.getItem("selectedOS") || "all";
-        select.value = savedOS;
-        filterPayloads(savedOS);
-
+    
+        // Defer localStorage access to prevent blocking
+        setTimeout(() => {
+            // Load saved filter option from localStorage
+            const savedOS = localStorage.getItem("selectedOS") || "all";
+            select.value = savedOS;
+            filterPayloads(savedOS);
+        }, 0);
+    
         // Save new selection and re-filter
-        select.addEventListener("change", function () {
-            const selected = this.value.toLowerCase();
-            localStorage.setItem("selectedOS", selected);
-            filterPayloads(selected);
+        select.addEventListener("change", function() {
+            // Use requestIdleCallback for non-urgent updates
+            requestIdleCallback(() => {
+                const selected = this.value.toLowerCase();
+                localStorage.setItem("selectedOS", selected);
+                filterPayloads(selected);
+            }, { timeout: 200 }); // Fallback if idle takes too long
         });
     }
 });
-
-// Loading indicator
-document.write(`    <style>
-        .page-loading::before {
-          content: '';
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          background: rgba(0,0,0,0.7);
-          z-index: 9999;
-        }
-        .page-loading::after {
-          content: 'Loading...';
-          position: fixed;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          color: #00f2ff;
-          font-size: 1.5em;
-          z-index: 10000;
-        }
-        .validation-text {
-          font-size: 0.75em;
-        }
-        @media (max-width: 768px) {
-          .validation-text {
-            font-size: 0.7em;
-          }
-        }
-      </style>
-`);
 )=====";
