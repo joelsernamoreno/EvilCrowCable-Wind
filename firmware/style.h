@@ -263,6 +263,57 @@ input[type="checkbox"] {
   margin-bottom: 6px;
   color: var(--primary);
   font-weight: bold;
+  font-size: 1em; /* Ensure consistent base size */
+}
+
+/* Validation styles */
+#validationStatus {
+  display: block;
+  font-size: 0.85em;
+  white-space: pre-wrap;
+  font-family: 'Courier New', monospace;
+  background-color: rgba(10, 10, 10, 0.9);
+  padding: 8px;
+  border-radius: 3px;
+  border-left: 3px solid var(--error);
+  margin-top: 5px;
+}
+
+.validation-ok {
+  color: var(--success);
+  border-left-color: var(--success) !important;
+}
+
+.validation-error {
+  color: var(--error);
+}
+
+.validation-empty {
+    color: #666; /* Gray color for empty state */
+    font-style: italic;
+    display: block; /* Ensure it's visible */
+}
+
+/* Desktop specific styles */
+@media (min-width: 768px) {
+  #validationStatus {
+    padding-left: 30px;
+    text-indent: -20px;
+    line-height: 1.4;
+  }
+  
+  #validationStatus::before {
+    content: "→ ";
+    color: var(--primary);
+    margin-right: 5px;
+  }
+}
+
+/* Mobile specific styles */
+@media (max-width: 767px) {
+  #validationStatus {
+    padding-left: 15px;
+  }
 }
 
 /* Payload list */
@@ -1151,25 +1202,37 @@ a.pyaloadButton:hover {
   border-color: var(--secondary);
   box-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
 }
+
 .page-loading::before {
-    content: '';
+    content: "";
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0,0,0,0.7);
+    background: rgba(5, 5, 8, 0.9);
     z-index: 9999;
-    will-change: opacity; /* Optimize for iOS */
 }
+
 .page-loading::after {
-    content: 'Loading...';
+    content: "LOADING...";
     position: fixed;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    color: #00f2ff;
-    font-size: 1.5em;
+    color: var(--primary);
+    font-family: 'Courier New', monospace;
+    font-size: 1.2em;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 0 0 8px var(--primary);
     z-index: 10000;
+    animation: pulse 1.5s infinite alternate;
+}
+
+@keyframes pulse {
+    from { opacity: 0.7; text-shadow: 0 0 5px var(--primary); }
+    to { opacity: 1; text-shadow: 0 0 15px var(--primary), 0 0 20px var(--secondary); }
 }
 )=====";

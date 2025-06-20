@@ -1660,31 +1660,35 @@ void loop() {
   static bool hasPendingPlan = false;
   static bool firstRun = true;
 
-  if (firstRun && LittleFS.exists("/autoexec_plan.json")) {
+  // Only check once per boot
+  if (firstRun) {
     firstRun = false;
-    File file = LittleFS.open("/autoexec_plan.json", FILE_READ);
-    if (file) {
-      String content = file.readString();
-      file.close();
-      deserializeJson(pendingAutoExecPlan, content);
+    
+    if (LittleFS.exists("/autoexec_plan.json")) {
+      File file = LittleFS.open("/autoexec_plan.json", FILE_READ);
+      if (file) {
+        String content = file.readString();
+        file.close();
+        deserializeJson(pendingAutoExecPlan, content);
 
-      if (pendingAutoExecPlan["enabled"] == true) {
-        // Check if we have a no-detection payload
-        if (pendingAutoExecPlan["nodetection"]) {
-          String osPayloadPath = pendingAutoExecPlan["nodetection"]["path"].as<String>();
-          if (osPayloadPath.length() > 0 && LittleFS.exists(osPayloadPath)) {
-            readFile(LittleFS, osPayloadPath);
-            payload_state = 1;
-            payloadExecuted = false;
+        if (pendingAutoExecPlan["enabled"] == true) {
+          // Check if we have a no-detection payload
+          if (pendingAutoExecPlan["nodetection"]) {
+            String osPayloadPath = pendingAutoExecPlan["nodetection"]["path"].as<String>();
+            if (osPayloadPath.length() > 0 && LittleFS.exists(osPayloadPath)) {
+              readFile(LittleFS, osPayloadPath);
+              payload_state = 1;
+              payloadExecuted = false;
+              autoExecChecked = true;
+            }
+          } else {
+            // If no no-detection payload, proceed with OS detection
+            onDetectOSRequested();
+            osDetectionStartTime = millis();
+            osDetectionInProgress = true;
+            hasPendingPlan = true;
             autoExecChecked = true;
           }
-        } else {
-          // If no no-detection payload, proceed with OS detection
-          onDetectOSRequested();
-          osDetectionStartTime = millis();
-          osDetectionInProgress = true;
-          hasPendingPlan = true;
-          autoExecChecked = true;
         }
       }
     }

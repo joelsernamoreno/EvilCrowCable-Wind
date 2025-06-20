@@ -28,7 +28,10 @@ const char LivePayload[] PROGMEM = R"=====(
 
     <div class="view-container">
         <div class="form-group">
-            <label for="livePayloadInput">Payload Editor: <span id="validationStatus"></span></label>
+            <label for="livePayloadInput">Payload Editor</label>
+            <div class="validation-container">
+                <span id="validationStatus"></span>
+            </div>
             <div class="payload-editor-container">
                 <div id="lineNumbers" class="line-numbers"></div>
                 <textarea id="livePayloadInput" class="terminal-style" name="livepayload" spellcheck="false"></textarea>
@@ -288,37 +291,46 @@ const char LivePayload[] PROGMEM = R"=====(
         function validatePayload() {
             const payloadInput = document.getElementById('livePayloadInput');
             const validationStatus = document.getElementById('validationStatus');
-            const lines = payloadInput.value.split('\n');
-            let errors = [];
+            const text = payloadInput.value.trim(); // Get trimmed content first
 
             // Clear previous validation
             validationStatus.className = '';
             validationStatus.textContent = '';
+            validationStatus.title = '';
 
-            // Check each line for valid commands
+            // Check for empty payload (primary check)
+            if (text === '') {
+                validationStatus.className = 'validation-empty validation-text';
+                validationStatus.textContent = 'Empty payload';
+                return; // Exit early if empty
+            }
+
+            // Only proceed with line validation if there's content
+            const lines = text.split('\n');
+            let errors = [];
+
             lines.forEach((line, index) => {
                 line = line.trim();
                 if (!line) return; // Skip empty lines
 
-                // Split command and arguments
                 const parts = line.split(/\s+/);
                 const command = parts[0];
                 const args = parts.slice(1).join(' ');
 
-                // Validate known commands
-                if (!isValidCommand(command, args, index + 1)) {
-                    errors.push(`Line ${index + 1}: Invalid command "${command}"`);
+                const validationResult = isValidCommand(command, args, index + 1);
+                if (!validationResult.valid) {
+                    errors.push(`Line ${index + 1}: ${validationResult.message}`);
                 }
             });
 
             // Display validation results
             if (errors.length > 0) {
                 validationStatus.className = 'validation-error validation-text';
-                validationStatus.textContent = `${errors.length} error(s) found`;
+                validationStatus.textContent = errors.join('\n');
                 validationStatus.title = errors.join('\n');
             } else {
                 validationStatus.className = 'validation-ok validation-text';
-                validationStatus.textContent = 'Valid payload';
+                validationStatus.textContent = 'All commands are valid';
             }
         }
 
@@ -562,23 +574,32 @@ const char LivePayload[] PROGMEM = R"=====(
         }
 
         function validateCurrentLine(e) {
+            const textarea = document.getElementById('livePayloadInput');
+            const validationStatus = document.getElementById('validationStatus');
+            const content = textarea.value.trim();
+        
+            // Always handle auto-suggestion on any input
+            handleAutoSuggestion();
+        
+            // First check if the entire payload is empty
+            if (content === '') {
+                validationStatus.className = 'validation-empty validation-text';
+                validationStatus.textContent = 'Empty payload';
+                validationStatus.title = 'Empty payload';
+                return;
+            }
+        
+            const lines = textarea.value.split('\n');
+            const currentLineNumber = textarea.value.substr(0, textarea.selectionStart).split('\n').length;
+            const currentLine = lines[currentLineNumber - 1].trim();
+        
             // Only validate on certain input events
             const shouldValidate = e.inputType === 'insertLineBreak' || 
                                 e.inputType === 'insertText' || 
                                 e.inputType === 'deleteContentBackward';
-            
-            const textarea = document.getElementById('livePayloadInput');
-            const lines = textarea.value.split('\n');
-            const currentLineNumber = textarea.value.substr(0, textarea.selectionStart).split('\n').length;
-            const currentLine = lines[currentLineNumber - 1].trim();
-            
-            // Always handle auto-suggestion on any input
-            handleAutoSuggestion();
-            
+        
             if (!shouldValidate) return;
-            
-            const validationStatus = document.getElementById('validationStatus');
-            
+        
             // First validate the current line
             if (currentLine) {
                 const validationResult = isValidCommandLine(currentLine);
@@ -590,12 +611,12 @@ const char LivePayload[] PROGMEM = R"=====(
                     return;
                 }
             }
-            
+        
             // If the current line is valid, check for errors in any line of the payload
             for (let i = 0; i < lines.length; i++) {
                 const line = lines[i].trim();
                 if (!line) continue; // Skip empty lines
-                
+        
                 const validationResult = isValidCommandLine(line);
                 if (!validationResult.valid) {
                     const errorMsg = `Error in line ${i + 1}: ${validationResult.message}`;
@@ -605,7 +626,7 @@ const char LivePayload[] PROGMEM = R"=====(
                     return;
                 }
             }
-            
+        
             // If we get here, the entire payload is valid
             validationStatus.className = 'validation-ok validation-text';
             validationStatus.textContent = 'Valid';
@@ -696,17 +717,17 @@ const char LivePayload[] PROGMEM = R"=====(
 
         function runPayload() {
             const validationStatus = document.getElementById('validationStatus');
-        
+            const payloadContent = document.getElementById('livePayloadInput').value;
+
+            // Check for empty payload
+            if (payloadContent.trim() === '') {
+                showMessage('error', 'Payload content cannot be empty!');
+                return;
+            }
+
             // Check if there are validation errors
             if (validationStatus.classList.contains('validation-error')) {
                 showMessage('error', 'Please fix validation errors before running the payload');
-                return;
-            }
-            const payloadContent = document.getElementById('livePayloadInput').value;
-
-            if (!payloadContent) {
-                showMessage('error', 'Payload content cannot be empty!');
-                toggle.checked = false;
                 return;
             }
 
@@ -732,14 +753,21 @@ const char LivePayload[] PROGMEM = R"=====(
         }
 
         function showSavePayloadForm() {
-            const toggle = document.getElementById('toggleSave');
+            const validationStatus = document.getElementById('validationStatus');
             const payloadContent = document.getElementById('livePayloadInput').value;
-            
-            if (!payloadContent) {
+
+            // Check for empty payload
+            if (payloadContent.trim() === '') {
                 showMessage('error', 'Payload content cannot be empty!');
                 return;
             }
-            
+
+            // Check if there are validation errors
+            if (validationStatus.classList.contains('validation-error')) {
+                showMessage('error', 'Please fix validation errors before saving the payload');
+                return;
+            }
+
             document.getElementById('metadataForm').style.display = 'block';
             document.getElementById('metadataForm').scrollIntoView({ behavior: 'smooth' });
         }
@@ -749,17 +777,30 @@ const char LivePayload[] PROGMEM = R"=====(
         }
 
         function confirmSavePayload() {
+            const validationStatus = document.getElementById('validationStatus');
+
+            // Check if there are validation errors
+            if (validationStatus.classList.contains('validation-error')) {
+                showMessage('error', 'Please fix validation errors before saving the payload');
+                return;
+            }
+
             const payloadContent = document.getElementById('livePayloadInput').value;
             const payloadName = document.getElementById('payloadName').value;
             const payloadDesc = document.getElementById('payloadDescription').value;
             const payloadOS = document.getElementById('payloadOS').value;
 
+            // Additional check for empty payload
+            if (!payloadContent) {
+                showMessage('error', 'Payload content cannot be empty!');
+                return;
+            }
+
             const formData = new FormData();
             formData.append('livepayload', payloadContent);
             formData.append('payloadName', payloadName || 'Unnamed Payload');
             formData.append('payloadDescription', payloadDesc || 'No description provided');
-            formData.append('payloadOS', payloadOS || 'unKnown');
-            
+            formData.append('payloadOS', payloadOS || 'unknown');
 
             fetch('/runlivesave', {
                 method: 'POST',
@@ -824,12 +865,15 @@ const char LivePayload[] PROGMEM = R"=====(
                 updateLineNumbers();
             }, 100);
 
+            validatePayload();
+
             // Setup text area event handlers
             const payloadInput = document.getElementById('livePayloadInput');
 
             // Input event for content changes, validation, and line numbers
             payloadInput.addEventListener('input', function(e) {
                 updateLineNumbers();
+                validatePayload();
                 validateCurrentLine(e);
                 handleAutoSuggestion();
             });

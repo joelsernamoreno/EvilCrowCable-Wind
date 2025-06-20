@@ -244,7 +244,7 @@ const char AutoExecPlanning[] PROGMEM = R"=====(
                 macos: getPayloadForOS('macos'),
                 android: getPayloadForOS('android'),
                 nodetection: getPayloadForOS('nodetection')
-            };      
+            };
 
             fetch('/saveautoexecplan', {
                 method: 'POST',
@@ -256,7 +256,7 @@ const char AutoExecPlanning[] PROGMEM = R"=====(
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    showMessage('success', 'Auto execution plan saved! Will run once on next insertion.');
+                    showMessage('success', 'Auto execution plan saved! Will run on next USB insertion.');
                     autoExecEnabled = true;
                 } else {
                     showMessage('error', 'Failed to save auto execution plan.');

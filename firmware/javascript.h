@@ -1,52 +1,82 @@
 const char Redirect[] PROGMEM = R"=====(
 
+// Global variable to track navigation state
+let isNavigating = false;
+let connectionController = null;
+let navigationTimeout = null;
+
 function checkConnection() {
-    if (isNavigating) return;
-    // AbortController to prevent hanging
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 1000); // 1s timeout
-    fetch('/stats', { signal: controller.signal })
+    if (isNavigating) {
+        if (connectionController) {
+            connectionController.abort();
+        }
+        return;
+    }
+
+    // Abort any existing connection check
+    if (connectionController) {
+        connectionController.abort();
+    }
+
+    connectionController = new AbortController();
+    const timeoutId = setTimeout(() => connectionController.abort(), 1000);
+
+    fetch('/stats', { signal: connectionController.signal })
         .then(response => {
             clearTimeout(timeoutId);
-            // Update ALL status indicators (including home page stats)
-            document.querySelectorAll('.status-indicator').forEach(indicator => {
-                indicator.classList.remove('status-offline');
-                indicator.classList.add('status-online');
-            });
-
-            // Only update title indicators on NON-home pages
-            if (window.location.pathname !== '/') {
-                document.querySelectorAll('.cable-wind-logo').forEach(title => {
-                    title.classList.remove('offline');
-                    title.classList.add('online');
-                });
-            }
+            if (isNavigating) return;
+            updateConnectionStatus(true);
             return response.json();
         })
         .catch(error => {
             clearTimeout(timeoutId);
-            if (error.name !== 'AbortError') { 
-                document.querySelectorAll('.status-indicator').forEach(indicator => {
-                    indicator.classList.remove('status-online');
-                    indicator.classList.add('status-offline');
-                });
-
-                if (window.location.pathname !== '/') {
-                    document.querySelectorAll('.cable-wind-logo').forEach(title => {
-                        title.classList.remove('online');
-                        title.classList.add('offline');
-                    });
-                }
+            if (error.name !== 'AbortError' && !isNavigating) {
+                updateConnectionStatus(false);
             }
         })
         .then(data => {
-            if (document.location.pathname === '/') {
-                // Update home page stats (connection status remains here)
-                document.getElementById('uptime').innerText = data.uptime + ' seconds';
-                document.getElementById('cpu0').innerText = data.cpu0 + ' MHz';
-                // ... keep all other stat updates ...
+            if (data && document.location.pathname === '/' && !isNavigating) {
+                updateStats(data);
             }
         });
+}
+
+function updateConnectionStatus(isOnline) {
+    document.querySelectorAll('.status-indicator').forEach(indicator => {
+        indicator.classList.toggle('status-online', isOnline);
+        indicator.classList.toggle('status-offline', !isOnline);
+    });
+
+    if (window.location.pathname !== '/') {
+        document.querySelectorAll('.cable-wind-logo').forEach(title => {
+            title.classList.toggle('online', isOnline);
+            title.classList.toggle('offline', !isOnline);
+        });
+    }
+}
+
+function updateStats(data) {
+    document.getElementById('uptime').innerText = data.uptime + ' seconds';
+    document.getElementById('cpu0').innerText = data.cpu0 + ' MHz';
+    document.getElementById('cpu1').innerText = data.cpu1 + ' MHz';
+    document.getElementById('totalspiffs').innerText = formatBytes(data.totalspiffs);
+    document.getElementById('usedspiffs').innerText = formatBytes(data.usedspiffs);
+    document.getElementById('freespiffs').innerText = formatBytes(data.freespiffs);
+    document.getElementById('temperature').innerText = data.temperature.toFixed(1) + ' °C';
+    document.getElementById('totalram').innerText = formatBytes(data.totalram);
+    document.getElementById('freeram').innerText = formatBytes(data.freeram);
+    document.getElementById('os').innerText = data.os;
+    document.getElementById('ssid').innerText = data.ssid;
+    document.getElementById('ipaddress').innerText = data.ipaddress;
+}
+
+// Format bytes helper function
+function formatBytes(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
 setInterval(checkConnection, 5000);
@@ -123,15 +153,6 @@ function handleSubmit(event) {
     });
 }
 
-function debounce(func, wait) {
-  let timeout;
-  return function() {
-    const context = this, args = arguments;
-    clearTimeout(timeout);
-    timeout = setTimeout(() => func.apply(context, args), wait);
-  };
-}
-
 function showMessage(type, text) {
     const container = document.getElementById('global-toast') || document.createElement('div');
     if (!container.id) {
@@ -183,18 +204,41 @@ document.addEventListener('gesturestart', function(e) {
 });
 
 document.addEventListener("DOMContentLoaded", function () {
-    let isNavigating = false;
-    // --- Highlight the active navigation link ---
     const links = document.querySelectorAll("#menu a");
+
     links.forEach(link => {
         link.addEventListener('click', function(e) {
             if (this.classList.contains('active')) {
                 e.preventDefault();
                 return;
             }
+
+            // Clear any pending navigation timeout
+            if (navigationTimeout) {
+                clearTimeout(navigationTimeout);
+            }
+
+            // Set navigation flag and abort any ongoing connection check
             isNavigating = true;
+            if (connectionController) {
+                connectionController.abort();
+            }
+
+            // Add loading class to body
             document.body.classList.add('page-loading');
-            window.location.href = this.href;
+
+            // Set a timeout to ensure navigation happens even if something hangs
+            navigationTimeout = setTimeout(() => {
+                window.location.href = this.href;
+            }, 300); // 300ms delay to allow for cleanup
+
+            // For iOS, prevent default and use location.href after a small delay
+            if (/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) {
+                e.preventDefault();
+                setTimeout(() => {
+                    window.location.href = this.href;
+                }, 50);
+            }
         });
     });
 
@@ -227,5 +271,8 @@ document.addEventListener("DOMContentLoaded", function () {
             }, { timeout: 200 }); // Fallback if idle takes too long
         });
     }
+    // Reset navigation flag when page loads
+    isNavigating = false;
+    document.body.classList.remove('page-loading');
 });
 )=====";
