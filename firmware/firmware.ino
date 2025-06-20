@@ -1658,8 +1658,10 @@ void loop() {
   static bool osDetectionInProgress = false;
   static DynamicJsonDocument pendingAutoExecPlan(2048);
   static bool hasPendingPlan = false;
+  static bool firstRun = true;
 
-  if (!autoExecChecked && LittleFS.exists("/autoexec_plan.json")) {
+  if (firstRun && LittleFS.exists("/autoexec_plan.json")) {
+    firstRun = false;
     File file = LittleFS.open("/autoexec_plan.json", FILE_READ);
     if (file) {
       String content = file.readString();
