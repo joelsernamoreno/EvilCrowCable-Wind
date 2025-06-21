@@ -4,7 +4,7 @@
 
 **Idea, development and implementation:** Joel Serna (@JoelSernaMoreno).
 
-**Firmware collaborators:** Juraj Belko (@s_c_johnson) and rustysun9.
+**Firmware collaborators:** Juraj Belko (@s_c_johnson) rustysun9 and Marcejr117.
 
 **Payloads collaborators:** AndrzejRPiotrowski.
 
@@ -66,7 +66,7 @@ You can invite me to a coffee to further develop low-cost hacking devices. If yo
 	* Installation
 	* First steps with Evil Crow Cable Wind
 	* Home
-	* Live Payload
+	* Payload Editor
 	* Payload and Syntax Checker
 	* Detect OS
 	* Upload Payload
@@ -206,9 +206,9 @@ The Home page shows interesting information about the device.
 
 ![Home](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/home.png)
 
-## Live Payload
+## Payload Editor
 
-The Live Payload page allows you to run payloads or save payloads:
+The Payload Editor page allows you to run payloads, save payloads, or edit payloads stored in the device:
 
 * You can use the "Run Payload" option to run the payload.
 * You can use the "Save Payload" option to save the payload in memory. Optionally, you can add a descriptive name and a brief explanation of what the payload does.
