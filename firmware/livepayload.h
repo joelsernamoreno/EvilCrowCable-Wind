@@ -2,7 +2,7 @@ const char LivePayload[] PROGMEM = R"=====(
 <!DOCTYPE HTML>
 <html>
 <head>
-    <title>EvilCrowCable-Wind - Live Payload</title>
+    <title>EvilCrowCable-Wind - Payload Editor</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -16,7 +16,7 @@ const char LivePayload[] PROGMEM = R"=====(
         <input type='checkbox' id='responsive-menu'><label for='responsive-menu'></label>
         <ul>
             <li><a href='/'>Home</a></li>
-            <li><a href='/livepayload'>Live Payload</a></li>
+            <li><a href='/livepayload'>Payload Editor</a></li>
             <li><a href='/uploadpayload'>Upload Payload</a></li>
             <li><a href='/listpayloads'>List Payloads</a></li>
             <li><a href='/autoexecplanning'>AutoExec Planning</a></li>
@@ -24,11 +24,10 @@ const char LivePayload[] PROGMEM = R"=====(
         </ul>
     </nav>
 
-    <div class="cable-wind-logo">LIVE PAYLOAD</div>
+    <div class="cable-wind-logo">PAYLOAD EDITOR</div>
 
     <div class="view-container">
         <div class="form-group">
-            <label for="livePayloadInput">Payload Editor</label>
             <div class="validation-container">
                 <span id="validationStatus"></span>
             </div>
@@ -919,6 +918,69 @@ const char LivePayload[] PROGMEM = R"=====(
             });
         });
 
+        if (window.location.search.includes('edit=true')) {
+            const editPayloadContent = localStorage.getItem('editPayloadContent');
+            const editPayloadPath = localStorage.getItem('editPayloadPath')
+            if (editPayloadContent && editPayloadPath) {
+                document.getElementById('livePayloadInput').value = editPayloadContent;
+                updateLineNumbers();
+                validatePayload()
+                // Modify the save button to update existing payload
+                document.querySelector('button[onclick="showSavePayloadForm()"]').textContent = 'Save Changes';
+                document.querySelector('button[onclick="showSavePayloadForm()"]').onclick = function() {
+                    updateExistingPayload(editPayloadPath);
+                }
+                // Clean up localStorage
+                localStorage.removeItem('editPayloadContent');
+                localStorage.removeItem('editPayloadPath');
+            }
+        }
+        
+        function updateExistingPayload(filePath) {
+            const validationStatus = document.getElementById('validationStatus');
+            const payloadContent = document.getElementById('livePayloadInput').value;
+
+            // Check for empty payload
+            if (payloadContent.trim() === '') {
+                showMessage('error', 'Payload content cannot be empty!');
+                return;
+            }
+
+            // Check if there are validation errors
+            if (validationStatus.classList.contains('validation-error')) {
+                showMessage('error', 'Please fix validation errors before saving changes');
+                return;
+            }
+
+            fetch('/updatepayload', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    path: filePath, 
+                    content: payloadContent 
+                })
+            })
+            .then(handleUpdateResponse)
+            .catch(handleUpdateError);
+        }
+
+        function handleUpdateResponse(response) {
+            if (!response.ok) {
+                return response.text().then(text => { throw new Error(text) });
+            }
+            return response.json().then(data => {
+                if (data.success) {
+                    showMessage('success', 'Payload updated successfully!');
+                } else {
+                    showMessage('error', data.message || 'Update failed');
+                }
+            });
+        }
+
+        function handleUpdateError(error) {
+            console.error('Update error:', error);
+            showMessage('error', `Update failed: ${error.message}`);
+        }
     </script>
 </body>
 </html>

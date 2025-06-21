@@ -504,6 +504,43 @@ String readPayloadMetadata(const String &filename, MetadataField field) {
     }
 }
 
+void handleUpdatePayload() {
+    if (controlserver.hasArg("plain")) {
+        DynamicJsonDocument doc(1024);
+        DeserializationError error = deserializeJson(doc, controlserver.arg("plain"));
+
+        if (error) {
+            controlserver.send(400, "application/json", 
+                "{\"success\":false,\"message\":\"Invalid JSON\"}");
+            return;
+        }
+
+        String path = doc["path"] | "";
+        String content = doc["content"] | "";
+
+        if (path.isEmpty() || content.isEmpty()) {
+            controlserver.send(400, "application/json", 
+                "{\"success\":false,\"message\":\"Missing path or content\"}");
+            return;
+        }
+
+        File file = LittleFS.open(path, "w");
+        if (!file) {
+            controlserver.send(500, "application/json", 
+                "{\"success\":false,\"message\":\"Failed to open file\"}");
+            return;
+        }
+
+        file.print(content);
+        file.close();
+        controlserver.send(200, "application/json", 
+            "{\"success\":true,\"message\":\"Payload updated\"}");
+    } else {
+        controlserver.send(400, "application/json", 
+            "{\"success\":false,\"message\":\"No data received\"}");
+    }
+}
+
 // Updated handleFileUpload to properly handle multi-line descriptions
 void handleFileUpload() {
   HTTPUpload &upload = controlserver.upload();
@@ -1642,6 +1679,7 @@ void setup() {
   controlserver.on("/gethostname", handleGetHostname);
   controlserver.on("/updatebackupwifi", HTTP_POST, handleUpdateBackupWiFi);
   controlserver.on("/deletebackupwificonfig", HTTP_POST, handleDeleteBackupWiFiConfig);
+  controlserver.on("/updatepayload", HTTP_POST, handleUpdatePayload);
 
   httpUpdater.setup(&controlserver);
   controlserver.begin();

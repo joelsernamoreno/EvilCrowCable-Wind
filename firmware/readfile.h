@@ -47,6 +47,12 @@ const char StaticFileList[] PROGMEM = R"=====(
         .toggle-icon {
             transition: transform 0.3s;
             margin-left: 10px;
+            font-size: 1.2em;
+        }
+        #payloadContent {
+            background-color: rgba(0, 0, 0, 0.5);
+            color: var(--secondary);
+            cursor: default;
         }
     </style>
 </head>
@@ -56,7 +62,7 @@ const char StaticFileList[] PROGMEM = R"=====(
         <input type='checkbox' id='responsive-menu'><label for='responsive-menu'></label>
         <ul>
             <li><a href='/'>Home</a></li>
-            <li><a href='/livepayload'>Live Payload</a></li>
+            <li><a href='/livepayload'>Payload Editor</a></li>
             <li><a href='/uploadpayload'>Upload Payload</a></li>
             <li><a href='/listpayloads'>List Payloads</a></li>
             <li><a href='/autoexecplanning'>AutoExec Planning</a></li>
@@ -70,7 +76,7 @@ const char StaticFileList[] PROGMEM = R"=====(
         <h3>{{path}}:</h3>
 
         <div class="form-group">
-            <textarea id="payloadContent" class="terminal-style" name="payloadContent" spellcheck="false">{{payloadContent}}</textarea>
+            <textarea id="payloadContent" class="terminal-style" name="payloadContent" spellcheck="false" readonly>{{payloadContent}}</textarea>
         </div>
 
         <!-- Payload Description Section -->
@@ -85,7 +91,7 @@ const char StaticFileList[] PROGMEM = R"=====(
         </div>
 
         <div class="button-container">
-            <button type="button" onclick="savePayloadChanges()">Save Changes</button>
+            <button type="button" onclick="editPayload()">Edit Payload</button>
             <button type="button" onclick="runPayloadFromViewer()">Run Payload</button>
             <button type="button" onclick="deletePayload()" style="background: linear-gradient(135deg, var(--error), #cc0022);">Delete Payload</button>
         </div>
@@ -97,7 +103,7 @@ const char StaticFileList[] PROGMEM = R"=====(
             const icon = document.querySelector('.payload-description-header .toggle-icon');
 
             content.classList.toggle('expanded');
-            icon.style.transform = content.classList.contains('expanded') ? 'rotate(180deg)' : 'rotate(0)';
+            icon.textContent = content.classList.contains('expanded') ? '▲' : '▼';
 
             // Adjust max-height based on content
             if (content.classList.contains('expanded')) {
@@ -107,32 +113,16 @@ const char StaticFileList[] PROGMEM = R"=====(
             }
         }
 
-        function savePayloadChanges() {
+        function editPayload() {
             const payloadContent = document.getElementById('payloadContent').value;
             const path = '{{path}}';
 
-            fetch('/updatepayload', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    path: path,
-                    content: payloadContent
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showMessage('success', 'Payload updated successfully!');
-                } else {
-                    showMessage('error', data.message || 'Failed to update payload');
-                }
-            })
-            .catch(error => {
-                showMessage('error', 'Error updating payload');
-                console.error('Error:', error);
-            });
+            // Store the payload content and path in localStorage
+            localStorage.setItem('editPayloadContent', payloadContent);
+            localStorage.setItem('editPayloadPath', path);
+
+            // Redirect to livepayload with edit mode
+            window.location.href = '/livepayload?edit=true';
         }
 
         function runPayloadFromViewer() {
@@ -212,50 +202,7 @@ const char StaticFileList[] PROGMEM = R"=====(
                 setTimeout(() => toast.remove(), 300);
             };
         }
-        document.getElementById('runPayloadCheckbox').addEventListener('change', function() {
-            handleToggle('/dopayload', this.checked);
-        });
 
-        document.getElementById('deletePayloadCheckbox').addEventListener('change', function() {
-            if (this.checked) {
-                if (confirm('Are you sure you want to delete this payload?')) {
-                    handleDelete('/deletepayload', this.checked);
-                } else {
-                    this.checked = false;
-                }
-            }
-        });
-
-        async function handleToggle(url, checked) {
-            if (checked) {
-                let response = await fetch(url, {
-                    method: 'POST',
-                    body: new URLSearchParams({configmodule:'{{path}}'})
-                });
-                let message = await response.text();
-                showMessage('success', message);
-
-                setTimeout(function() {
-                    document.getElementById('runPayloadCheckbox').checked = false;
-                }, 2000); 
-            }
-        }
-
-        async function handleDelete(url, checked) {
-            if (checked) {
-                let response = await fetch(url, {
-                    method: 'POST',
-                    body: new URLSearchParams({configmodule:'{{path}}'})
-                });
-                let message = await response.text();
-                showMessage('success', message);
-
-                setTimeout(function() {
-                    window.location.href = '/listpayloads';
-                }, 1000);
-            }
-        }
-        
         // Initialize with description collapsed
         document.addEventListener('DOMContentLoaded', function() {
             const descriptionContent = document.getElementById('payloadDescriptionContent');
