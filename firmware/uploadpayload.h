@@ -16,7 +16,7 @@ const char UploadPayload[] PROGMEM = R"=====(
         <input type='checkbox' id='responsive-menu'><label for='responsive-menu'></label>
         <ul>
             <li><a href='/'>Home</a></li>
-            <li><a href='/livepayload'>Live Payload</a></li>
+            <li><a href='/livepayload'>Payload Editor</a></li>
             <li><a href='/uploadpayload'>Upload Payload</a></li>
             <li><a href='/listpayloads'>List Payloads</a></li>
             <li><a href='/autoexecplanning'>AutoExec Planning</a></li>
@@ -34,7 +34,20 @@ const char UploadPayload[] PROGMEM = R"=====(
             </div>
             <div class="form-group">
                 <label for="payloadDescription">Description:</label>
-                <textarea id="payloadDescription" name="payloadDescription" placeholder="Enter a brief description" rows="3" class="terminal-style"></textarea>
+                <textarea id="payloadDescription" name="payloadDescription" 
+                          placeholder="Write a short description" 
+                          rows="5" class="terminal-style"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="payloadOS">Target OS:</label>
+                <select id="payloadOS" class="styled-select" name="payloadOS" required>
+                  <option value="unknown">Select OS</option>
+                  <option value="windows">Windows</option>
+                  <option value="linux">Linux</option>
+                  <option value="android">Android</option>
+                  <option value="macos">macOS</option>
+                  <option value="ios">iOS</option>
+                </select>
             </div>
             <div class="form-group">
                 <label for="uploadFile">Payload File (.txt only):</label>

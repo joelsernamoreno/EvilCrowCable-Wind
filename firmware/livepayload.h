@@ -2,7 +2,7 @@ const char LivePayload[] PROGMEM = R"=====(
 <!DOCTYPE HTML>
 <html>
 <head>
-    <title>EvilCrowCable-Wind - Live Payload</title>
+    <title>EvilCrowCable-Wind - Payload Editor</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -16,7 +16,7 @@ const char LivePayload[] PROGMEM = R"=====(
         <input type='checkbox' id='responsive-menu'><label for='responsive-menu'></label>
         <ul>
             <li><a href='/'>Home</a></li>
-            <li><a href='/livepayload'>Live Payload</a></li>
+            <li><a href='/livepayload'>Payload Editor</a></li>
             <li><a href='/uploadpayload'>Upload Payload</a></li>
             <li><a href='/listpayloads'>List Payloads</a></li>
             <li><a href='/autoexecplanning'>AutoExec Planning</a></li>
@@ -24,11 +24,13 @@ const char LivePayload[] PROGMEM = R"=====(
         </ul>
     </nav>
 
-    <div class="cable-wind-logo">LIVE PAYLOAD</div>
+    <div class="cable-wind-logo">PAYLOAD EDITOR</div>
 
     <div class="view-container">
         <div class="form-group">
-            <label for="livePayloadInput">Payload Editor: <span id="validationStatus"></span></label>
+            <div class="validation-container">
+                <span id="validationStatus"></span>
+            </div>
             <div class="payload-editor-container">
                 <div id="lineNumbers" class="line-numbers"></div>
                 <textarea id="livePayloadInput" class="terminal-style" name="livepayload" spellcheck="false"></textarea>
@@ -49,6 +51,17 @@ const char LivePayload[] PROGMEM = R"=====(
             <div class="form-group">
                 <label for="payloadDescription">Description:</label>
                 <textarea id="payloadDescription" name="payloadDescription" placeholder="Enter a brief description" rows="3" class="terminal-style"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="payloadOS">Target OS:</label>
+                <select id="payloadOS" class="styled-select" name="payloadOS" required>
+                  <option value="unknown">Select OS</option>
+                  <option value="windows">Windows</option>
+                  <option value="linux">Linux</option>
+                  <option value="android">Android</option>
+                  <option value="macos">macOS</option>
+                  <option value="ios">iOS</option>
+                </select>
             </div>
             <div class="button-container">
                 <button type="button" onclick="confirmSavePayload()">Confirm Save</button>
@@ -277,37 +290,46 @@ const char LivePayload[] PROGMEM = R"=====(
         function validatePayload() {
             const payloadInput = document.getElementById('livePayloadInput');
             const validationStatus = document.getElementById('validationStatus');
-            const lines = payloadInput.value.split('\n');
-            let errors = [];
+            const text = payloadInput.value.trim(); // Get trimmed content first
 
             // Clear previous validation
             validationStatus.className = '';
             validationStatus.textContent = '';
+            validationStatus.title = '';
 
-            // Check each line for valid commands
+            // Check for empty payload (primary check)
+            if (text === '') {
+                validationStatus.className = 'validation-empty validation-text';
+                validationStatus.textContent = 'Empty payload';
+                return; // Exit early if empty
+            }
+
+            // Only proceed with line validation if there's content
+            const lines = text.split('\n');
+            let errors = [];
+
             lines.forEach((line, index) => {
                 line = line.trim();
                 if (!line) return; // Skip empty lines
 
-                // Split command and arguments
                 const parts = line.split(/\s+/);
                 const command = parts[0];
                 const args = parts.slice(1).join(' ');
 
-                // Validate known commands
-                if (!isValidCommand(command, args, index + 1)) {
-                    errors.push(`Line ${index + 1}: Invalid command "${command}"`);
+                const validationResult = isValidCommand(command, args, index + 1);
+                if (!validationResult.valid) {
+                    errors.push(`Line ${index + 1}: ${validationResult.message}`);
                 }
             });
 
             // Display validation results
             if (errors.length > 0) {
                 validationStatus.className = 'validation-error validation-text';
-                validationStatus.textContent = `${errors.length} error(s) found`;
+                validationStatus.textContent = errors.join('\n');
                 validationStatus.title = errors.join('\n');
             } else {
                 validationStatus.className = 'validation-ok validation-text';
-                validationStatus.textContent = 'Valid payload';
+                validationStatus.textContent = 'All commands are valid';
             }
         }
 
@@ -532,28 +554,51 @@ const char LivePayload[] PROGMEM = R"=====(
             const lineNumbers = document.getElementById('lineNumbers');
             const lines = textarea.value.split('\n');
 
-            lineNumbers.innerHTML = lines.map((_, i) => `<div>${i + 1}</div>`).join('');
+            // Get computed styles for accurate measurements
+            const textareaStyle = getComputedStyle(textarea);
+            const lineHeight = parseFloat(textareaStyle.lineHeight);
+            const paddingTop = parseFloat(textareaStyle.paddingTop);
+            const paddingBottom = parseFloat(textareaStyle.paddingBottom);
+
+            // Calculate total height needed
+            const totalHeight = lines.length * lineHeight + paddingTop + paddingBottom;
+
+            // Generate line numbers HTML
+            lineNumbers.innerHTML = Array(lines.length).fill().map((_, i) => 
+                `<div style="height: ${lineHeight}px; line-height: ${lineHeight}px">${i + 1}</div>`
+            ).join('');
+
+            // Sync scroll positions
             lineNumbers.scrollTop = textarea.scrollTop;
         }
 
         function validateCurrentLine(e) {
+            const textarea = document.getElementById('livePayloadInput');
+            const validationStatus = document.getElementById('validationStatus');
+            const content = textarea.value.trim();
+        
+            // Always handle auto-suggestion on any input
+            handleAutoSuggestion();
+        
+            // First check if the entire payload is empty
+            if (content === '') {
+                validationStatus.className = 'validation-empty validation-text';
+                validationStatus.textContent = 'Empty payload';
+                validationStatus.title = 'Empty payload';
+                return;
+            }
+        
+            const lines = textarea.value.split('\n');
+            const currentLineNumber = textarea.value.substr(0, textarea.selectionStart).split('\n').length;
+            const currentLine = lines[currentLineNumber - 1].trim();
+        
             // Only validate on certain input events
             const shouldValidate = e.inputType === 'insertLineBreak' || 
                                 e.inputType === 'insertText' || 
                                 e.inputType === 'deleteContentBackward';
-            
-            const textarea = document.getElementById('livePayloadInput');
-            const lines = textarea.value.split('\n');
-            const currentLineNumber = textarea.value.substr(0, textarea.selectionStart).split('\n').length;
-            const currentLine = lines[currentLineNumber - 1].trim();
-            
-            // Always handle auto-suggestion on any input
-            handleAutoSuggestion();
-            
+        
             if (!shouldValidate) return;
-            
-            const validationStatus = document.getElementById('validationStatus');
-            
+        
             // First validate the current line
             if (currentLine) {
                 const validationResult = isValidCommandLine(currentLine);
@@ -565,12 +610,12 @@ const char LivePayload[] PROGMEM = R"=====(
                     return;
                 }
             }
-            
+        
             // If the current line is valid, check for errors in any line of the payload
             for (let i = 0; i < lines.length; i++) {
                 const line = lines[i].trim();
                 if (!line) continue; // Skip empty lines
-                
+        
                 const validationResult = isValidCommandLine(line);
                 if (!validationResult.valid) {
                     const errorMsg = `Error in line ${i + 1}: ${validationResult.message}`;
@@ -580,7 +625,7 @@ const char LivePayload[] PROGMEM = R"=====(
                     return;
                 }
             }
-            
+        
             // If we get here, the entire payload is valid
             validationStatus.className = 'validation-ok validation-text';
             validationStatus.textContent = 'Valid';
@@ -625,9 +670,6 @@ const char LivePayload[] PROGMEM = R"=====(
                 }
             }
         }
-
-        // No longer showing visual suggestion element
-        // This simplifies the editor experience while still enabling Tab completion
         
         function handleTabCompletion(e) {
             if (e.key === 'Tab') {
@@ -674,17 +716,17 @@ const char LivePayload[] PROGMEM = R"=====(
 
         function runPayload() {
             const validationStatus = document.getElementById('validationStatus');
-        
+            const payloadContent = document.getElementById('livePayloadInput').value;
+
+            // Check for empty payload
+            if (payloadContent.trim() === '') {
+                showMessage('error', 'Payload content cannot be empty!');
+                return;
+            }
+
             // Check if there are validation errors
             if (validationStatus.classList.contains('validation-error')) {
                 showMessage('error', 'Please fix validation errors before running the payload');
-                return;
-            }
-            const payloadContent = document.getElementById('livePayloadInput').value;
-
-            if (!payloadContent) {
-                showMessage('error', 'Payload content cannot be empty!');
-                toggle.checked = false;
                 return;
             }
 
@@ -710,14 +752,21 @@ const char LivePayload[] PROGMEM = R"=====(
         }
 
         function showSavePayloadForm() {
-            const toggle = document.getElementById('toggleSave');
+            const validationStatus = document.getElementById('validationStatus');
             const payloadContent = document.getElementById('livePayloadInput').value;
-            
-            if (!payloadContent) {
+
+            // Check for empty payload
+            if (payloadContent.trim() === '') {
                 showMessage('error', 'Payload content cannot be empty!');
                 return;
             }
-            
+
+            // Check if there are validation errors
+            if (validationStatus.classList.contains('validation-error')) {
+                showMessage('error', 'Please fix validation errors before saving the payload');
+                return;
+            }
+
             document.getElementById('metadataForm').style.display = 'block';
             document.getElementById('metadataForm').scrollIntoView({ behavior: 'smooth' });
         }
@@ -727,14 +776,30 @@ const char LivePayload[] PROGMEM = R"=====(
         }
 
         function confirmSavePayload() {
+            const validationStatus = document.getElementById('validationStatus');
+
+            // Check if there are validation errors
+            if (validationStatus.classList.contains('validation-error')) {
+                showMessage('error', 'Please fix validation errors before saving the payload');
+                return;
+            }
+
             const payloadContent = document.getElementById('livePayloadInput').value;
             const payloadName = document.getElementById('payloadName').value;
             const payloadDesc = document.getElementById('payloadDescription').value;
-            
+            const payloadOS = document.getElementById('payloadOS').value;
+
+            // Additional check for empty payload
+            if (!payloadContent) {
+                showMessage('error', 'Payload content cannot be empty!');
+                return;
+            }
+
             const formData = new FormData();
             formData.append('livepayload', payloadContent);
             formData.append('payloadName', payloadName || 'Unnamed Payload');
             formData.append('payloadDescription', payloadDesc || 'No description provided');
+            formData.append('payloadOS', payloadOS || 'unknown');
 
             fetch('/runlivesave', {
                 method: 'POST',
@@ -749,6 +814,7 @@ const char LivePayload[] PROGMEM = R"=====(
                 document.getElementById('metadataForm').style.display = 'none';
                 document.getElementById('payloadName').value = '';
                 document.getElementById('payloadDescription').value = '';
+                document.getElementById('payloadOS').value = '';
             })
             .catch(error => {
                 showMessage('error', 'Error saving payload.');
@@ -794,6 +860,36 @@ const char LivePayload[] PROGMEM = R"=====(
         document.addEventListener('DOMContentLoaded', function() {
             updateLineNumbers();
 
+            setTimeout(() => {
+                updateLineNumbers();
+            }, 100);
+
+            validatePayload();
+
+            // Setup text area event handlers
+            const payloadInput = document.getElementById('livePayloadInput');
+
+            // Input event for content changes, validation, and line numbers
+            payloadInput.addEventListener('input', function(e) {
+                updateLineNumbers();
+                validatePayload();
+                validateCurrentLine(e);
+                handleAutoSuggestion();
+            });
+
+            // Key events for tab completion
+            payloadInput.addEventListener('keydown', handleTabCompletion);
+
+            // Scroll event for line number sync - improved
+            payloadInput.addEventListener('scroll', function() {
+                const lineNumbers = document.getElementById('lineNumbers');
+                lineNumbers.scrollTop = this.scrollTop;
+            });
+            // Clear current suggestion on blur
+            payloadInput.addEventListener('blur', function() {
+                currentSuggestion = null;
+            });
+
             // Command cell click handlers
             document.querySelectorAll('.command-cell').forEach(cell => {
                 cell.addEventListener('click', function() {
@@ -820,29 +916,71 @@ const char LivePayload[] PROGMEM = R"=====(
 
                 cell.style.cursor = 'pointer';
             });
-
-            // Setup text area event handlers
-            const payloadInput = document.getElementById('livePayloadInput');
-            
-            // Input event for content changes, validation, and line numbers
-            payloadInput.addEventListener('input', function(e) {
-                updateLineNumbers();
-                validateCurrentLine(e);
-                handleAutoSuggestion();
-            });
-            
-            // Key events for tab completion
-            payloadInput.addEventListener('keydown', handleTabCompletion);
-            
-            // Scroll event for line number sync
-            payloadInput.addEventListener('scroll', updateLineNumbers);
-            
-            // Clear current suggestion on blur
-            payloadInput.addEventListener('blur', function() {
-                currentSuggestion = null;
-            });
         });
 
+        if (window.location.search.includes('edit=true')) {
+            const editPayloadContent = localStorage.getItem('editPayloadContent');
+            const editPayloadPath = localStorage.getItem('editPayloadPath')
+            if (editPayloadContent && editPayloadPath) {
+                document.getElementById('livePayloadInput').value = editPayloadContent;
+                updateLineNumbers();
+                validatePayload()
+                // Modify the save button to update existing payload
+                document.querySelector('button[onclick="showSavePayloadForm()"]').textContent = 'Save Changes';
+                document.querySelector('button[onclick="showSavePayloadForm()"]').onclick = function() {
+                    updateExistingPayload(editPayloadPath);
+                }
+                // Clean up localStorage
+                localStorage.removeItem('editPayloadContent');
+                localStorage.removeItem('editPayloadPath');
+            }
+        }
+        
+        function updateExistingPayload(filePath) {
+            const validationStatus = document.getElementById('validationStatus');
+            const payloadContent = document.getElementById('livePayloadInput').value;
+
+            // Check for empty payload
+            if (payloadContent.trim() === '') {
+                showMessage('error', 'Payload content cannot be empty!');
+                return;
+            }
+
+            // Check if there are validation errors
+            if (validationStatus.classList.contains('validation-error')) {
+                showMessage('error', 'Please fix validation errors before saving changes');
+                return;
+            }
+
+            fetch('/updatepayload', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    path: filePath, 
+                    content: payloadContent 
+                })
+            })
+            .then(handleUpdateResponse)
+            .catch(handleUpdateError);
+        }
+
+        function handleUpdateResponse(response) {
+            if (!response.ok) {
+                return response.text().then(text => { throw new Error(text) });
+            }
+            return response.json().then(data => {
+                if (data.success) {
+                    showMessage('success', 'Payload updated successfully!');
+                } else {
+                    showMessage('error', data.message || 'Update failed');
+                }
+            });
+        }
+
+        function handleUpdateError(error) {
+            console.error('Update error:', error);
+            showMessage('error', `Update failed: ${error.message}`);
+        }
     </script>
 </body>
 </html>

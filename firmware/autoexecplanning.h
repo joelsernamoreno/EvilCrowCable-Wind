@@ -16,7 +16,7 @@ const char AutoExecPlanning[] PROGMEM = R"=====(
         <input type='checkbox' id='responsive-menu'><label for='responsive-menu'></label>
         <ul>
             <li><a href='/'>Home</a></li>
-            <li><a href='/livepayload'>Live Payload</a></li>
+            <li><a href='/livepayload'>Payload Editor</a></li>
             <li><a href='/uploadpayload'>Upload Payload</a></li>
             <li><a href='/listpayloads'>List Payloads</a></li>
             <li><a href='/autoexecplanning'>AutoExec Planning</a></li>
@@ -256,7 +256,7 @@ const char AutoExecPlanning[] PROGMEM = R"=====(
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    showMessage('success', 'Auto execution plan saved and enabled!');
+                    showMessage('success', 'Auto execution plan saved! Will run on next USB insertion.');
                     autoExecEnabled = true;
                 } else {
                     showMessage('error', 'Failed to save auto execution plan.');
