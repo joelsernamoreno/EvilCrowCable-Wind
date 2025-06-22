@@ -1,6 +1,7 @@
 #include <WiFiClient.h>
 #include <WiFi.h>
 #include <ESPmDNS.h>
+#include <DNSServer.h>
 #include <WiFiServer.h>
 #include <WebServer.h>
 #include <LittleFS.h>
@@ -20,8 +21,8 @@
 #include <map>
 
 // Config default SSID, password and channel
-String ssid = "Evil Crow Cable Wind";  // Enter your SSID here
-String password = "123456789";         //Enter your Password here
+String ssid = "";   // Enter your SSID here
+String password = "";  //Enter your Password here
 char *serverIP;
 int serverPort = 4444;
 
@@ -58,6 +59,7 @@ WebServer controlserver(80);
 WiFiServer tcpServer(12345);
 WiFiClient clientServer;
 HTTPUpdateServer httpUpdater;
+DNSServer dnsServer;
 USBCDC USBSerial;
 USBHIDKeyboard Keyboard;
 
@@ -1249,6 +1251,12 @@ void handleDeletePayload() {
 }
 
 void setup() {
+  Serial.begin(115200);
+  Serial.println("EvilCrowCable" ); 
+  Serial.printf("arduino_version: %d.%d.%d\n" ,ESP_ARDUINO_VERSION_MAJOR,ESP_ARDUINO_VERSION_MINOR,ESP_ARDUINO_VERSION_PATCH);
+  Serial.printf("esp_idf_version: %d.%d.%d\n" ,ESP_IDF_VERSION_MAJOR ,ESP_IDF_VERSION_MINOR,ESP_IDF_VERSION_PATCH);
+  Serial.printf("Build Date: " __DATE__ " " __TIME__ "\n");
+
   USB.onEvent(usbEventCallback);
   Keyboard.onEvent(usbEventCallback);
   USBSerial.onEvent(usbEventCallback);
@@ -1318,8 +1326,54 @@ void setup() {
       fsUploadFile.close();
     }
   }
+  Serial.println("Start Wifi");
+  Serial.println( ssid );
+  Serial.println( password );
+//  WiFi.begin(ssid.c_str(), password.c_str());
+  // Access Point
+  String hostname = "cable-wind"; 
+  bool WiFiConected = false;
+  WiFi.hostname(hostname);
+  if (ssid.length() > 0 && ( password.length() >= 8 || password.length() == 0))
+  {
+      Serial.printf("Connecting to  \"%s\":\"%s\"\n", ssid, password);
+      WiFi.begin(ssid, password);
+      for (uint8_t i = 0; i < 20 && !WiFiConected; i++)
+      { // wait 10 seconds
+          if (WiFi.status() != WL_CONNECTED)
+              delay(500);
+          else
+              WiFiConected = true;
+      }
+      if (!WiFiConected)
+          Serial.printf("Connecting to  \"%s\":\"%s\" Failed\n", ssid, password);
+#if not defined(CONFIG_BT_BLE_ENABLED)
+#if not defined(ESP8266)
+      esp_wifi_set_ps(WIFI_PS_NONE); // Esp32 enters the power saving mode by default,
+#endif
+#endif
+  }
+  if (!WiFiConected)
+  {
+      // WiFi.mode(WIFI_AP_STA);
+      String apssid="EvilCrowCable";
+      String apPassword="";
+      IPAddress apIP(192, 168, 4, 1);
+      WiFi.softAP(apssid, apPassword);
+      WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
+      Serial.printf("Started Access Point \"%s\":\"%s\" 192.168.4.1\n", apssid, apPassword);
 
-  WiFi.begin(ssid.c_str(), password.c_str());
+      dnsServer.setTTL(300);
+      dnsServer.setErrorReplyCode(DNSReplyCode::ServerFailure);
+
+      /* Setup the DNS server redirecting all the domains to the apIP */
+      //dnsServer.setErrorReplyCode(DNSReplyCode::NoError);
+      //dnsServer->start(DNS_PORT, F("*"), WiFi.softAPIP());
+      // This will connect to the EvilCrowCable
+      dnsServer.start(53, F("*"), apIP);
+  }
+
+  Serial.println("End Wifi");
   unsigned long startAttemptTime = millis();
 
   // Try primary WiFi for 10 seconds
@@ -1327,7 +1381,7 @@ void setup() {
     delay(500);
   }
 
-  String hostname = "cable-wind";
+  //String hostname = "cable-wind";
   if (LittleFS.exists("/hostname_config.txt")) {
     File fsUploadFile = LittleFS.open("/hostname_config.txt", FILE_READ);
     if (fsUploadFile) {
