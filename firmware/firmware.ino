@@ -24,6 +24,10 @@ String ssid = "Evil Crow Cable Wind";  // Enter your SSID here
 String password = "123456789";         //Enter your Password here
 char *serverIP;
 int serverPort = 4444;
+// WiFi monitoring variables
+unsigned long lastWifiCheckTime = 0;
+const unsigned long wifiCheckInterval = 60000; // 1 minute
+bool wifiConnected = false;
 
 // Global variables
 String cmd;
@@ -664,6 +668,78 @@ void handleStats() {
   json += ",\"ipaddress\":\"" + WiFi.localIP().toString() + "\"";
   json += "}";
   controlserver.send(200, "application/json", json);
+}
+
+void connectToWiFi() {
+  // Disconnect first if currently connected
+  if (WiFi.status() == WL_CONNECTED) {
+    WiFi.disconnect();
+    delay(1000);
+  }
+
+  // Try primary WiFi for 10 seconds
+  if (LittleFS.exists("/wifi_config.txt")) {
+    File fsUploadFile = LittleFS.open("/wifi_config.txt", FILE_READ);
+    if (fsUploadFile) {
+      String primarySSID = fsUploadFile.readStringUntil('\n');
+      primarySSID.trim();
+      String primaryPassword = fsUploadFile.readStringUntil('\n');
+      primaryPassword.trim();
+      fsUploadFile.close();
+
+      WiFi.begin(primarySSID.c_str(), primaryPassword.c_str());
+      unsigned long startAttemptTime = millis();
+
+      while (WiFi.status() != WL_CONNECTED && millis() - startAttemptTime < 10000) {
+        delay(500);
+      }
+    }
+  }
+
+  // If primary WiFi failed, try backup WiFi if it exists
+  if (WiFi.status() != WL_CONNECTED && LittleFS.exists("/wifi_backup_config.txt")) {
+    File file = LittleFS.open("/wifi_backup_config.txt", FILE_READ);
+    if (file) {
+      String backupSSID = file.readStringUntil('\n');
+      backupSSID.trim();
+      String backupPassword = file.readStringUntil('\n');
+      backupPassword.trim();
+      file.close();
+
+      WiFi.begin(backupSSID.c_str(), backupPassword.c_str());
+      unsigned long startAttemptTime = millis();
+
+      while (WiFi.status() != WL_CONNECTED && millis() - startAttemptTime < 10000) {
+        delay(500);
+      }
+    }
+  }
+
+  // Initialize MDNS and TCP server if connected
+  if (WiFi.status() == WL_CONNECTED) {
+    String hostname = "cable-wind";
+    if (LittleFS.exists("/hostname_config.txt")) {
+      File fsUploadFile = LittleFS.open("/hostname_config.txt", FILE_READ);
+      if (fsUploadFile) {
+        hostname = fsUploadFile.readStringUntil('\n');
+        hostname.trim();
+        fsUploadFile.close();
+      }
+    }
+
+    // Stop any existing MDNS before restarting
+    MDNS.end();
+
+    if (!MDNS.begin(hostname.c_str())) {
+      Serial.println("Error setting up MDNS responder!");
+    }
+
+    tcpServer.begin();
+    wifiConnected = true;
+  } else {
+    wifiConnected = false;
+    MDNS.end();
+  }
 }
 
 void handleUpdateHostname() {
@@ -1308,77 +1384,7 @@ void setup() {
     }
   }
 
-  if (LittleFS.exists("/wifi_config.txt")) {
-    File fsUploadFile = LittleFS.open("/wifi_config.txt", FILE_READ);
-    if (fsUploadFile) {
-      ssid = fsUploadFile.readStringUntil('\n');
-      ssid.trim();
-      password = fsUploadFile.readStringUntil('\n');
-      password.trim();
-      fsUploadFile.close();
-    }
-  }
-
-  WiFi.begin(ssid.c_str(), password.c_str());
-  unsigned long startAttemptTime = millis();
-
-  // Try primary WiFi for 10 seconds
-  while (WiFi.status() != WL_CONNECTED && millis() - startAttemptTime < 10000) {
-    delay(500);
-  }
-
-  String hostname = "cable-wind";
-  if (LittleFS.exists("/hostname_config.txt")) {
-    File fsUploadFile = LittleFS.open("/hostname_config.txt", FILE_READ);
-    if (fsUploadFile) {
-      hostname = fsUploadFile.readStringUntil('\n');
-      hostname.trim();
-      fsUploadFile.close();
-    }
-  }
-
-  if (!MDNS.begin(hostname.c_str())) {
-    while (1) {
-      delay(1000);
-    }
-  }
-
-  // If primary WiFi failed, try backup WiFi if it exists
-  if (WiFi.status() != WL_CONNECTED && LittleFS.exists("/wifi_backup_config.txt")) {
-    File file = LittleFS.open("/wifi_backup_config.txt", FILE_READ);
-    if (file) {
-      String backupSSID = file.readStringUntil('\n');
-      backupSSID.trim();
-      String backupPassword = file.readStringUntil('\n');
-      backupPassword.trim();
-      file.close();
-
-      WiFi.begin(backupSSID.c_str(), backupPassword.c_str());
-      startAttemptTime = millis();
-
-      // Try backup WiFi for 10 seconds
-      while (WiFi.status() != WL_CONNECTED && millis() - startAttemptTime < 10000) {
-        delay(500);
-      }
-    }
-    String hostname = "cable-wind";
-    if (LittleFS.exists("/hostname_config.txt")) {
-      File fsUploadFile = LittleFS.open("/hostname_config.txt", FILE_READ);
-      if (fsUploadFile) {
-        hostname = fsUploadFile.readStringUntil('\n');
-        hostname.trim();
-        fsUploadFile.close();
-      }
-    }
-
-    if (!MDNS.begin(hostname.c_str())) {
-      while (1) {
-        delay(1000);
-      }
-    }
-  }
-
-  tcpServer.begin();
+  connectToWiFi();
 
   {
     File root = LittleFS.open("/payloads/");
@@ -1431,16 +1437,30 @@ void setup() {
 
   controlserver.on("/style.css", []() {
     // Set aggressive caching for CSS
-    controlserver.sendHeader("Cache-Control", "public, max-age=31536000");  // Cache for 1 year
+    controlserver.sendHeader("Cache-Control", "public, max-age=1728000");   // Cache for 20 days
     controlserver.sendHeader("ETag", "\"v1.0\"");                           // Add ETag for cache validation
     controlserver.send_P(200, "text/css", Style);
   });
 
   controlserver.on("/javascript.js", []() {
     // Set aggressive caching for JavaScript
-    controlserver.sendHeader("Cache-Control", "public, max-age=31536000");  // Cache for 1 year
+    controlserver.sendHeader("Cache-Control", "public, max-age=1728000");  // Cache for 20 days
     controlserver.sendHeader("ETag", "\"v1.0\"");                           // Add ETag for cache validation
     controlserver.send_P(200, "application/javascript", Redirect);
+  });
+
+  controlserver.on("/reboot", HTTP_POST, []() {
+      // Send response first
+      controlserver.send(200, "application/json", "{\"success\":true,\"message\":\"Device rebooting\"}");
+      
+      // Delay to ensure response is sent
+      controlserver.client().setNoDelay(true);
+      delay(100);
+      controlserver.client().stop();
+      delay(100);
+      
+      // Then reboot
+      ESP.restart();
   });
 
   controlserver.on("/dopayload", []() {
@@ -1803,6 +1823,16 @@ void loop() {
     cmd = "";
     livepayload = "";
     payloadExecuted = true;
+  }
+
+  // WiFi connection monitoring
+  if (millis() - lastWifiCheckTime >= wifiCheckInterval) {
+    lastWifiCheckTime = millis();
+    
+    // Only attempt reconnection if we're not currently connected
+    if (WiFi.status() != WL_CONNECTED) {
+      connectToWiFi();
+    }
   }
   vTaskDelay(1);
 }

@@ -116,8 +116,11 @@ const char Configuration[] PROGMEM = R"=====(
             <button type="button" onclick="applyHostname()">Apply Hostname</button>
         </form>
         <hr>
-        <button type="button" name="clearCacheButton" onclick="clearCache()">Clear Device Cache</button>
-        <p class="payload-desc">Forces reload of CSS/JS files if they were cached.</p>
+        <div class="config-buttons-container">
+            <button type="button" name="clearCacheButton" onclick="clearCache()">Clear Device Cache</button>
+            <button type="button" name="rebootDeviceButton" onclick="rebootDevice()">Reboot Device</button>
+        </div>
+        <p class="payload-desc">Reload of CSS/JS files.</p>
     </div>
 
     <script>
@@ -287,7 +290,7 @@ const char Configuration[] PROGMEM = R"=====(
                     showMessage('success', 'Hostname updated successfully! Device will restart.');
                     setTimeout(() => {
                         window.location.href = `http://${hostname}.local`;
-                    }, 3000);
+                    }, 6000);
                 } else {
                     showMessage('error', data.message || 'Error updating hostname');
                 }
@@ -312,6 +315,33 @@ const char Configuration[] PROGMEM = R"=====(
 
           // Reload after a delay
           setTimeout(() => location.reload(true), 1000);
+        }
+
+        function rebootDevice() {
+            if (confirm('Are you sure you want to reboot the device?')) {
+                showMessage('info', 'Device rebooting... Please wait');
+                document.body.classList.add('page-loading');
+                
+                fetch('/reboot', {
+                    method: 'POST'
+                })
+                .then(response => {
+                    if (response.ok) {
+                        // Try to reload the page after 6 seconds
+                        setTimeout(() => {
+                            window.location.reload(true);
+                        }, 6000);
+                    } else {
+                        document.body.classList.remove('page-loading');
+                        throw new Error('Reboot failed');
+                    }
+                })
+                .catch(error => {
+                    document.body.classList.remove('page-loading');
+                    showMessage('error', 'Error rebooting device');
+                    console.error('Error:', error);
+                });
+            }
         }
 
         // Function to load the current layout when the config page is loaded
