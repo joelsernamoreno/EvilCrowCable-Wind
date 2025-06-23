@@ -389,7 +389,15 @@ void onDetectOSRequested() {
 }
 
 void deleteFile(fs::FS &fs, const String &path) {
-  if (fs.remove(path)) {
+  // Delete the main payload file
+  bool payloadDeleted = fs.remove(path);
+
+  // Delete the corresponding meta file
+  String metaPath = path;
+  metaPath += ".meta";
+  bool metaDeleted = fs.remove(metaPath);
+
+  if (payloadDeleted) {
     controlserver.send(200, "text/plain", "File deleted successfully");
   } else {
     controlserver.send(500, "text/plain", "Failed to delete file");
@@ -427,7 +435,7 @@ void readFile(fs::FS &fs, const String &path) {
 }
 
 
-// Helper function to save payload metadata - UPDATED to handle multi-line
+// Helper function to save payload metadata
 void savePayloadMetadata(const String &filename, const String &name, const String &description, const String &os) {
   String metaPath = filename + ".meta";
   File metaFile = LittleFS.open(metaPath, FILE_WRITE);
@@ -452,7 +460,7 @@ void savePayloadMetadata(const String &filename, const String &name, const Strin
   }
 }
 
-// Helper function to read payload metadata - UPDATED for multi-line
+// Helper function to read payload metadata
 String readPayloadMetadata(const String &filename, MetadataField field) {
     String metaPath = filename + ".meta";
 
@@ -545,7 +553,7 @@ void handleUpdatePayload() {
     }
 }
 
-// Updated handleFileUpload to properly handle multi-line descriptions
+// Updated handleFileUpload
 void handleFileUpload() {
   HTTPUpload &upload = controlserver.upload();
   static const uint32_t MAX_FILE_SIZE = 204800;  // 200KB limit
@@ -558,7 +566,6 @@ void handleFileUpload() {
     payloadDescription = controlserver.arg("payloadDescription");
     payloadOS = controlserver.arg("payloadOS");
 
-    // Get filename from upload, not from args
     fileName = upload.filename;
 
     if (!fileName.endsWith(".txt")) {
@@ -567,7 +574,7 @@ void handleFileUpload() {
     }
 
     if (!fileName.startsWith("/")) {
-      fileName = "/payloads/" + fileName;
+      fileName = String("/payloads/") + fileName;
     }
 
     if (!LittleFS.exists("/payloads")) {
@@ -584,6 +591,10 @@ void handleFileUpload() {
     if (totalUploaded > MAX_FILE_SIZE) {
       fsUploadFile.close();
       LittleFS.remove(fsUploadFile.name());
+      // Remove meta file using proper string concatenation
+      String metaPath = fsUploadFile.name();
+      metaPath += ".meta";
+      LittleFS.remove(metaPath);
       controlserver.send(413, "application/json", "{\"status\":\"error\",\"message\":\"File exceeded size limit\"}");
       return;
     }
@@ -594,13 +605,16 @@ void handleFileUpload() {
   } else if (upload.status == UPLOAD_FILE_END) {
     if (fsUploadFile) {
       fsUploadFile.close();
-      // Save metadata with complete description
       savePayloadMetadata(fileName, payloadName, payloadDescription, payloadOS);
     }
   } else {
     if (fsUploadFile) {
       fsUploadFile.close();
       LittleFS.remove(fsUploadFile.name());
+      // Remove meta file using proper string concatenation
+      String metaPath = fsUploadFile.name();
+      metaPath += ".meta";
+      LittleFS.remove(metaPath);
     }
     controlserver.send(500, "application/json", "{\"status\":\"error\",\"message\":\"Upload failed\"}");
   }

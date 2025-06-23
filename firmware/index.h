@@ -138,10 +138,10 @@ const char Index[] PROGMEM = R"=====(
                         document.getElementById('uptime').innerText = data.uptime + ' seconds';
                         document.getElementById('cpu0').innerText = data.cpu0 + ' MHz';
                         document.getElementById('cpu1').innerText = data.cpu1 + ' MHz';
-                        document.getElementById('freespiffs').innerText = data.freespiffs + ' bytes';
+                        document.getElementById('freespiffs').innerText = (data.freespiffs / 1024).toFixed(2) + ' KB';
                         document.getElementById('temperature').innerText = data.temperature + ' °C';
-                        document.getElementById('totalram').innerText = data.totalram + ' bytes';
-                        document.getElementById('freeram').innerText = data.freeram + ' bytes';
+                        document.getElementById('totalram').innerText = (data.totalram / 1024).toFixed(2) + ' KB';
+                        document.getElementById('freeram').innerText = (data.freeram / 1024).toFixed(2) + ' KB';
                         document.getElementById('ssid').innerText = data.ssid || "Not connected";
                         document.getElementById('ipaddress').innerText = data.ipaddress || "N/A";
                         document.getElementById("targetos").textContent = data.os || "N/A";
