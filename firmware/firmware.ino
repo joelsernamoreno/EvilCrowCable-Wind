@@ -1701,6 +1701,63 @@ void setup() {
     }
   });
 
+   // clear all payloads and metadata
+  controlserver.on("/clearpayloads", HTTP_POST, []() {
+    int deletedCount = 0;
+    String allFiles = "";
+    File root = LittleFS.open("/payloads");
+    if (!root || !root.isDirectory()) {
+        controlserver.send(500, "application/json", "{\"status\":\"error\",\"message\":\"Failed to open FS root\"}");
+        return;
+    }
+
+    File file = root.openNextFile();
+    while (file) {
+        String path = String(file.name());
+        allFiles+=path+", ";
+        file.close();
+
+        if ((path.endsWith(".txt") || path.endsWith(".meta"))) {
+            if (LittleFS.remove("/payloads/"+path)) {
+                deletedCount++;
+            } else {
+            }
+        }
+
+        file = root.openNextFile();
+    }
+
+  String response = "{\"status\":\"ok\",\"deleted\":" + String(deletedCount) +
+                  ",\"message\":\"Files Deleted " + String(deletedCount) + " :\\n " + allFiles + "\"}";
+    controlserver.send(200, "application/json", response);
+  });
+
+  // Return all files (.txt , .meta) under /payloads
+  controlserver.on("/payloadcount", HTTP_GET, []() {
+      int count = 0;
+
+      File dir = LittleFS.open("/payloads");
+      if (!dir || !dir.isDirectory()) {
+          controlserver.send(500, "application/json", "{\"status\":\"error\",\"message\":\"Payloads directory not found\"}");
+          return;
+      }
+
+      File file = dir.openNextFile();
+      while (file) {
+          String filename = file.name();
+          file.close();
+
+          if (filename.startsWith("/payloads/") && filename.endsWith(".txt") || filename.endsWith(".meta")) {
+              count++;
+          }
+
+          file = dir.openNextFile();
+      }
+
+      controlserver.send(200, "application/json", "{\"count\":" + String(count) + "}");
+  });
+
+
 
   controlserver.on("/updatewifi", HTTP_POST, handleUpdateWiFi);
   controlserver.on("/layout", HTTP_POST, handleLayout);
