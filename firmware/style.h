@@ -778,6 +778,28 @@ hr {
   max-width: 600px;
 }
 
+/* Config page specific buttons */
+.config-buttons-container {
+    display: flex;
+    justify-content: space-between;
+    margin: 15px 0;
+    width: 100%;
+}
+
+.config-buttons-container button {
+    width: 48%;
+    min-width: auto;
+    margin: 0;
+}
+
+button[name="clearCacheButton"] {
+    background: linear-gradient(135deg, var(--error), #cc0022);
+}
+
+button[name="rebootDeviceButton"] {
+    background: linear-gradient(135deg, var(--warning), #ff6600);
+}
+
 /* Metadata form */
 #metadataForm {
   background: rgba(51, 51, 51, 0.5);

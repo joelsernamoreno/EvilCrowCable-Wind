@@ -24,6 +24,10 @@ String ssid = "Evil Crow Cable Wind";  // Enter your SSID here
 String password = "123456789";         //Enter your Password here
 char *serverIP;
 int serverPort = 4444;
+// WiFi monitoring variables
+unsigned long lastWifiCheckTime = 0;
+const unsigned long wifiCheckInterval = 60000; // 1 minute
+bool wifiConnected = false;
 
 // Global variables
 String cmd;
@@ -385,7 +389,15 @@ void onDetectOSRequested() {
 }
 
 void deleteFile(fs::FS &fs, const String &path) {
-  if (fs.remove(path)) {
+  // Delete the main payload file
+  bool payloadDeleted = fs.remove(path);
+
+  // Delete the corresponding meta file
+  String metaPath = path;
+  metaPath += ".meta";
+  bool metaDeleted = fs.remove(metaPath);
+
+  if (payloadDeleted) {
     controlserver.send(200, "text/plain", "File deleted successfully");
   } else {
     controlserver.send(500, "text/plain", "Failed to delete file");
@@ -423,7 +435,7 @@ void readFile(fs::FS &fs, const String &path) {
 }
 
 
-// Helper function to save payload metadata - UPDATED to handle multi-line
+// Helper function to save payload metadata
 void savePayloadMetadata(const String &filename, const String &name, const String &description, const String &os) {
   String metaPath = filename + ".meta";
   File metaFile = LittleFS.open(metaPath, FILE_WRITE);
@@ -448,7 +460,7 @@ void savePayloadMetadata(const String &filename, const String &name, const Strin
   }
 }
 
-// Helper function to read payload metadata - UPDATED for multi-line
+// Helper function to read payload metadata
 String readPayloadMetadata(const String &filename, MetadataField field) {
     String metaPath = filename + ".meta";
 
@@ -541,7 +553,7 @@ void handleUpdatePayload() {
     }
 }
 
-// Updated handleFileUpload to properly handle multi-line descriptions
+// Updated handleFileUpload
 void handleFileUpload() {
   HTTPUpload &upload = controlserver.upload();
   static const uint32_t MAX_FILE_SIZE = 204800;  // 200KB limit
@@ -554,7 +566,6 @@ void handleFileUpload() {
     payloadDescription = controlserver.arg("payloadDescription");
     payloadOS = controlserver.arg("payloadOS");
 
-    // Get filename from upload, not from args
     fileName = upload.filename;
 
     if (!fileName.endsWith(".txt")) {
@@ -563,7 +574,7 @@ void handleFileUpload() {
     }
 
     if (!fileName.startsWith("/")) {
-      fileName = "/payloads/" + fileName;
+      fileName = String("/payloads/") + fileName;
     }
 
     if (!LittleFS.exists("/payloads")) {
@@ -580,6 +591,10 @@ void handleFileUpload() {
     if (totalUploaded > MAX_FILE_SIZE) {
       fsUploadFile.close();
       LittleFS.remove(fsUploadFile.name());
+      // Remove meta file using proper string concatenation
+      String metaPath = fsUploadFile.name();
+      metaPath += ".meta";
+      LittleFS.remove(metaPath);
       controlserver.send(413, "application/json", "{\"status\":\"error\",\"message\":\"File exceeded size limit\"}");
       return;
     }
@@ -590,13 +605,16 @@ void handleFileUpload() {
   } else if (upload.status == UPLOAD_FILE_END) {
     if (fsUploadFile) {
       fsUploadFile.close();
-      // Save metadata with complete description
       savePayloadMetadata(fileName, payloadName, payloadDescription, payloadOS);
     }
   } else {
     if (fsUploadFile) {
       fsUploadFile.close();
       LittleFS.remove(fsUploadFile.name());
+      // Remove meta file using proper string concatenation
+      String metaPath = fsUploadFile.name();
+      metaPath += ".meta";
+      LittleFS.remove(metaPath);
     }
     controlserver.send(500, "application/json", "{\"status\":\"error\",\"message\":\"Upload failed\"}");
   }
@@ -664,6 +682,78 @@ void handleStats() {
   json += ",\"ipaddress\":\"" + WiFi.localIP().toString() + "\"";
   json += "}";
   controlserver.send(200, "application/json", json);
+}
+
+void connectToWiFi() {
+  // Disconnect first if currently connected
+  if (WiFi.status() == WL_CONNECTED) {
+    WiFi.disconnect();
+    delay(1000);
+  }
+
+  // Try primary WiFi for 10 seconds
+  if (LittleFS.exists("/wifi_config.txt")) {
+    File fsUploadFile = LittleFS.open("/wifi_config.txt", FILE_READ);
+    if (fsUploadFile) {
+      String primarySSID = fsUploadFile.readStringUntil('\n');
+      primarySSID.trim();
+      String primaryPassword = fsUploadFile.readStringUntil('\n');
+      primaryPassword.trim();
+      fsUploadFile.close();
+
+      WiFi.begin(primarySSID.c_str(), primaryPassword.c_str());
+      unsigned long startAttemptTime = millis();
+
+      while (WiFi.status() != WL_CONNECTED && millis() - startAttemptTime < 10000) {
+        delay(500);
+      }
+    }
+  }
+
+  // If primary WiFi failed, try backup WiFi if it exists
+  if (WiFi.status() != WL_CONNECTED && LittleFS.exists("/wifi_backup_config.txt")) {
+    File file = LittleFS.open("/wifi_backup_config.txt", FILE_READ);
+    if (file) {
+      String backupSSID = file.readStringUntil('\n');
+      backupSSID.trim();
+      String backupPassword = file.readStringUntil('\n');
+      backupPassword.trim();
+      file.close();
+
+      WiFi.begin(backupSSID.c_str(), backupPassword.c_str());
+      unsigned long startAttemptTime = millis();
+
+      while (WiFi.status() != WL_CONNECTED && millis() - startAttemptTime < 10000) {
+        delay(500);
+      }
+    }
+  }
+
+  // Initialize MDNS and TCP server if connected
+  if (WiFi.status() == WL_CONNECTED) {
+    String hostname = "cable-wind";
+    if (LittleFS.exists("/hostname_config.txt")) {
+      File fsUploadFile = LittleFS.open("/hostname_config.txt", FILE_READ);
+      if (fsUploadFile) {
+        hostname = fsUploadFile.readStringUntil('\n');
+        hostname.trim();
+        fsUploadFile.close();
+      }
+    }
+
+    // Stop any existing MDNS before restarting
+    MDNS.end();
+
+    if (!MDNS.begin(hostname.c_str())) {
+      Serial.println("Error setting up MDNS responder!");
+    }
+
+    tcpServer.begin();
+    wifiConnected = true;
+  } else {
+    wifiConnected = false;
+    MDNS.end();
+  }
 }
 
 void handleUpdateHostname() {
@@ -1308,77 +1398,7 @@ void setup() {
     }
   }
 
-  if (LittleFS.exists("/wifi_config.txt")) {
-    File fsUploadFile = LittleFS.open("/wifi_config.txt", FILE_READ);
-    if (fsUploadFile) {
-      ssid = fsUploadFile.readStringUntil('\n');
-      ssid.trim();
-      password = fsUploadFile.readStringUntil('\n');
-      password.trim();
-      fsUploadFile.close();
-    }
-  }
-
-  WiFi.begin(ssid.c_str(), password.c_str());
-  unsigned long startAttemptTime = millis();
-
-  // Try primary WiFi for 10 seconds
-  while (WiFi.status() != WL_CONNECTED && millis() - startAttemptTime < 10000) {
-    delay(500);
-  }
-
-  String hostname = "cable-wind";
-  if (LittleFS.exists("/hostname_config.txt")) {
-    File fsUploadFile = LittleFS.open("/hostname_config.txt", FILE_READ);
-    if (fsUploadFile) {
-      hostname = fsUploadFile.readStringUntil('\n');
-      hostname.trim();
-      fsUploadFile.close();
-    }
-  }
-
-  if (!MDNS.begin(hostname.c_str())) {
-    while (1) {
-      delay(1000);
-    }
-  }
-
-  // If primary WiFi failed, try backup WiFi if it exists
-  if (WiFi.status() != WL_CONNECTED && LittleFS.exists("/wifi_backup_config.txt")) {
-    File file = LittleFS.open("/wifi_backup_config.txt", FILE_READ);
-    if (file) {
-      String backupSSID = file.readStringUntil('\n');
-      backupSSID.trim();
-      String backupPassword = file.readStringUntil('\n');
-      backupPassword.trim();
-      file.close();
-
-      WiFi.begin(backupSSID.c_str(), backupPassword.c_str());
-      startAttemptTime = millis();
-
-      // Try backup WiFi for 10 seconds
-      while (WiFi.status() != WL_CONNECTED && millis() - startAttemptTime < 10000) {
-        delay(500);
-      }
-    }
-    String hostname = "cable-wind";
-    if (LittleFS.exists("/hostname_config.txt")) {
-      File fsUploadFile = LittleFS.open("/hostname_config.txt", FILE_READ);
-      if (fsUploadFile) {
-        hostname = fsUploadFile.readStringUntil('\n');
-        hostname.trim();
-        fsUploadFile.close();
-      }
-    }
-
-    if (!MDNS.begin(hostname.c_str())) {
-      while (1) {
-        delay(1000);
-      }
-    }
-  }
-
-  tcpServer.begin();
+  connectToWiFi();
 
   {
     File root = LittleFS.open("/payloads/");
@@ -1431,16 +1451,30 @@ void setup() {
 
   controlserver.on("/style.css", []() {
     // Set aggressive caching for CSS
-    controlserver.sendHeader("Cache-Control", "public, max-age=31536000");  // Cache for 1 year
+    controlserver.sendHeader("Cache-Control", "public, max-age=1728000");   // Cache for 20 days
     controlserver.sendHeader("ETag", "\"v1.0\"");                           // Add ETag for cache validation
     controlserver.send_P(200, "text/css", Style);
   });
 
   controlserver.on("/javascript.js", []() {
     // Set aggressive caching for JavaScript
-    controlserver.sendHeader("Cache-Control", "public, max-age=31536000");  // Cache for 1 year
+    controlserver.sendHeader("Cache-Control", "public, max-age=1728000");  // Cache for 20 days
     controlserver.sendHeader("ETag", "\"v1.0\"");                           // Add ETag for cache validation
     controlserver.send_P(200, "application/javascript", Redirect);
+  });
+
+  controlserver.on("/reboot", HTTP_POST, []() {
+      // Send response first
+      controlserver.send(200, "application/json", "{\"success\":true,\"message\":\"Device rebooting\"}");
+      
+      // Delay to ensure response is sent
+      controlserver.client().setNoDelay(true);
+      delay(100);
+      controlserver.client().stop();
+      delay(100);
+      
+      // Then reboot
+      ESP.restart();
   });
 
   controlserver.on("/dopayload", []() {
@@ -1667,6 +1701,63 @@ void setup() {
     }
   });
 
+   // clear all payloads and metadata
+  controlserver.on("/clearpayloads", HTTP_POST, []() {
+    int deletedCount = 0;
+    String allFiles = "";
+    File root = LittleFS.open("/payloads");
+    if (!root || !root.isDirectory()) {
+        controlserver.send(500, "application/json", "{\"status\":\"error\",\"message\":\"Failed to open FS root\"}");
+        return;
+    }
+
+    File file = root.openNextFile();
+    while (file) {
+        String path = String(file.name());
+        allFiles+=path+", ";
+        file.close();
+
+        if ((path.endsWith(".txt") || path.endsWith(".meta"))) {
+            if (LittleFS.remove("/payloads/"+path)) {
+                deletedCount++;
+            } else {
+            }
+        }
+
+        file = root.openNextFile();
+    }
+
+  String response = "{\"status\":\"ok\",\"deleted\":" + String(deletedCount) +
+                  ",\"message\":\"Files Deleted " + String(deletedCount) + " :\\n " + allFiles + "\"}";
+    controlserver.send(200, "application/json", response);
+  });
+
+  // Return all files (.txt , .meta) under /payloads/
+  controlserver.on("/payloadcount", HTTP_GET, []() {
+      int count = 0;
+
+      File dir = LittleFS.open("/payloads");
+      if (!dir || !dir.isDirectory()) {
+          controlserver.send(500, "application/json", "{\"status\":\"error\",\"message\":\"Payloads directory not found\"}");
+          return;
+      }
+
+      File file = dir.openNextFile();
+      while (file) {
+          String filename = file.name();
+          file.close();
+
+          if (filename.startsWith("/payloads/") && filename.endsWith(".txt") || filename.endsWith(".meta")) {
+              count++;
+          }
+
+          file = dir.openNextFile();
+      }
+
+      controlserver.send(200, "application/json", "{\"count\":" + String(count) + "}");
+  });
+
+
 
   controlserver.on("/updatewifi", HTTP_POST, handleUpdateWiFi);
   controlserver.on("/layout", HTTP_POST, handleLayout);
@@ -1803,6 +1894,16 @@ void loop() {
     cmd = "";
     livepayload = "";
     payloadExecuted = true;
+  }
+
+  // WiFi connection monitoring
+  if (millis() - lastWifiCheckTime >= wifiCheckInterval) {
+    lastWifiCheckTime = millis();
+    
+    // Only attempt reconnection if we're not currently connected
+    if (WiFi.status() != WL_CONNECTED) {
+      connectToWiFi();
+    }
   }
   vTaskDelay(1);
 }
