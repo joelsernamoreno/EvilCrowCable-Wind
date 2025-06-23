@@ -1732,7 +1732,7 @@ void setup() {
     controlserver.send(200, "application/json", response);
   });
 
-  // Return all files (.txt , .meta) under /payloads
+  // Return all files (.txt , .meta) under /payloads/
   controlserver.on("/payloadcount", HTTP_GET, []() {
       int count = 0;
 
