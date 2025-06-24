@@ -29,7 +29,7 @@ const char Configuration[] PROGMEM = R"=====(
     <div class="view-container">
         <form id="layoutForm">
             <div class="form-group">
-                <label for="layout">Keyboard Layout:</label>
+                <div class="section-header">Keyboard Layout</div>
                 <select id="layout" name="layout-select">
                     <option value="EN_US">EN_US</option>
                     <option value="ES_ES">ES_ES</option>
@@ -54,9 +54,8 @@ const char Configuration[] PROGMEM = R"=====(
             <button type="button" onclick="applyLayout()">Apply Layout</button>
         </form>
 
-        <hr>
-
         <form id="wifiForm">
+            <div class="section-header">WIFI</div>
             <div class="form-group">
                 <label for="ssid">Wi-Fi SSID:</label>
                 <input type="text" id="ssid" name="ssid" required class="terminal-style single-line-input">
@@ -68,8 +67,6 @@ const char Configuration[] PROGMEM = R"=====(
             <button type="button" onclick="applyWiFi()">Apply Wi-Fi</button>
             <button type="button" name="deleteWifiButton" onclick="deleteWiFiConfig()">Delete Wi-Fi Config</button>
 
-            <hr>
-
             <div class="form-group">
                 <label for="backup_ssid">Backup Wi-Fi SSID:</label>
                 <input type="text" id="backup_ssid" name="backup_ssid" class="terminal-style single-line-input">
@@ -80,12 +77,11 @@ const char Configuration[] PROGMEM = R"=====(
             </div>
             <button type="button" onclick="applyBackupWiFi()">Apply Backup Wi-Fi</button>
             <button type="button" name="deleteBackupWifiButton" onclick="deleteBackupWiFiConfig()">Delete Backup Wi-Fi</button>
-
         </form>
 
-        <hr>
 
         <form id="usbForm">
+            <div class="section-header">USB</div>
             <div class="form-group">
                 <label for="vendorID">Vendor ID:</label>
                 <input type="text" id="vendorID" name="vendorID" required class="terminal-style">
@@ -106,11 +102,9 @@ const char Configuration[] PROGMEM = R"=====(
             <button type="button" name="deleteUSBButton" onclick="deleteUSBConfig()">Delete USB Config</button>
         </form>
 
-        <hr>
-
         <form id="hostnameForm">
             <div class="form-group">
-                <label for="hostname">Device Hostname:</label>
+                <div class="section-header">Hostname</div>
                 <input type="text" id="hostname" name="hostname" placeholder="cable-wind" required class="terminal-style">
             </div>
             <button type="button" onclick="applyHostname()">Apply Hostname</button>

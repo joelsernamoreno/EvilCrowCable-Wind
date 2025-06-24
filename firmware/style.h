@@ -260,10 +260,11 @@ input[type="checkbox"] {
 
 .form-group label {
   display: block;
+  margin-top: 10px;
   margin-bottom: 6px;
   color: var(--primary);
   font-weight: bold;
-  font-size: 1em; /* Ensure consistent base size */
+  font-size: 1em;
 }
 
 /* Validation styles */
@@ -746,7 +747,7 @@ input[type="checkbox"] {
 hr {
   border: none;
   height: 1px;
-  background: linear-gradient(90deg, transparent, var(--primary), transparent);
+  background-color: var(--primary);
   margin: 15px 0;
 }
 
@@ -1223,6 +1224,28 @@ a.pyaloadButton:hover {
   outline: none;
   border-color: var(--secondary);
   box-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+}
+
+.section-header {
+  font-size: 1.2em;
+  color: var(--primary);
+  margin: 20px 0 10px 0;
+  padding-bottom: 5px;
+  border-bottom: none;
+  position: relative;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: bold;
+}
+
+.section-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--primary), transparent);
 }
 
 .page-loading::before {
