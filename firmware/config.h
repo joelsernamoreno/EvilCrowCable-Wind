@@ -29,8 +29,8 @@ const char Configuration[] PROGMEM = R"=====(
     <div class="view-container">
         <form id="layoutForm">
             <div class="form-group">
-                <label for="layout">Keyboard Layout:</label>
-                <select id="layout" class="styled-select" name="layout-select">
+                <div class="section-header">Keyboard Layout</div>
+                <select id="layout" name="layout-select">
                     <option value="EN_US">EN_US</option>
                     <option value="ES_ES">ES_ES</option>
                     <option value="FR_FR">FR_FR</option>
@@ -54,9 +54,8 @@ const char Configuration[] PROGMEM = R"=====(
             <button type="button" onclick="applyLayout()">Apply Layout</button>
         </form>
 
-        <hr>
-
         <form id="wifiForm">
+            <div class="section-header">WIFI</div>
             <div class="form-group">
                 <label for="ssid">Wi-Fi SSID:</label>
                 <input type="text" id="ssid" name="ssid" required class="terminal-style single-line-input">
@@ -68,8 +67,6 @@ const char Configuration[] PROGMEM = R"=====(
             <button type="button" onclick="applyWiFi()">Apply Wi-Fi</button>
             <button type="button" name="deleteWifiButton" onclick="deleteWiFiConfig()">Delete Wi-Fi Config</button>
 
-            <hr>
-
             <div class="form-group">
                 <label for="backup_ssid">Backup Wi-Fi SSID:</label>
                 <input type="text" id="backup_ssid" name="backup_ssid" class="terminal-style single-line-input">
@@ -80,12 +77,11 @@ const char Configuration[] PROGMEM = R"=====(
             </div>
             <button type="button" onclick="applyBackupWiFi()">Apply Backup Wi-Fi</button>
             <button type="button" name="deleteBackupWifiButton" onclick="deleteBackupWiFiConfig()">Delete Backup Wi-Fi</button>
-
         </form>
 
-        <hr>
 
         <form id="usbForm">
+            <div class="section-header">USB</div>
             <div class="form-group">
                 <label for="vendorID">Vendor ID:</label>
                 <input type="text" id="vendorID" name="vendorID" required class="terminal-style">
@@ -106,11 +102,9 @@ const char Configuration[] PROGMEM = R"=====(
             <button type="button" name="deleteUSBButton" onclick="deleteUSBConfig()">Delete USB Config</button>
         </form>
 
-        <hr>
-
         <form id="hostnameForm">
             <div class="form-group">
-                <label for="hostname">Device Hostname:</label>
+                <div class="section-header">Hostname</div>
                 <input type="text" id="hostname" name="hostname" placeholder="cable-wind" required class="terminal-style">
             </div>
             <button type="button" onclick="applyHostname()">Apply Hostname</button>
@@ -119,8 +113,6 @@ const char Configuration[] PROGMEM = R"=====(
         <div class="config-buttons-container">
             <button type="button" name="clearCacheButton" onclick="clearCache()">Clear Device Cache</button>
             <button type="button" name="rebootDeviceButton" onclick="rebootDevice()">Reboot Device</button>
-            <button type="button" name="clearPayloadsButton" onclick="clearPayloads()">Clear <span id="payloadCounter" class="payload-desc">0</span> Payloads / Meta</button>
-            
         </div>
         <p class="payload-desc">Reload of CSS/JS files.</p>
     </div>
@@ -369,8 +361,6 @@ const char Configuration[] PROGMEM = R"=====(
                         document.getElementById('hostname').value = currentHostname;
                     }
                 });
-
-            updatePayloadCounter(); // update counter when page loads
         });
 
         function showMessage(type, text) {
@@ -406,34 +396,6 @@ const char Configuration[] PROGMEM = R"=====(
                 setTimeout(() => toast.remove(), 300);
             };
         }
-
-        // delete payloads and metadata, then update file's counter
-        function clearPayloads() {
-            if (confirm('Are you sure you want to delete all payloads and .meta files?')) {
-                fetch('/clearpayloads', { method: 'POST' })
-                    .then(res => res.json())
-                    .then(data => {
-                        console.log('[✓] Payloads cleared response:', data);
-                        showMessage('success', data.message || 'Payloads cleared');
-                        updatePayloadCounter(); // Actualiza el contador visual
-                    })
-                    .catch(err => {
-                        console.error('[!] Error clearing payloads:', err);
-                        showMessage('error', 'Failed to clear payloads');
-                    });
-            }
-        }
-
-
-        function updatePayloadCounter() {
-            fetch('/payloadcount')
-                .then(res => res.json())
-                .then(data => {
-                    const countSpan = document.getElementById('payloadCounter');
-                    countSpan.textContent = `${data.count}`;
-                })
-                .catch(err => console.error('Error counting payloads:', err));
-        } 
     </script>
 </body>
 </html>

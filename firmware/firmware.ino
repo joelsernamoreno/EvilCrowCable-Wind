@@ -663,6 +663,7 @@ void listDir(fs::FS &fs, const char *dirname, uint8_t levels) {
 
     file = root.openNextFile();
   }
+  FileList += "</div><button type=\"button\" name=\"clearPayloadsButton\" onclick=\"clearPayloads()\" style=\"white-space: nowrap;\">Delete <span id=\"payloadCounter\" class=\"payload-desc\" style=\"display: inline;\">0</span> Payloads</button>";
   FileList += "</body></html>";
 }
 
@@ -671,10 +672,8 @@ void handleStats() {
   json += "\"uptime\":" + String(millis() / 1000);
   json += ",\"cpu0\":" + String(getCpuFrequencyMhz());
   json += ",\"cpu1\":" + String(getXtalFrequencyMhz());
-  json += ",\"totalspiffs\":" + String(LittleFS.totalBytes());
-  json += ",\"usedspiffs\":" + String(LittleFS.usedBytes());
-  json += ",\"freespiffs\":" + String(LittleFS.totalBytes() - LittleFS.usedBytes());
   json += ",\"temperature\":" + String(temperatureRead());
+  json += ",\"freespiffs\":" + String(LittleFS.totalBytes() - LittleFS.usedBytes());
   json += ",\"totalram\":" + String(ESP.getHeapSize());
   json += ",\"freeram\":" + String(ESP.getFreeHeap());
   json += ",\"os\":\"" + os + "\"";
@@ -691,7 +690,10 @@ void connectToWiFi() {
     delay(1000);
   }
 
-  // Try primary WiFi for 10 seconds
+  bool triedPrimary = false;
+  bool triedBackup = false;
+
+  // Try primary WiFi if it exists
   if (LittleFS.exists("/wifi_config.txt")) {
     File fsUploadFile = LittleFS.open("/wifi_config.txt", FILE_READ);
     if (fsUploadFile) {
@@ -702,15 +704,16 @@ void connectToWiFi() {
       fsUploadFile.close();
 
       WiFi.begin(primarySSID.c_str(), primaryPassword.c_str());
-      unsigned long startAttemptTime = millis();
+      triedPrimary = true;
 
+      unsigned long startAttemptTime = millis();
       while (WiFi.status() != WL_CONNECTED && millis() - startAttemptTime < 10000) {
         delay(500);
       }
     }
   }
 
-  // If primary WiFi failed, try backup WiFi if it exists
+  // If primary WiFi failed or doesn't exist, try backup WiFi if it exists
   if (WiFi.status() != WL_CONNECTED && LittleFS.exists("/wifi_backup_config.txt")) {
     File file = LittleFS.open("/wifi_backup_config.txt", FILE_READ);
     if (file) {
@@ -721,11 +724,22 @@ void connectToWiFi() {
       file.close();
 
       WiFi.begin(backupSSID.c_str(), backupPassword.c_str());
-      unsigned long startAttemptTime = millis();
+      triedBackup = true;
 
+      unsigned long startAttemptTime = millis();
       while (WiFi.status() != WL_CONNECTED && millis() - startAttemptTime < 10000) {
         delay(500);
       }
+    }
+  }
+
+  // If no saved configurations worked or exist, try default credentials
+  if (WiFi.status() != WL_CONNECTED && (!triedPrimary && !triedBackup)) {
+    WiFi.begin(ssid.c_str(), password.c_str());
+
+    unsigned long startAttemptTime = millis();
+    while (WiFi.status() != WL_CONNECTED && millis() - startAttemptTime < 10000) {
+      delay(500);
     }
   }
 
@@ -741,8 +755,7 @@ void connectToWiFi() {
       }
     }
 
-    // Stop any existing MDNS before restarting
-    MDNS.end();
+    MDNS.end(); // Stop any existing MDNS before restarting
 
     if (!MDNS.begin(hostname.c_str())) {
       Serial.println("Error setting up MDNS responder!");
@@ -1420,6 +1433,10 @@ void setup() {
 
   controlserver.on("/stats", handleStats);
 
+  controlserver.on("/connectioncheck", []() {
+      controlserver.send(200, "application/json", "{\"status\":\"ok\"}");
+  });
+
   controlserver.on("/livepayload", []() {
     controlserver.send_P(200, "text/html", LivePayload);
   });
@@ -1732,32 +1749,30 @@ void setup() {
     controlserver.send(200, "application/json", response);
   });
 
-  // Return all files (.txt , .meta) under /payloads/
+
   controlserver.on("/payloadcount", HTTP_GET, []() {
-      int count = 0;
+    int count = 0;
 
-      File dir = LittleFS.open("/payloads");
-      if (!dir || !dir.isDirectory()) {
-          controlserver.send(500, "application/json", "{\"status\":\"error\",\"message\":\"Payloads directory not found\"}");
-          return;
-      }
+    File dir = LittleFS.open("/payloads");
+    if (!dir || !dir.isDirectory()) {
+        controlserver.send(500, "application/json", "{\"status\":\"error\",\"message\":\"Payloads directory not found\"}");
+        return;
+    }
 
-      File file = dir.openNextFile();
-      while (file) {
-          String filename = file.name();
-          file.close();
+    File file = dir.openNextFile();
+    while (file) {
+        String filename = file.name();
+        file.close();
 
-          if (filename.startsWith("/payloads/") && filename.endsWith(".txt") || filename.endsWith(".meta")) {
-              count++;
-          }
+        if (filename.startsWith("/payloads/") && filename.endsWith(".txt") || filename.endsWith(".meta")) {
+            count++;
+        }
 
-          file = dir.openNextFile();
-      }
+        file = dir.openNextFile();
+    }
 
-      controlserver.send(200, "application/json", "{\"count\":" + String(count) + "}");
+    controlserver.send(200, "application/json", "{\"count\":" + String(count) + "}");
   });
-
-
 
   controlserver.on("/updatewifi", HTTP_POST, handleUpdateWiFi);
   controlserver.on("/layout", HTTP_POST, handleLayout);
