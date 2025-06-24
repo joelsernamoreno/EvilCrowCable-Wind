@@ -68,7 +68,6 @@ const char Index[] PROGMEM = R"=====(
     </div>
 
     <script>
-        // JavaScript
         function detectOS() {
             const osElement = document.getElementById('targetos');
             osElement.textContent = 'Detecting...';
@@ -122,42 +121,6 @@ const char Index[] PROGMEM = R"=====(
                 }, 2000);
             });
         }
-
-        // Connection check
-        function checkConnection() {
-            fetch('/stats')
-                .then(response => {
-                    document.querySelectorAll('.status-indicator').forEach(indicator => {
-                        indicator.classList.remove('status-offline');
-                        indicator.classList.add('status-online');
-                    });
-                    return response.json();
-                })
-                .then(data => {
-                    if (document.location.pathname === '/') {
-                        document.getElementById('uptime').innerText = data.uptime + ' seconds';
-                        document.getElementById('cpu0').innerText = data.cpu0 + ' MHz';
-                        document.getElementById('cpu1').innerText = data.cpu1 + ' MHz';
-                        document.getElementById('freespiffs').innerText = (data.freespiffs / 1024).toFixed(2) + ' KB';
-                        document.getElementById('temperature').innerText = data.temperature + ' °C';
-                        document.getElementById('totalram').innerText = (data.totalram / 1024).toFixed(2) + ' KB';
-                        document.getElementById('freeram').innerText = (data.freeram / 1024).toFixed(2) + ' KB';
-                        document.getElementById('ssid').innerText = data.ssid || "Not connected";
-                        document.getElementById('ipaddress').innerText = data.ipaddress || "N/A";
-                        document.getElementById("targetos").textContent = data.os || "N/A";
-                    }
-                })
-                .catch(error => {
-                    if (error.name !== 'AbortError') { 
-                        document.querySelectorAll('.status-indicator').forEach(indicator => {
-                            indicator.classList.remove('status-online');
-                            indicator.classList.add('status-offline');
-                        });
-                    }
-                });
-        }
-        setInterval(checkConnection, 5000);
-        checkConnection();
     </script>
 </body>
 </html>
