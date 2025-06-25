@@ -29,8 +29,8 @@ const char Configuration[] PROGMEM = R"=====(
     <div class="view-container">
         <form id="layoutForm">
             <div class="form-group">
-                <label for="layout">Keyboard Layout:</label>
-                <select id="layout" name="layout-select">
+                <div class="section-header">Keyboard Layout</div>
+                <select id="layout" class="styled-select" name="layout-select">
                     <option value="EN_US">EN_US</option>
                     <option value="ES_ES">ES_ES</option>
                     <option value="FR_FR">FR_FR</option>
@@ -54,9 +54,8 @@ const char Configuration[] PROGMEM = R"=====(
             <button type="button" onclick="applyLayout()">Apply Layout</button>
         </form>
 
-        <hr>
-
         <form id="wifiForm">
+            <div class="section-header">WIFI</div>
             <div class="form-group">
                 <label for="ssid">Wi-Fi SSID:</label>
                 <input type="text" id="ssid" name="ssid" required class="terminal-style single-line-input">
@@ -68,8 +67,6 @@ const char Configuration[] PROGMEM = R"=====(
             <button type="button" onclick="applyWiFi()">Apply Wi-Fi</button>
             <button type="button" name="deleteWifiButton" onclick="deleteWiFiConfig()">Delete Wi-Fi Config</button>
 
-            <hr>
-
             <div class="form-group">
                 <label for="backup_ssid">Backup Wi-Fi SSID:</label>
                 <input type="text" id="backup_ssid" name="backup_ssid" class="terminal-style single-line-input">
@@ -80,12 +77,10 @@ const char Configuration[] PROGMEM = R"=====(
             </div>
             <button type="button" onclick="applyBackupWiFi()">Apply Backup Wi-Fi</button>
             <button type="button" name="deleteBackupWifiButton" onclick="deleteBackupWiFiConfig()">Delete Backup Wi-Fi</button>
-
         </form>
 
-        <hr>
-
         <form id="usbForm">
+            <div class="section-header">USB</div>
             <div class="form-group">
                 <label for="vendorID">Vendor ID:</label>
                 <input type="text" id="vendorID" name="vendorID" required class="terminal-style">
@@ -106,18 +101,19 @@ const char Configuration[] PROGMEM = R"=====(
             <button type="button" name="deleteUSBButton" onclick="deleteUSBConfig()">Delete USB Config</button>
         </form>
 
-        <hr>
-
         <form id="hostnameForm">
             <div class="form-group">
-                <label for="hostname">Device Hostname:</label>
+                <div class="section-header">Hostname</div>
                 <input type="text" id="hostname" name="hostname" placeholder="cable-wind" required class="terminal-style">
             </div>
             <button type="button" onclick="applyHostname()">Apply Hostname</button>
         </form>
         <hr>
-        <button type="button" name="clearCacheButton" onclick="clearCache()">Clear Device Cache</button>
-        <p class="payload-desc">Forces reload of CSS/JS files if they were cached.</p>
+        <div class="config-buttons-container">
+            <button type="button" name="clearCacheButton" onclick="clearCache()">Clear Device Cache</button>
+            <button type="button" name="rebootDeviceButton" onclick="rebootDevice()">Reboot Device</button>
+        </div>
+        <p class="payload-desc">Reload of CSS/JS files.</p>
     </div>
 
     <script>
@@ -207,33 +203,46 @@ const char Configuration[] PROGMEM = R"=====(
         }
 
         function deleteWiFiConfig() {
-            fetch('/deletewificonfig', {
-                method: 'POST',
-            })
-            .then(response => response.text())
-            .then(data => {
-                showMessage('success', 'Wi-Fi Configuration successfully deleted!');
-            })
-            .catch(error => {
-                showMessage('error', 'Error deleting Wi-Fi Configuration.');
-                console.error('Error:', error);
-            });
+            if (confirm('Are you sure you want to delete the primary WiFi configuration?')) {
+                fetch('/deletewificonfig', {
+                    method: 'POST',
+                })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    }
+                    throw new Error('Network response was not ok');
+                })
+                .then(data => {
+                    showMessage('success', 'Primary WiFi configuration deleted successfully!');
+                })
+                .catch(error => {
+                    showMessage('error', 'Error deleting WiFi configuration: ' + error.message);
+                    console.error('Error:', error);
+                });
+            }
         }
 
         function deleteBackupWiFiConfig() {
-            fetch('/deletebackupwificonfig', {
-                method: 'POST',
-            })
-            .then(response => response.text())
-            .then(data => {
-                showMessage('success', 'Backup Wi-Fi Configuration successfully deleted!');
-            })
-            .catch(error => {
-                showMessage('error', 'Error deleting Backup Wi-Fi Configuration.');
-                console.error('Error:', error);
-            });
+            if (confirm('Are you sure you want to delete the backup WiFi configuration?')) {
+                fetch('/deletebackupwificonfig', {
+                    method: 'POST',
+                })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    }
+                    throw new Error('Network response was not ok');
+                })
+                .then(data => {
+                    showMessage('success', 'Backup WiFi configuration deleted successfully!');
+                })
+                .catch(error => {
+                    showMessage('error', 'Error deleting backup WiFi configuration: ' + error.message);
+                    console.error('Error:', error);
+                });
+            }
         }
-
 
         function applyUSB() {
             const vendorID = document.getElementById('vendorID').value;
@@ -287,7 +296,7 @@ const char Configuration[] PROGMEM = R"=====(
                     showMessage('success', 'Hostname updated successfully! Device will restart.');
                     setTimeout(() => {
                         window.location.href = `http://${hostname}.local`;
-                    }, 3000);
+                    }, 6000);
                 } else {
                     showMessage('error', data.message || 'Error updating hostname');
                 }
@@ -312,6 +321,33 @@ const char Configuration[] PROGMEM = R"=====(
 
           // Reload after a delay
           setTimeout(() => location.reload(true), 1000);
+        }
+
+        function rebootDevice() {
+            if (confirm('Are you sure you want to reboot the device?')) {
+                showMessage('info', 'Device rebooting... Please wait');
+                document.body.classList.add('page-loading');
+                
+                fetch('/reboot', {
+                    method: 'POST'
+                })
+                .then(response => {
+                    if (response.ok) {
+                        // Try to reload the page after 6 seconds
+                        setTimeout(() => {
+                            window.location.reload(true);
+                        }, 6000);
+                    } else {
+                        document.body.classList.remove('page-loading');
+                        throw new Error('Reboot failed');
+                    }
+                })
+                .catch(error => {
+                    document.body.classList.remove('page-loading');
+                    showMessage('error', 'Error rebooting device');
+                    console.error('Error:', error);
+                });
+            }
         }
 
         // Function to load the current layout when the config page is loaded

@@ -1,6 +1,6 @@
 const char Redirect[] PROGMEM = R"=====(
 
-// Global variable to track navigation state
+// Track navigation state and abort controller globally
 let isNavigating = false;
 let connectionController = null;
 let navigationTimeout = null;
@@ -21,24 +21,44 @@ function checkConnection() {
     connectionController = new AbortController();
     const timeoutId = setTimeout(() => connectionController.abort(), 1000);
 
-    fetch('/stats', { signal: connectionController.signal })
-        .then(response => {
-            clearTimeout(timeoutId);
-            if (isNavigating) return;
-            updateConnectionStatus(true);
-            return response.json();
-        })
-        .catch(error => {
-            clearTimeout(timeoutId);
-            if (error.name !== 'AbortError' && !isNavigating) {
-                updateConnectionStatus(false);
-            }
-        })
-        .then(data => {
-            if (data && document.location.pathname === '/' && !isNavigating) {
+    // Check if we're on the homepage
+    const isHomePage = window.location.pathname === '/' || window.location.pathname === '/index.html';
+
+    fetch(isHomePage ? '/stats' : '/connectioncheck', { 
+        signal: connectionController.signal 
+    })
+    .then(response => {
+        clearTimeout(timeoutId);
+        if (isNavigating) return;
+
+        if (isHomePage) {
+            return response.json().then(data => {
                 updateStats(data);
+            });
+        } else {
+            updateConnectionStatus(response.ok);
+            return response.json();
+        }
+    })
+    .catch(error => {
+        clearTimeout(timeoutId);
+        if (error.name !== 'AbortError' && !isNavigating) {
+            updateConnectionStatus(false);
+            if (isHomePage) {
+                // Set default values when offline
+                document.getElementById('uptime').innerText = 'N/A';
+                document.getElementById('cpu0').innerText = 'N/A';
+                document.getElementById('cpu1').innerText = 'N/A';
+                document.getElementById('temperature').innerText = 'N/A';
+                document.getElementById('freespiffs').innerText = 'N/A';
+                document.getElementById('totalram').innerText = 'N/A';
+                document.getElementById('freeram').innerText = 'N/A';
+                document.getElementById('targetos').innerText = 'N/A';
+                document.getElementById('ssid').innerText = 'N/A';
+                document.getElementById('ipaddress').innerText = 'N/A';
             }
-        });
+        }
+    });
 }
 
 function updateConnectionStatus(isOnline) {
@@ -56,18 +76,20 @@ function updateConnectionStatus(isOnline) {
 }
 
 function updateStats(data) {
-    document.getElementById('uptime').innerText = data.uptime + ' seconds';
-    document.getElementById('cpu0').innerText = data.cpu0 + ' MHz';
-    document.getElementById('cpu1').innerText = data.cpu1 + ' MHz';
-    document.getElementById('totalspiffs').innerText = formatBytes(data.totalspiffs);
-    document.getElementById('usedspiffs').innerText = formatBytes(data.usedspiffs);
-    document.getElementById('freespiffs').innerText = formatBytes(data.freespiffs);
-    document.getElementById('temperature').innerText = data.temperature.toFixed(1) + ' °C';
-    document.getElementById('totalram').innerText = formatBytes(data.totalram);
-    document.getElementById('freeram').innerText = formatBytes(data.freeram);
-    document.getElementById('os').innerText = data.os;
-    document.getElementById('ssid').innerText = data.ssid;
-    document.getElementById('ipaddress').innerText = data.ipaddress;
+    // Update all stats that exist in index.h
+    if (data.uptime) document.getElementById('uptime').innerText = data.uptime + ' seconds';
+    if (data.cpu0) document.getElementById('cpu0').innerText = data.cpu0 + ' MHz';
+    if (data.cpu1) document.getElementById('cpu1').innerText = data.cpu1 + ' MHz';
+    if (data.temperature) document.getElementById('temperature').innerText = data.temperature.toFixed(1) + ' °C';
+    if (data.freespiffs) document.getElementById('freespiffs').innerText = formatBytes(data.freespiffs);
+    if (data.totalram) document.getElementById('totalram').innerText = formatBytes(data.totalram);
+    if (data.freeram) document.getElementById('freeram').innerText = formatBytes(data.freeram);
+    if (data.os) document.getElementById('targetos').innerText = data.os;
+    if (data.ssid) document.getElementById('ssid').innerText = data.ssid;
+    if (data.ipaddress) document.getElementById('ipaddress').innerText = data.ipaddress;
+
+    // Update connection status indicator
+    updateConnectionStatus(true);
 }
 
 // Format bytes helper function
@@ -230,7 +252,7 @@ document.addEventListener("DOMContentLoaded", function () {
             // Set a timeout to ensure navigation happens even if something hangs
             navigationTimeout = setTimeout(() => {
                 window.location.href = this.href;
-            }, 300); // 300ms delay to allow for cleanup
+            }, 100); // Reduced from 300ms to 100ms
 
             // For iOS, prevent default and use location.href after a small delay
             if (/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) {
@@ -241,6 +263,9 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
     });
+    // Reset navigation flag when page loads
+    isNavigating = false;
+    document.body.classList.remove('page-loading');
 
     // --- OS-based payload filter ---
     const select = document.getElementById("os-filter");
@@ -271,8 +296,5 @@ document.addEventListener("DOMContentLoaded", function () {
             }, { timeout: 200 }); // Fallback if idle takes too long
         });
     }
-    // Reset navigation flag when page loads
-    isNavigating = false;
-    document.body.classList.remove('page-loading');
 });
 )=====";
