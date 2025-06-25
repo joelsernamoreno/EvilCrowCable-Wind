@@ -659,7 +659,7 @@ input[type="checkbox"] {
 
 .button-container button, 
 .button-container-os button {
-  flex: none;
+  flex: auto;
   min-width: 100px;
   background: linear-gradient(135deg, var(--primary), var(--secondary));
   color: var(--darker);
@@ -685,35 +685,35 @@ input[type="checkbox"] {
 }
 
 .select-os-btn {
-  /* Fixed dimensions */
-  width: 120px; /* Slightly wider to accommodate text */
-  height: 44px; /* Fixed height */
-  min-width: 120px; /* Minimum width */
-  max-width: 120px; /* Maximum width to prevent growing */
-  /* Visual styling */
-  background: linear-gradient(135deg, var(--primary), var(--secondary));
-  color: var(--darker);
-  border: none;
-  padding: 10px 5px; /* Adjusted padding */
-  font-weight: bold;
-  border-radius: 3px;
-  cursor: pointer;
-  transition: all 0.3s;
-  /* Text styling */
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  font-family: 'Courier New', monospace;
-  font-size: 10px;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow: hidden;
-  /* Positioning */
-  position: relative;
-  margin: 5px;
-  flex-shrink: 0; /* Prevent shrinking in flex containers */
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+    /* Make button wider to accommodate longer text */
+    width: 140px;
+    min-width: 140px;
+    max-width: 140px;
+    /* Visual styling */
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: var(--darker);
+    border: none;
+    padding: 10px 8px;
+    font-weight: bold;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.3s;
+    /* Text styling */
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    /* Positioning */
+    position: relative;
+    margin: 5px;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
 }
 
 .button-container button:hover, 
@@ -832,15 +832,6 @@ a.pyaloadButton:hover {
 }
 
 /* Responsive design */
-
-@media screen and (-webkit-min-device-pixel-ratio:0) {
-  select:focus,
-  textarea:focus,
-  input:focus {
-    font-size: 16px !important;
-  }
-}
-
 /* Hide only the hamburger menu checkbox (not other inputs) */
 #responsive-menu {
   position: absolute;
@@ -1025,29 +1016,29 @@ a.pyaloadButton:hover {
 
 @media (max-width: 480px) {
     .select-os-btn {
-        width: 80px;
-        min-width: 80px;
-        padding: 6px 8px;
-        font-size: 12px;
+      width: 100px;
+      min-width: 100px;
+      max-width: 100px;
+      padding: 6px 4px;
+      font-size: 11px;
     }
 }
-  
-  .payload-list-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 15px; /* Increased gap */
-    margin: 15px 0;
-    position: relative;
-    z-index: 1;
+
+.payload-list-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 15px; /* Increased gap */
+  margin: 15px 0;
+  position: relative;
+  z-index: 1;
 }
-  
-  .button-container button, .button-container-os button {
-    width: 100%;
-  }
-  
-  .stat-group {
-    flex: 1 1 100%;
-  }
+
+.button-container button, .button-container-os button {
+  width: 100%;
+}
+
+.stat-group {
+  flex: 1 1 100%;
 }
 
 #validationStatus {

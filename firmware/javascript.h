@@ -1,6 +1,6 @@
 const char Redirect[] PROGMEM = R"=====(
 
-// Track navigation state
+// Track navigation state and abort controller globally
 let isNavigating = false;
 let connectionController = null;
 let navigationTimeout = null;
@@ -252,7 +252,7 @@ document.addEventListener("DOMContentLoaded", function () {
             // Set a timeout to ensure navigation happens even if something hangs
             navigationTimeout = setTimeout(() => {
                 window.location.href = this.href;
-            }, 300); // 300ms delay to allow for cleanup
+            }, 100); // Reduced from 300ms to 100ms
 
             // For iOS, prevent default and use location.href after a small delay
             if (/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) {
@@ -263,6 +263,9 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
     });
+    // Reset navigation flag when page loads
+    isNavigating = false;
+    document.body.classList.remove('page-loading');
 
     // --- OS-based payload filter ---
     const select = document.getElementById("os-filter");
@@ -293,8 +296,5 @@ document.addEventListener("DOMContentLoaded", function () {
             }, { timeout: 200 }); // Fallback if idle takes too long
         });
     }
-    // Reset navigation flag when page loads
-    isNavigating = false;
-    document.body.classList.remove('page-loading');
 });
 )=====";

@@ -689,83 +689,88 @@ void connectToWiFi() {
     delay(1000);
   }
 
-  bool triedPrimary = false;
-  bool triedBackup = false;
+  bool hasPrimaryConfig = LittleFS.exists("/wifi_config.txt");
+  bool hasBackupConfig = LittleFS.exists("/wifi_backup_config.txt");
 
   // Try primary WiFi if it exists
-  if (LittleFS.exists("/wifi_config.txt")) {
-    File fsUploadFile = LittleFS.open("/wifi_config.txt", FILE_READ);
-    if (fsUploadFile) {
-      String primarySSID = fsUploadFile.readStringUntil('\n');
+  if (hasPrimaryConfig) {
+    File configFile = LittleFS.open("/wifi_config.txt", FILE_READ);
+    if (configFile) {
+      String primarySSID = configFile.readStringUntil('\n');
       primarySSID.trim();
-      String primaryPassword = fsUploadFile.readStringUntil('\n');
+      String primaryPassword = configFile.readStringUntil('\n');
       primaryPassword.trim();
-      fsUploadFile.close();
+      configFile.close();
 
       WiFi.begin(primarySSID.c_str(), primaryPassword.c_str());
-      triedPrimary = true;
 
       unsigned long startAttemptTime = millis();
       while (WiFi.status() != WL_CONNECTED && millis() - startAttemptTime < 10000) {
         delay(500);
       }
+
+      if (WiFi.status() == WL_CONNECTED) {
+        initMDNS();
+        return;
+      }
     }
   }
 
-  // If primary WiFi failed or doesn't exist, try backup WiFi if it exists
-  if (WiFi.status() != WL_CONNECTED && LittleFS.exists("/wifi_backup_config.txt")) {
-    File file = LittleFS.open("/wifi_backup_config.txt", FILE_READ);
-    if (file) {
-      String backupSSID = file.readStringUntil('\n');
+  // Try backup WiFi if it exists and primary failed
+  if (hasBackupConfig) {
+    File backupFile = LittleFS.open("/wifi_backup_config.txt", FILE_READ);
+    if (backupFile) {
+      String backupSSID = backupFile.readStringUntil('\n');
       backupSSID.trim();
-      String backupPassword = file.readStringUntil('\n');
+      String backupPassword = backupFile.readStringUntil('\n');
       backupPassword.trim();
-      file.close();
+      backupFile.close();
 
       WiFi.begin(backupSSID.c_str(), backupPassword.c_str());
-      triedBackup = true;
 
       unsigned long startAttemptTime = millis();
       while (WiFi.status() != WL_CONNECTED && millis() - startAttemptTime < 10000) {
         delay(500);
       }
-    }
-  }
 
-  // If no saved configurations worked or exist, try default credentials
-  if (WiFi.status() != WL_CONNECTED && (!triedPrimary && !triedBackup)) {
-    WiFi.begin(ssid.c_str(), password.c_str());
-
-    unsigned long startAttemptTime = millis();
-    while (WiFi.status() != WL_CONNECTED && millis() - startAttemptTime < 10000) {
-      delay(500);
-    }
-  }
-
-  // Initialize MDNS and TCP server if connected
-  if (WiFi.status() == WL_CONNECTED) {
-    String hostname = "cable-wind";
-    if (LittleFS.exists("/hostname_config.txt")) {
-      File fsUploadFile = LittleFS.open("/hostname_config.txt", FILE_READ);
-      if (fsUploadFile) {
-        hostname = fsUploadFile.readStringUntil('\n');
-        hostname.trim();
-        fsUploadFile.close();
+      if (WiFi.status() == WL_CONNECTED) {
+        initMDNS();
+        return;
       }
     }
-
-    MDNS.end(); // Stop any existing MDNS before restarting
-
-    if (!MDNS.begin(hostname.c_str())) {
-      Serial.println("Error setting up MDNS responder!");
-    }
-
-    tcpServer.begin();
-    wifiConnected = true;
-  } else {
-    wifiConnected = false;
-    MDNS.end();
   }
+
+  // Fall back to default credentials if no saved configs worked
+  WiFi.begin(ssid.c_str(), password.c_str());
+
+  unsigned long startAttemptTime = millis();
+  while (WiFi.status() != WL_CONNECTED && millis() - startAttemptTime < 10000) {
+    delay(500);
+  }
+
+  if (WiFi.status() == WL_CONNECTED) {
+    initMDNS();
+  }
+}
+
+void initMDNS() {
+  String hostname = "cable-wind";
+  if (LittleFS.exists("/hostname_config.txt")) {
+    File hostnameFile = LittleFS.open("/hostname_config.txt", FILE_READ);
+    if (hostnameFile) {
+      hostname = hostnameFile.readStringUntil('\n');
+      hostname.trim();
+      hostnameFile.close();
+    }
+  }
+
+  MDNS.end();
+  if (!MDNS.begin(hostname.c_str())) {
+    Serial.println("Error setting up MDNS responder!");
+  }
+
+  tcpServer.begin();
+  wifiConnected = true;
 }
 
 void handleUpdateHostname() {
@@ -1246,35 +1251,25 @@ void handleUpdateBackupWiFi() {
   }
 }
 
-
 void handleDeleteWiFiConfig() {
-  if (LittleFS.exists("/wifi_config.txt")) {
-    if (LittleFS.remove("/wifi_config.txt")) {
-      controlserver.send(200, "application/json", "{\"status\":\"success\",\"message\":\"Wi-Fi config deleted successfully\"}");
-      delay(1000);  // Give time for response to be sent
-      ESP.restart();
-    } else {
-      controlserver.send(500, "application/json", "{\"status\":\"error\",\"message\":\"Failed to delete the file\"}");
-    }
+  if (LittleFS.remove("/wifi_config.txt")) {
+    controlserver.send(200, "application/json", "{\"status\":\"success\",\"message\":\"Wi-Fi config deleted successfully\"}");
+    connectToWiFi();
   } else {
-    controlserver.send(500, "application/json", "{\"status\":\"error\",\"message\":\"File does not exist\"}");
+    controlserver.send(500, "application/json", "{\"status\":\"error\",\"message\":\"Failed to delete the file\"}");
   }
 }
 
 void handleDeleteBackupWiFiConfig() {
-  if (LittleFS.exists("/wifi_backup_config.txt")) {
-    if (LittleFS.remove("/wifi_backup_config.txt")) {
-      controlserver.send(200, "application/json", "{\"status\":\"success\",\"message\":\"Backup Wi-Fi config deleted successfully\"}");
-      delay(1000);
-      ESP.restart();
-    } else {
-      controlserver.send(500, "application/json", "{\"status\":\"error\",\"message\":\"Failed to delete backup Wi-Fi config\"}");
+  if (LittleFS.remove("/wifi_backup_config.txt")) {
+    controlserver.send(200, "application/json", "{\"status\":\"success\",\"message\":\"Backup Wi-Fi config deleted successfully\"}");
+    if (WiFi.status() != WL_CONNECTED) {
+      connectToWiFi();
     }
   } else {
-    controlserver.send(500, "application/json", "{\"status\":\"error\",\"message\":\"Backup Wi-Fi config does not exist\"}");
+    controlserver.send(500, "application/json", "{\"status\":\"error\",\"message\":\"Failed to delete backup Wi-Fi config\"}");
   }
 }
-
 
 void handleUpdateUSB() {
   if (controlserver.hasArg("vendorID") && controlserver.hasArg("productID") && controlserver.hasArg("productName") && controlserver.hasArg("manufacturerName")) {

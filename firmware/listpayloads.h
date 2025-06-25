@@ -30,7 +30,6 @@ const char StaticListPayloads[] PROGMEM = R"=====(
         <div class="payload-header">
             <h3 style="margin: 0;">Available Payloads:</h3>
             <button class="select-os-btn" onclick="showOSFilterModal()">Filter OS</button>
-            <span id="selected-os-label">ALL</span>
         </div>
         <div class="payload-list-container">
             <div id="os-filter-modal" class="os-modal" style="display: none;">
@@ -50,13 +49,19 @@ const char StaticListPayloads[] PROGMEM = R"=====(
             <script>
                 function showOSFilterModal() {
                     document.getElementById('os-filter-modal').style.display = 'flex';
-
+                
                     document.querySelectorAll('#os-filter-modal .os-options button').forEach(btn => {
-                        btn.onclick = function () {
+                        btn.onclick = function() {
                             const selectedOS = this.dataset.os;
-                            document.getElementById('selected-os-label').textContent = selectedOS.toUpperCase();
-                            document.getElementById('os-filter-modal').style.display = 'none';
+                            hideOSFilterModal();
                             filterPayloadsByOS(selectedOS);
+                
+                            const filterBtn = document.querySelector('.select-os-btn');
+                            if (selectedOS === 'all') {
+                                filterBtn.textContent = 'Filter OS';
+                            } else {
+                                filterBtn.textContent = `OS: ${selectedOS}`;
+                            }
                         };
                     });
                 }
