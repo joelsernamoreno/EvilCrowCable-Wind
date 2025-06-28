@@ -85,7 +85,75 @@ const char StaticListPayloads[] PROGMEM = R"=====(
                 // Optional: Default filter to 'all'
                 document.addEventListener('DOMContentLoaded', () => {
                     filterPayloadsByOS('all');
+                    updatePayloadCounter();
                 });
+
+                function showMessage(type, text) {
+                    const container = document.getElementById('global-toast');
+                    const toast = document.createElement('div');
+                    toast.className = `toast-message ${type}`;
+
+                    const messageSpan = document.createElement('span');
+                    messageSpan.textContent = text;
+
+                    const closeButton = document.createElement('span');
+                    closeButton.className = 'toast-close';
+                    closeButton.innerHTML = '&times;';
+                    closeButton.onclick = () => {
+                        toast.style.animation = 'toastFadeOut 0.3s ease-out';
+                        setTimeout(() => toast.remove(), 300);
+                    };
+
+                    toast.appendChild(messageSpan);
+                    toast.appendChild(closeButton);
+                    container.appendChild(toast);
+
+                    // Auto-remove after 5 seconds
+                    const timer = setTimeout(() => {
+                        toast.style.animation = 'toastFadeOut 0.3s ease-out';
+                        setTimeout(() => toast.remove(), 300);
+                    }, 5000);
+
+                    // Update close handler to also clear the timer
+                    closeButton.onclick = () => {
+                        clearTimeout(timer);
+                        toast.style.animation = 'toastFadeOut 0.3s ease-out';
+                        setTimeout(() => toast.remove(), 300);
+                    };
+                }
+
+                // delete payloads and metadata, then update file's counter
+                function clearPayloads() {
+                    if (confirm('Are you sure you want to delete all payloads and .meta files?')) {
+                        fetch('/clearpayloads', { method: 'POST' })
+                            .then(res => res.json())
+                            .then(data => {
+                                console.log('[✓] Payloads cleared response:', data);
+                                showMessage('success', data.message || 'Payloads cleared');
+                                // updatePayloadCounter(); // Actualiza el contador visual
+
+                                // it allow to read the message
+                                setTimeout(() => {
+                                    location.reload(); // Recarga la página
+                                }, 5000);
+                            })
+                            .catch(err => {
+                                console.error('[!] Error clearing payloads:', err);
+                                showMessage('error', 'Failed to clear payloads');
+                            });
+                    }
+                }
+
+                function updatePayloadCounter() {
+                    fetch('/payloadcount')
+                        .then(res => res.json())
+                        .then(data => {
+                            const countSpan = document.getElementById('payloadCounter');
+                            countSpan.textContent = `${data.count}`;
+                        })
+                        .catch(err => console.error('Error counting payloads:', err));
+                }
+
             </script>
 
 
