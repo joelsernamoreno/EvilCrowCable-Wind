@@ -28,12 +28,16 @@ const char StaticListPayloads[] PROGMEM = R"=====(
 
     <div class="view-container">
         <div class="payload-header">
-            <h3 style="margin: 0;">Available Payloads:</h3>
-            <button class="select-os-btn" onclick="showOSFilterModal()">Filter OS</button>
+            <h3 style="margin: 0;">Available Payloads</h3>
+            <div class="header-buttons">
+                <button type="button" name="deleteAllPayloads" onclick="deleteAllPayloads()">Delete 0 payloads</button>
+                <button class="select-os-btn" onclick="showOSFilterModal()">Filter OS</button>
+            </div>
         </div>
+        <hr>
         <div class="payload-list-container">
             <div id="os-filter-modal" class="os-modal" style="display: none;">
-                <div class="os-modal-content">
+                <div class="os-modal-content" onclick="event.stopPropagation()">
                     <h3>Select OS Filter</h3>
                     <div class="os-options">
                         <button data-os="all">ALL</button>
@@ -47,15 +51,51 @@ const char StaticListPayloads[] PROGMEM = R"=====(
                 </div>
             </div>
             <script>
+                function deleteAllPayloads() {
+                    if (confirm('WARNING: This will delete ALL payloads and their metadata. Are you sure?')) {
+                        fetch('/deleteallpayloads', {
+                            method: 'POST'
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                // Update button text
+                                const deleteButton = document.querySelector('button[name="deleteAllPayloads"]');
+                                if (deleteButton) {
+                                    deleteButton.textContent = 'Delete 0 payloads';
+                                }
+
+                                // Show detailed success message
+                                let message = `Deleted ${data.count} payloads successfully:\n`;
+                                if (data.deleted_files && data.deleted_files.length > 0) {
+                                    message += data.deleted_files.join('\n');
+                                }
+                                showMessage('success', message);
+
+                                // Refresh the list after a short delay
+                                setTimeout(() => window.location.reload(), 1500);
+                            } else {
+                                showMessage('error', data.message || 'Error deleting payloads');
+                            }
+                        })
+                        .catch(error => {
+                            showMessage('error', 'Error deleting payloads');
+                            console.error('Error:', error);
+                        });
+                    }
+                }
+
                 function showOSFilterModal() {
-                    document.getElementById('os-filter-modal').style.display = 'flex';
-                
+                    const modal = document.getElementById('os-filter-modal');
+                    modal.style.display = 'flex';
+                    modal.onclick = hideOSFilterModal;
+
                     document.querySelectorAll('#os-filter-modal .os-options button').forEach(btn => {
                         btn.onclick = function() {
                             const selectedOS = this.dataset.os;
                             hideOSFilterModal();
                             filterPayloadsByOS(selectedOS);
-                
+
                             const filterBtn = document.querySelector('.select-os-btn');
                             if (selectedOS === 'all') {
                                 filterBtn.textContent = 'Filter OS';
@@ -85,75 +125,7 @@ const char StaticListPayloads[] PROGMEM = R"=====(
                 // Optional: Default filter to 'all'
                 document.addEventListener('DOMContentLoaded', () => {
                     filterPayloadsByOS('all');
-                    updatePayloadCounter();
                 });
-
-                function showMessage(type, text) {
-                    const container = document.getElementById('global-toast');
-                    const toast = document.createElement('div');
-                    toast.className = `toast-message ${type}`;
-
-                    const messageSpan = document.createElement('span');
-                    messageSpan.textContent = text;
-
-                    const closeButton = document.createElement('span');
-                    closeButton.className = 'toast-close';
-                    closeButton.innerHTML = '&times;';
-                    closeButton.onclick = () => {
-                        toast.style.animation = 'toastFadeOut 0.3s ease-out';
-                        setTimeout(() => toast.remove(), 300);
-                    };
-
-                    toast.appendChild(messageSpan);
-                    toast.appendChild(closeButton);
-                    container.appendChild(toast);
-
-                    // Auto-remove after 5 seconds
-                    const timer = setTimeout(() => {
-                        toast.style.animation = 'toastFadeOut 0.3s ease-out';
-                        setTimeout(() => toast.remove(), 300);
-                    }, 5000);
-
-                    // Update close handler to also clear the timer
-                    closeButton.onclick = () => {
-                        clearTimeout(timer);
-                        toast.style.animation = 'toastFadeOut 0.3s ease-out';
-                        setTimeout(() => toast.remove(), 300);
-                    };
-                }
-
-                // delete payloads and metadata, then update file's counter
-                function clearPayloads() {
-                    if (confirm('Are you sure you want to delete all payloads and .meta files?')) {
-                        fetch('/clearpayloads', { method: 'POST' })
-                            .then(res => res.json())
-                            .then(data => {
-                                console.log('[✓] Payloads cleared response:', data);
-                                showMessage('success', data.message || 'Payloads cleared');
-                                // updatePayloadCounter(); // Actualiza el contador visual
-
-                                // it allow to read the message
-                                setTimeout(() => {
-                                    location.reload(); // Recarga la página
-                                }, 5000);
-                            })
-                            .catch(err => {
-                                console.error('[!] Error clearing payloads:', err);
-                                showMessage('error', 'Failed to clear payloads');
-                            });
-                    }
-                }
-
-                function updatePayloadCounter() {
-                    fetch('/payloadcount')
-                        .then(res => res.json())
-                        .then(data => {
-                            const countSpan = document.getElementById('payloadCounter');
-                            countSpan.textContent = `${data.count}`;
-                        })
-                        .catch(err => console.error('Error counting payloads:', err));
-                }
-
             </script>
 
 

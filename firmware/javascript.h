@@ -175,6 +175,22 @@ function handleSubmit(event) {
     });
 }
 
+function countPayloads() {
+    fetch('/payloadcounter')
+        .then(response => response.json())
+        .then(data => {
+            if (data.count >= 0) {
+                const deleteButton = document.querySelector('button[name="deleteAllPayloads"]');
+                if (deleteButton) {
+                    deleteButton.textContent = `Delete ${data.count} payloads`;
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error counting payloads:', error);
+        });
+}
+
 function showMessage(type, text) {
     const container = document.getElementById('global-toast') || document.createElement('div');
     if (!container.id) {
@@ -263,6 +279,11 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
     });
+
+    if (window.location.pathname === '/listpayloads') {
+        countPayloads(); // This will run when /listpayloads page loads
+    }
+
     // Reset navigation flag when page loads
     isNavigating = false;
     document.body.classList.remove('page-loading');
