@@ -27,7 +27,6 @@ const char AutoExecPlanning[] PROGMEM = R"=====(
     <div class="cable-wind-logo">AUTOEXEC PLANNING</div>
 
     <div class="view-container">
-        <h3>Auto Execution Planning</h3>       
         <div class="os-container">
             <div class="os-box" id="windowsBox" data-os="windows">
                 <h3>Windows</h3>

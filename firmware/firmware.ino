@@ -663,8 +663,28 @@ void listDir(fs::FS &fs, const char *dirname, uint8_t levels) {
 
     file = root.openNextFile();
   }
-  FileList += "</div><button type=\"button\" name=\"clearPayloadsButton\" onclick=\"clearPayloads()\" style=\"white-space: nowrap;\">Delete <span id=\"payloadCounter\" class=\"payload-desc\" style=\"display: inline;\">0</span> Payloads</button>";
   FileList += "</body></html>";
+}
+
+void handlePayloadCounter() {
+    int count = 0;
+
+    if (LittleFS.exists("/payloads")) {
+        File root = LittleFS.open("/payloads");
+        File file = root.openNextFile();
+        while (file) {
+            String fileName = file.name();
+            file = root.openNextFile();
+
+            // Skip metadata files
+            if (!fileName.endsWith(".meta")) {
+                count++;
+            }
+        }
+    }
+
+    String json = "{\"count\":" + String(count) + "}";
+    controlserver.send(200, "application/json", json);
 }
 
 void handleStats() {
@@ -1346,6 +1366,48 @@ void handleDeletePayload() {
   }
 }
 
+void handleDeleteAllPayloads() {
+    DynamicJsonDocument doc(2048); // Increased size to hold filenames
+    doc["success"] = false;
+    doc["count"] = 0;
+    JsonArray deletedFiles = doc.createNestedArray("deleted_files");
+
+    File root = LittleFS.open("/payloads");
+    if (!root || !root.isDirectory()) {
+        doc["message"] = "No payloads found";
+        controlserver.send(200, "application/json", doc.as<String>());
+        return;
+    }
+
+    File file = root.openNextFile();
+    while (file) {
+        String fileName = file.name();
+        file = root.openNextFile();
+
+        // Skip metadata files (we'll handle them with their payloads)
+        if (fileName.endsWith(".meta")) {
+            continue;
+        }
+
+        String filePath = "/payloads/" + fileName;
+        if (LittleFS.remove(filePath)) {
+            doc["count"] = doc["count"].as<int>() + 1;
+            deletedFiles.add(fileName);
+
+            // Delete corresponding meta file
+            String metaPath = filePath + ".meta";
+            LittleFS.remove(metaPath);
+        }
+    }
+
+    doc["success"] = true;
+    doc["message"] = "Payloads deleted successfully";
+
+    String jsonResponse;
+    serializeJson(doc, jsonResponse);
+    controlserver.send(200, "application/json", jsonResponse);
+}
+
 void setup() {
   USB.onEvent(usbEventCallback);
   Keyboard.onEvent(usbEventCallback);
@@ -1714,74 +1776,20 @@ void setup() {
   });
 
 
-// clear all payloads and metadata
-  controlserver.on("/clearpayloads", HTTP_POST, []() {
-    int deletedCount = 0;
-    String allFiles = "";
-    File root = LittleFS.open("/payloads");
-    if (!root || !root.isDirectory()) {
-        controlserver.send(500, "application/json", "{\"status\":\"error\",\"message\":\"Failed to open FS root\"}");
-        return;
-    }
-
-    File file = root.openNextFile();
-    while (file) {
-        String path = String(file.name());
-        allFiles+=path+", ";
-        file.close();
-
-        if ((path.endsWith(".txt") || path.endsWith(".meta"))) {
-            if (LittleFS.remove("/payloads/"+path)) {
-                deletedCount++;
-            } else {
-            }
-        }
-
-        file = root.openNextFile();
-    }
-
-  String response = "{\"status\":\"ok\",\"deleted\":" + String(deletedCount) +
-                  ",\"message\":\"Files Deleted " + String(deletedCount) + " :\\n " + allFiles + "\"}";
-    controlserver.send(200, "application/json", response);
-  });
-
- // return the number of payloads
-  controlserver.on("/payloadcount", HTTP_GET, []() {
-    int count = 0;
-
-    File dir = LittleFS.open("/payloads");
-    if (!dir || !dir.isDirectory()) {
-        controlserver.send(500, "application/json", "{\"status\":\"error\",\"message\":\"Payloads directory not found\"}");
-        return;
-    }
-
-    File file = dir.openNextFile();
-    while (file) {
-        String filename = file.name();
-        file.close();
-
-        if (filename.startsWith("/payloads/") && filename.endsWith(".txt") || filename.endsWith(".meta")) {
-            count++;
-        }
-
-        file = dir.openNextFile();
-    }
-
-    controlserver.send(200, "application/json", "{\"count\":" + String(count) + "}");
-  });
-
   controlserver.on("/updatewifi", HTTP_POST, handleUpdateWiFi);
   controlserver.on("/layout", HTTP_POST, handleLayout);
   controlserver.on("/deletewificonfig", HTTP_POST, handleDeleteWiFiConfig);
   controlserver.on("/updateusb", HTTP_POST, handleUpdateUSB);
   controlserver.on("/deleteusbconfig", HTTP_POST, handleDeleteUSBConfig);
   controlserver.on("/deletepayload", HTTP_POST, handleDeletePayload);
+  controlserver.on("/deleteallpayloads", HTTP_POST, handleDeleteAllPayloads);
   controlserver.on("/getcurrentlayout", handleGetCurrentLayout);
   controlserver.on("/updatehostname", HTTP_POST, handleUpdateHostname);
   controlserver.on("/gethostname", handleGetHostname);
   controlserver.on("/updatebackupwifi", HTTP_POST, handleUpdateBackupWiFi);
   controlserver.on("/deletebackupwificonfig", HTTP_POST, handleDeleteBackupWiFiConfig);
   controlserver.on("/updatepayload", HTTP_POST, handleUpdatePayload);
+  controlserver.on("/payloadcounter", handlePayloadCounter);
 
   httpUpdater.setup(&controlserver);
   controlserver.begin();

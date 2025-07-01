@@ -135,6 +135,9 @@ body {
 
 /* Main content */
 .view-container {
+  -webkit-transform: translate3d(0,0,0);
+  transform: translateZ(0);
+  will-change: transform;
   background: rgba(10, 10, 18, 0.8);
   border: 1px solid var(--primary);
   border-radius: 5px;
@@ -145,6 +148,7 @@ body {
   box-shadow: 0 0 20px rgba(0, 242, 255, 0.1);
   position: relative;
   overflow: hidden;
+  min-height: 350px;
 }
 
 .view-container::before {
@@ -200,9 +204,17 @@ button:hover::after {
 button[name="deleteWifiButton"], 
 button[name="deleteUSBButton"],
 button[name="deleteBackupWifiButton"],
-button[name="clearPayloadsButton"],
 button[name="clearCacheButton"] {
   background: linear-gradient(135deg, var(--error), #cc0022);
+}
+
+button[name="deleteAllPayloads"] {
+    background: linear-gradient(135deg, var(--error), #cc0022);
+    min-width: auto;
+    margin: 0;
+    width: auto;
+    flex-shrink: 0;
+    white-space: nowrap; /* Prevent text wrapping */
 }
 
 /* Input fields - Improved for mobile */
@@ -627,6 +639,9 @@ input[type="checkbox"] {
 
 /* Special cable wind elements */
 .cable-wind-logo {
+  -webkit-backface-visibility: hidden;
+  -webkit-transform: translate3d(0,0,0);
+  transform: translateZ(0);
   text-align: center;
   margin: 25px 0 15px 0; /* Increased top margin */
   font-size: 2em;
@@ -709,7 +724,7 @@ input[type="checkbox"] {
     text-overflow: ellipsis;
     /* Positioning */
     position: relative;
-    margin: 5px;
+    margin: 0px;
     flex-shrink: 0;
     display: inline-flex;
     align-items: center;
@@ -880,6 +895,7 @@ a.pyaloadButton:hover {
   .view-container {
     padding: 20px;
     margin: 20px auto;
+    min-height: 350px;
   }
   
   .os-box {
@@ -892,6 +908,9 @@ a.pyaloadButton:hover {
   }
   
   .cable-wind-logo {
+    -webkit-backface-visibility: hidden;
+    -webkit-transform: translate3d(0,0,0);
+    transform: translateZ(0);
     font-size: 2.5em;
   }
 }
@@ -959,7 +978,13 @@ a.pyaloadButton:hover {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 8px;
+    margin-bottom: 15px;
+    width: 100%;
+}
+
+/* Button container */
+.header-buttons {
+    display: flex;
     gap: 10px;
 }
 
@@ -974,7 +999,6 @@ a.pyaloadButton:hover {
     background: linear-gradient(135deg, #55616F, #73879F);
 }
 
-/* Add this to your style.css */
 .status-indicator {
     display: inline-block;
     width: 12px;
@@ -1015,6 +1039,12 @@ a.pyaloadButton:hover {
     box-shadow: 0 0 6px var(--error);
 }
 
+@supports (-webkit-touch-callout: none) {
+  .cable-wind-logo {
+    -webkit-text-stroke: 0.45px transparent; /* Safari anti-flicker hack */
+  }
+}
+
 @media (max-width: 480px) {
     .select-os-btn {
       width: 100px;
@@ -1043,8 +1073,7 @@ a.pyaloadButton:hover {
 }
 
 #validationStatus {
-    font-size: 0.7em;  /* Reduced font size from 0.8em to 0.7em */
-    margin-left: 10px;
+    font-size: 0.7em;
     display: inline-block;
     vertical-align: middle;
 }
@@ -1121,6 +1150,13 @@ a.pyaloadButton:hover {
 
 /* Mobile styles remain exactly the same */
 @media (max-width: 768px) {
+    .payload-list-container {
+      transition: filter 0.3s ease;
+    }
+    .modal-open .payload-list-container {
+      filter: blur(2px);
+      opacity: 0.7;
+    }
     .payload-editor-container {
         height: 15em;
     }
@@ -1187,7 +1223,7 @@ a.pyaloadButton:hover {
 
 /* OS selector*/
 .styled-select {
-  background-color: rgba(10, 10, 10, 0.9); /* igual que tu .view-container */
+  background-color: rgba(10, 10, 10, 0.9);
   border: 1px solid var(--primary);
   color: var(--light);
   padding: 8px 12px;
