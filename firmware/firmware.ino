@@ -71,7 +71,8 @@ enum HostOS {
   OS_LINUX,
   OS_MACOS,
   OS_IOS,
-  OS_ANDROID
+  OS_ANDROID,
+  OS_CHROMEOS
 };
 
 enum MetadataField {
@@ -171,9 +172,9 @@ std::map<String, uint8_t> keyMap = {
   { "KEY_F12", KEY_F12 }
 };
 
-void usbEventCallback(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data) {
+void usbEventCallback(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
   if (event_base == ARDUINO_USB_HID_KEYBOARD_EVENTS) {
-    arduino_usb_hid_keyboard_event_data_t *data = (arduino_usb_hid_keyboard_event_data_t *)event_data;
+    arduino_usb_hid_keyboard_event_data_t* data = (arduino_usb_hid_keyboard_event_data_t*)event_data;
 
     if (event_id == ARDUINO_USB_HID_KEYBOARD_LED_EVENT) {
       led_response_received = true;
@@ -290,7 +291,7 @@ void writeLineWindows(const char *str) {
   Keyboard.releaseAll();
 }
 
-void toggleKey(uint8_t key, unsigned long *send_time) {
+void toggleKey(uint8_t key, unsigned long* send_time) {
   *send_time = millis();
   led_response_received = false;
 
@@ -339,19 +340,29 @@ void detectHostOS() {
 
   if (led_event_count == 0) {
     detected_os = (caps_status != initial_caps) ? OS_IOS : OS_MACOS;
-  } else if (led_event_count >= 3 && caps_delay < 100 && num_delay < 100 && scroll_delay < 100) {
+  }
+  else if (led_event_count >= 3 && caps_delay < 100 && num_delay < 100 && scroll_delay < 100) {
     detected_os = OS_WINDOWS;
-  } else {
+  }
+  else {
     bool has_numlock_response = (num_delay > 0);
     bool has_scrolllock_response = (scroll_delay > 0);
 
-    if (num_status && !scroll_status && has_numlock_response && !has_scrolllock_response) {
+    if (led_event_count == 1 && caps_status != initial_caps && caps_delay > 0 && caps_delay < 20 && !has_numlock_response && !has_scrolllock_response) {
+      detected_os = OS_CHROMEOS;
+    }
+    
+    else if (num_status && !scroll_status && has_numlock_response && !has_scrolllock_response) {
       detected_os = OS_LINUX;
-    } else if ((caps_delay > 200 || num_delay > 200 || scroll_delay > 200) && (has_numlock_response || has_scrolllock_response)) {
+    }
+    else if ((caps_delay > 200 || num_delay > 200 || scroll_delay > 200) && 
+             (has_numlock_response || has_scrolllock_response)) {
       detected_os = OS_ANDROID;
-    } else if (caps_status != initial_caps) {
+    }
+    else if (caps_status != initial_caps) {
       detected_os = OS_IOS;
-    } else {
+    }
+    else {
       detected_os = OS_UNKNOWN;
     }
   }
@@ -373,6 +384,9 @@ void printDetectedOS() {
       break;
     case OS_ANDROID:
       os = "Android";
+      break;
+    case OS_CHROMEOS:
+      os = "chromeOS";
       break;
     default:
       os = "OS Unknown";
@@ -1864,6 +1878,8 @@ void loop() {
             break;
           case OS_ANDROID:
             osPayloadPath = pendingAutoExecPlan["android"]["path"].as<String>();
+            break;
+          case OS_CHROMEOS:
             break;
           default:
             break;

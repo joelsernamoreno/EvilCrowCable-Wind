@@ -254,15 +254,19 @@ Use the DetectOS command from livepayload to get the victim's operating system:
 
 ![DetectOS](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/detectos-payload.png)
 
-This is a BETA feature. Currently it can detect the following operating systems: Windows, Linux, Android and iOS. MacOS detection is implemented but does not work properly yet.
+This is a BETA feature. Currently it can detect the following operating systems: Windows, Linux, MacOS, Android, iOS and ChromeOS (ChromeOS Flex). Please open an issue if you experience any issues with OS detection.
 
 ![DetectOS](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/detectos-windows.png)
 
 ![DetectOS](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/detectos-linux.png)
 
+![DetectOS](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/detectos-macos.png)
+
 ![DetectOS](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/detectos-android.png)
 
 ![DetectOS](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/detectos-ios.png)
+
+![DetectOS](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/detectos-chromeos.png)
 
 ## Upload Payload
 
@@ -361,6 +365,12 @@ Change the hostname to access the web panel with another name:
 Forces reload of CSS/JS files if they were cached:
 
 ![Config](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/css-js-files.png)
+
+* **Reboot Device:**
+
+Reboot device remotely:
+
+![Config](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/reboot.png)
 
 ## Debug messages
 
