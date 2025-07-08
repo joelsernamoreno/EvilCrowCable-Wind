@@ -351,7 +351,7 @@ const char LivePayload[] PROGMEM = R"=====(
                 },
                 'ServerConnect': {
                     validate: args => args.length > 0,
-                    message: 'requires IP address/hostname'
+                    message: 'requires IP address/hostname or ipaddress:port'
                 },
                 'DetectOS': {
                     validate: args => args.length === 0,
@@ -371,7 +371,7 @@ const char LivePayload[] PROGMEM = R"=====(
                 },
                 'ShellWin': {
                     validate: args => args.length > 0,
-                    message: 'requires IP address'
+                    message: 'requires IP address or ipaddress:port'
                 },
                 'RunNix': {
                     validate: args => args.length > 0,
@@ -387,11 +387,11 @@ const char LivePayload[] PROGMEM = R"=====(
                 },
                 'ShellNix': {
                     validate: args => args.length > 0,
-                    message: 'requires IP address'
+                    message: 'requires IP address or ipaddress:port'
                 },
                 'ShellMac': {
                     validate: args => args.length > 0,
-                    message: 'requires IP address'
+                    message: 'requires IP address or ipaddress:port'
                 },
                 'ShellMacCleanup': {
                     validate: args => args.length === 0,
