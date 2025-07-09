@@ -909,6 +909,12 @@ void saveLayoutConfig(const String &layout) {
 }
 
 void payloadExec() {
+  cmd.trim();
+  // Skip empty lines and comments
+  if (cmd.length() == 0 || cmd.startsWith("##")) {
+      return;
+  }
+
   if (cmd.startsWith("RunMac ")) {
     cmd.toCharArray(Command, cmd.length() + 1);
     Keyboard.press(KEY_LEFT_GUI);

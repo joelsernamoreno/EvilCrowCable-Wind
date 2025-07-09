@@ -349,6 +349,10 @@ const char LivePayload[] PROGMEM = R"=====(
                     },
                     message: 'requires valid keyboard layout code (e.g., EN_US, SI_SI)'
                 },
+                '##': {
+                    validate: args => true, // Always valid
+                    message: 'Comment line'
+                },
                 'ServerConnect': {
                     validate: args => args.length > 0,
                     message: 'requires IP address/hostname or ipaddress:port'
@@ -633,6 +637,11 @@ const char LivePayload[] PROGMEM = R"=====(
         }
 
         function isValidCommandLine(line) {
+            // Skip comment lines (starting with ##)
+            if (line.startsWith('##')) {
+                return { valid: true };
+            }
+
             // Special handling for "# Layout:" command
             if (line.startsWith('# Layout:')) {
                 const args = line.substring('# Layout:'.length).trim();

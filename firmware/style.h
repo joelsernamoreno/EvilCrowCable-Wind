@@ -1114,7 +1114,7 @@ a.pyaloadButton:hover {
 
 .line-numbers {
     width: 30px;
-    padding: 12px 5px 12px 10px;
+    padding: 12px 5px 5px 10px;
     background-color: rgba(5, 5, 8, 0.7);
     color: #666;
     font-family: 'Courier New', monospace;
