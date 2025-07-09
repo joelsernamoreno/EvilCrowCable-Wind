@@ -2,35 +2,33 @@ const char Redirect[] PROGMEM = R"=====(
 
 // Track navigation state and abort controller globally
 let isNavigating = false;
-let connectionController = null;
+let abortControllers = [];
 let navigationTimeout = null;
+const isHomePage = window.location.pathname === '/' || window.location.pathname === '/index.html';
+let lastConnectionCheck = 0;
 
 function checkConnection() {
+    // Debounce check - skip if called too frequently
+    const now = Date.now();
+    if (now - lastConnectionCheck < 2000) return;
+    lastConnectionCheck = now;
+
     if (isNavigating) {
-        if (connectionController) {
-            connectionController.abort();
-        }
+        abortAllRequests();
         return;
     }
 
-    // Abort any existing connection check
-    if (connectionController) {
-        connectionController.abort();
-    }
+    const controller = new AbortController();
+    abortControllers.push(controller);
 
-    connectionController = new AbortController();
-    const timeoutId = setTimeout(() => connectionController.abort(), 1000);
-
-    // Check if we're on the homepage
-    const isHomePage = window.location.pathname === '/' || window.location.pathname === '/index.html';
+    const timeout = setTimeout(() => controller.abort(), 1500);
 
     fetch(isHomePage ? '/stats' : '/connectioncheck', { 
-        signal: connectionController.signal 
+        signal: controller.signal 
     })
     .then(response => {
-        clearTimeout(timeoutId);
+        clearTimeout(timeout);
         if (isNavigating) return;
-
         if (isHomePage) {
             return response.json().then(data => {
                 updateStats(data);
@@ -41,7 +39,7 @@ function checkConnection() {
         }
     })
     .catch(error => {
-        clearTimeout(timeoutId);
+        clearTimeout(timeout);
         if (error.name !== 'AbortError' && !isNavigating) {
             updateConnectionStatus(false);
             if (isHomePage) {
@@ -60,6 +58,52 @@ function checkConnection() {
         }
     });
 }
+
+function abortAllRequests() {
+    abortControllers.forEach(controller => controller.abort());
+    abortControllers = [];
+}
+
+function setupNavigation() {
+    const links = document.querySelectorAll("#menu a");
+
+    links.forEach(link => {
+        link.addEventListener('click', function(e) {
+            if (this.classList.contains('active')) {
+                e.preventDefault();
+                return;
+            }
+
+            // Set navigation flag and abort requests
+            isNavigating = true;
+            abortAllRequests();
+
+            // Show loading indicator immediately
+            document.body.classList.add('page-loading');
+
+            // For iOS, use a more reliable navigation method
+            if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+                e.preventDefault();
+
+                // Use location.replace() for cleaner navigation stack
+                setTimeout(() => {
+                    window.location.replace(this.href);
+                }, 50);
+            } else {
+                // For desktop, proceed normally with a slight delay
+                setTimeout(() => {
+                    window.location.href = this.href;
+                }, 100);
+            }
+        });
+    });
+}
+
+// Reset navigation state when page loads
+window.addEventListener('load', () => {
+    isNavigating = false;
+    document.body.classList.remove('page-loading');
+});
 
 function updateConnectionStatus(isOnline) {
     document.querySelectorAll('.status-indicator').forEach(indicator => {
@@ -191,6 +235,38 @@ function countPayloads() {
         });
 }
 
+function setupOSFilter() {
+    // --- OS-based payload filter ---
+    const select = document.getElementById("os-filter");
+    if (select) {
+        function filterPayloads(os) {
+            const payloads = document.querySelectorAll(".payload-item");
+            payloads.forEach(el => {
+                const itemOS = el.getAttribute("data-os") || "all";
+                el.style.display = (os === "all" || itemOS === os) ? "" : "none";
+            });
+        }
+    
+        // Defer localStorage access to prevent blocking
+        setTimeout(() => {
+            // Load saved filter option from localStorage
+            const savedOS = localStorage.getItem("selectedOS") || "all";
+            select.value = savedOS;
+            filterPayloads(savedOS);
+        }, 0);
+    
+        // Save new selection and re-filter
+        select.addEventListener("change", function() {
+            // Use requestIdleCallback for non-urgent updates
+            requestIdleCallback(() => {
+                const selected = this.value.toLowerCase();
+                localStorage.setItem("selectedOS", selected);
+                filterPayloads(selected);
+            }, { timeout: 200 }); // Fallback if idle takes too long
+        });
+    }
+}
+
 function showMessage(type, text) {
     const container = document.getElementById('global-toast') || document.createElement('div');
     if (!container.id) {
@@ -242,80 +318,14 @@ document.addEventListener('gesturestart', function(e) {
 });
 
 document.addEventListener("DOMContentLoaded", function () {
-    const links = document.querySelectorAll("#menu a");
-
-    links.forEach(link => {
-        link.addEventListener('click', function(e) {
-            if (this.classList.contains('active')) {
-                e.preventDefault();
-                return;
-            }
-
-            // Clear any pending navigation timeout
-            if (navigationTimeout) {
-                clearTimeout(navigationTimeout);
-            }
-
-            // Set navigation flag and abort any ongoing connection check
-            isNavigating = true;
-            if (connectionController) {
-                connectionController.abort();
-            }
-
-            // Add loading class to body
-            document.body.classList.add('page-loading');
-
-            // Set a timeout to ensure navigation happens even if something hangs
-            navigationTimeout = setTimeout(() => {
-                window.location.href = this.href;
-            }, 100); // Reduced from 300ms to 100ms
-
-            // For iOS, prevent default and use location.href after a small delay
-            if (/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) {
-                e.preventDefault();
-                setTimeout(() => {
-                    window.location.href = this.href;
-                }, 50);
-            }
-        });
-    });
+    setupNavigation(); 
 
     if (window.location.pathname === '/listpayloads') {
-        countPayloads(); // This will run when /listpayloads page loads
+        countPayloads();
     }
 
     // Reset navigation flag when page loads
     isNavigating = false;
     document.body.classList.remove('page-loading');
-
-    // --- OS-based payload filter ---
-    const select = document.getElementById("os-filter");
-    if (select) {
-        function filterPayloads(os) {
-            const payloads = document.querySelectorAll(".payload-item");
-            payloads.forEach(el => {
-                const itemOS = el.getAttribute("data-os") || "all";
-                el.style.display = (os === "all" || itemOS === os) ? "" : "none";
-            });
-        }
-    
-        // Defer localStorage access to prevent blocking
-        setTimeout(() => {
-            // Load saved filter option from localStorage
-            const savedOS = localStorage.getItem("selectedOS") || "all";
-            select.value = savedOS;
-            filterPayloads(savedOS);
-        }, 0);
-    
-        // Save new selection and re-filter
-        select.addEventListener("change", function() {
-            // Use requestIdleCallback for non-urgent updates
-            requestIdleCallback(() => {
-                const selected = this.value.toLowerCase();
-                localStorage.setItem("selectedOS", selected);
-                filterPayloads(selected);
-            }, { timeout: 200 }); // Fallback if idle takes too long
-        });
-    }
 });
 )=====";

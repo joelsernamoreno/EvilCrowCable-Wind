@@ -1452,7 +1452,8 @@ void handleLayout() {
 
     if (it != layoutMapInit.end()) {
       Keyboard.setLayout(it->second);
-      saveLayoutConfig(layout);  // Save the layout selection
+      saveLayoutConfig(layout);
+      controlserver.sendHeader("Cache-Control", "no-cache");
       controlserver.send(200, "text/plain", "Layout applied successfully!");
     } else {
       controlserver.send(400, "text/plain", "Invalid layout specified.");
