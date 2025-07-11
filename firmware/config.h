@@ -350,31 +350,6 @@ const char Configuration[] PROGMEM = R"=====(
             }
         }
 
-        // Function to load the current layout when the config page is loaded
-        document.addEventListener('DOMContentLoaded', function() {
-            // Fetch the current layout from the server
-            fetch('/getcurrentlayout')
-            .then(response => response.text())
-            .then(currentLayout => {
-                // Set the select dropdown to the current layout
-                const layoutSelect = document.getElementById('layout');
-                if (layoutSelect && currentLayout) {
-                    layoutSelect.value = currentLayout;
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching current layout:', error);
-            });
-            // Fetch current hostname
-            fetch('/gethostname')
-                .then(response => response.text())
-                .then(currentHostname => {
-                    if (currentHostname) {
-                        document.getElementById('hostname').value = currentHostname;
-                    }
-                });
-        });
-
         function showMessage(type, text) {
             const container = document.getElementById('global-toast');
             const toast = document.createElement('div');
@@ -408,6 +383,44 @@ const char Configuration[] PROGMEM = R"=====(
                 setTimeout(() => toast.remove(), 300);
             };
         }
+        // Function to load the current layout when the config page is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            const cachedLayout = localStorage.getItem('currentLayout');
+            if (cachedLayout) {
+                document.getElementById('layout').value = cachedLayout;
+            }
+
+            // Then fetch the actual current layout from the server
+            fetch('/getcurrentlayout')
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.text();
+            })
+            .then(currentLayout => {
+                if (currentLayout) {
+                    const layoutSelect = document.getElementById('layout');
+                    layoutSelect.value = currentLayout;
+                    // Cache the value for future page loads
+                    localStorage.setItem('currentLayout', currentLayout);
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching current layout:', error);
+                // Fall back to localStorage value if fetch fails
+                if (cachedLayout) {
+                    document.getElementById('layout').value = cachedLayout;
+                }
+            });
+
+            // Rest of your hostname fetching code...
+            fetch('/gethostname')
+                .then(response => response.text())
+                .then(currentHostname => {
+                    if (currentHostname) {
+                        document.getElementById('hostname').value = currentHostname;
+                    }
+                });
+        });
     </script>
 </body>
 </html>
