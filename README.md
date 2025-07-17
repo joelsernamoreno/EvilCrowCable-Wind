@@ -84,6 +84,7 @@ You can invite me to a coffee to further develop low-cost hacking devices. If yo
 	* Linux/iOS Server
 	* Windows Server
 	* Android Server
+7. Alternative Firmware: USB Army Knife
 
 ![Cable](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/cable.jpg)
 
@@ -599,3 +600,99 @@ You have several ways to run Evil Crow Server.
 
 **Demo:** [Remote Shell](https://www.youtube.com/watch?v=FmkIHYdOxS4)
 
+# Alternative Firmware: USB Army Knife
+
+USB Army Knife is a powerful and compact offensive security tool designed for penetration testers, red teamers, and security researchers. Built primarily for ESP32-S3 based devices like the LilyGo T-Dongle S3, it combines multiple USB attack vectors and wireless capabilities into one highly flexible platform.
+The firmware enables a wide range of attacks, including:
+
+* USB HID (BadUSB) attacks using DuckyScript.
+* Mass storage emulation with covert payload delivery.
+* USB Ethernet adapter impersonation for network sniffing and traffic capture.
+* WiFi and Bluetooth exploits via an enhanced fork of ESP32 Marauder.
+* Hot mic and screen capture streamed over WiFi.
+* Triggering attacks remotely, on a timer, or via an onboard UI.
+* Covert command and control through a serial interface, even when the target machine is locked.
+
+The system includes a mobile-friendly web interface for deploying and managing attacks, allowing full control using just a smartphone.
+
+USB Army Knife supports various hardware platforms, mainly those based on ESP32-S3, with some functionality on ESP32-S2 and limited support for RP2040 devices. It is open-source and can be flashed via a browser or built from source.
+
+In short, USB Army Knife is a versatile, low-cost, and covert physical access tool that fuses the best of HID, network, wireless, and storage-based attacks into a single USB device.
+
+USB Army Knife is also compatible with the Evil Crow Cable Wind. However, due to hardware limitations (notably the lack of a microSD card slot, screen, and external buttons), some features are restricted. Instead, the internal flash memory is used to store payloads and data, which reduces overall capacity and flexibility. Additionally, thermal throttling may activate when running WiFi access points for long durations, but this can be mitigated by connecting the device to an existing WiFi network or disabling WiFi entirely.
+
+Below is how to install the firmware:
+
+1. The first step is to download and install Visual Studio Code: https://code.visualstudio.com/Download
+
+![USBArmyKnife](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/vscode-webpage.png)
+
+![USBArmyKnife](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/vscode-installed.png)
+
+2. The next step is to download and install the PlatformIO extension for Visual Studio Code, which is required for building and flashing the firmware:
+
+* Open VSCode Extension Manager.
+* Search for official PlatformIO IDE extension.
+* Install PlatformIO IDE.
+
+![USBArmyKnife](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/vscode-extension-manager.png)
+
+3. Download the USB Army Knife repository: https://github.com/i-am-shodan/USBArmyKnife/
+
+4. Now that you have cloned the repository, you need to initialize and update the submodules. To do this, run the following command inside the directory you just cloned: git submodule update --init
+
+5. Open Visual Studio Code, then go to File > Open Folder and select the USB Army Knife directory:
+
+![USBArmyKnife](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/vscode-usbarmyknife.png)
+
+6. Click on the PlatformIO icon (the alien head) located in the Activity Bar on the left side of Visual Studio Code:
+
+![USBArmyKnife](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/platformio-icon.png)
+
+7. In the menu, expand the section for the device you want to flash. For the Evil Crow Cable Wind, you should expand 'Evil-Crow-Cable-Wind':
+
+![USBArmyKnife](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/platformio-evilcrowcablewind.png)
+
+8. Connect the Evil Crow Cable Wind to your computer in flash mode (with a magnet). Once connected, click "Upload" in PlatformIO to flash the firmware to the device:
+
+![USBArmyKnife](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/platformio-upload.png)
+
+![USBArmyKnife](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/platformio-flashed.png)
+
+9. Next, you need to modify the autorun.ds file located in the data directory. Replace its contents with the following script to configure the Evil Crow Cable Wind to connect to an existing Wi‑Fi access point:
+
+![USBArmyKnife](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/platformio-data-directory.png)
+
+![USBArmyKnife](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/platformio-autorun-script.png)
+
+When connecting to an existing Wi‑Fi access point, the Evil Crow Cable Wind will use the following default credentials:
+
+* **SSID:** USBArmyKnife_AP
+* **Password:** 123456789
+
+This means the device will attempt to connect to a Wi‑Fi network with the SSID USBArmyKnife_AP and the password 123456789.
+
+**NOTE:** You can modify these values in the autorun.ds file to match the SSID and password of the Wi‑Fi network you want the device to join.
+
+10. As the next step, navigate to Project Tasks → Evil-Crow-Cable-Wind → Platform, and click on “Upload Filesystem Image”. This will upload the contents of the data directory to the internal storage of the Evil Crow Cable Wind device:
+
+![USBArmyKnife](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/platformio-upload-image.png)
+
+![USBArmyKnife](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/platformio-filesystem-uploaded.png)
+
+11. Next, disconnect the Evil Crow Cable Wind from your computer. Then, set up a Wi‑Fi Access Point using a mobile phone or another device.  The Wi-Fi Access Point must be configured as follows:
+
+* **SSID:** USBArmyKnife_AP
+* **Password:** 123456789
+
+Once the access point is active, reconnect the Evil Crow Cable Wind to your computer without using a magnet, so that it powers on in normal mode (not flash mode). The device will attempt to connect to the specified Wi‑Fi network automatically.
+
+12. Finally, connect the attacker's computer to the same Wi‑Fi access point, then determine the IP address assigned to the Evil Crow Cable Wind (e.g., by checking the connected devices list on your router or mobile hotspot). Once you have the IP address, open a browser and navigate to:
+
+* http://[DEVICE_IP]:8080/
+
+**NOTE:** Replace [DEVICE_IP] with the actual IP address assigned to the device.
+
+![USBArmyKnife](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/usbarmyknife-webpanel.png)
+
+For detailed information on how to use the USB Army Knife firmware, please refer to the official documentation available in its GitHub repository: https://github.com/i-am-shodan/USBArmyKnife/
