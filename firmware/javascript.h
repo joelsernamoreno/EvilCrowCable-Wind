@@ -54,6 +54,7 @@ function checkConnection() {
                 document.getElementById('targetos').innerText = 'N/A';
                 document.getElementById('ssid').innerText = 'N/A';
                 document.getElementById('ipaddress').innerText = 'N/A';
+                document.getElementById('vpnipaddress').innerText = 'N/A';
             }
         }
     });
@@ -131,6 +132,7 @@ function updateStats(data) {
     if (data.os) document.getElementById('targetos').innerText = data.os;
     if (data.ssid) document.getElementById('ssid').innerText = data.ssid;
     if (data.ipaddress) document.getElementById('ipaddress').innerText = data.ipaddress;
+    if (data.vpnipaddress) document.getElementById('vpnipaddress').innerText = data.vpnipaddress;
 
     // Update connection status indicator
     updateConnectionStatus(true);

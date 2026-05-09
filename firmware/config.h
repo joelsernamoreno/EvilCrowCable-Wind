@@ -79,6 +79,16 @@ const char Configuration[] PROGMEM = R"=====(
             <button type="button" name="deleteBackupWifiButton" onclick="deleteBackupWiFiConfig()">Delete Backup Wi-Fi</button>
         </form>
 
+        <form id="vpnForm">
+            <div class="section-header">P2P VPN</div>
+            <div class="form-group">
+                <label for="joincode">Join Code:</label>
+                <input type="text" id="joincode" name="joincode" required class="terminal-style single-line-input">
+            </div>
+            <button type="button" onclick="applyVPN()">Apply VPN</button>
+            <button type="button" name="deleteVPNButton" onclick="deleteVPNConfig()">Delete VPN Config</button>
+        </form>
+
         <form id="usbForm">
             <div class="section-header">USB</div>
             <div class="form-group">
@@ -239,6 +249,55 @@ const char Configuration[] PROGMEM = R"=====(
                 })
                 .catch(error => {
                     showMessage('error', 'Error deleting backup WiFi configuration: ' + error.message);
+                    console.error('Error:', error);
+                });
+            }
+        }
+
+        function applyVPN() {
+            const joincode = document.getElementById('joincode').value;
+            if (!joincode) {
+                showMessage('error', 'Join code is required.');
+                return;
+            }
+            fetch('/updatevpn', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({ joincode }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    showMessage('success', data.message);
+                } else {
+                    showMessage('error', data.message);
+                }
+            })
+            .catch(error => {
+                showMessage('error', 'Error applying VPN settings.');
+                console.error('Error:', error);
+            });
+        }
+
+        function deleteVPNConfig() {
+            if (confirm('Are you sure you want to delete the VPN configuration?')) {
+                fetch('/deletevpnconfig', {
+                    method: 'POST',
+                })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    }
+                    throw new Error('Network response was not ok');
+                })
+                .then(data => {
+                    showMessage('success', 'VPN configuration deleted successfully!');
+                    document.getElementById('joincode').value = '';
+                })
+                .catch(error => {
+                    showMessage('error', 'Error deleting VPN configuration: ' + error.message);
                     console.error('Error:', error);
                 });
             }
@@ -420,7 +479,7 @@ const char Configuration[] PROGMEM = R"=====(
                         document.getElementById('hostname').value = currentHostname;
                     }
                 });
-        });
+            });
     </script>
 </body>
 </html>

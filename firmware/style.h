@@ -205,6 +205,7 @@ button:hover::after {
 button[name="deleteWifiButton"], 
 button[name="deleteUSBButton"],
 button[name="deleteBackupWifiButton"],
+button[name="deleteVPNButton"],
 button[name="clearCacheButton"] {
   background: linear-gradient(135deg, var(--error), #cc0022);
 }

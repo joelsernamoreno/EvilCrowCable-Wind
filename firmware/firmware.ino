@@ -17,6 +17,7 @@
 #include "listpayloads.h"
 #include "autoexecplanning.h"
 #include <ArduinoJson.h>
+#include <husarnet.h>
 #include <map>
 
 // Config default SSID, password and channel
@@ -58,6 +59,7 @@ unsigned long scroll_delay = 0;
 const unsigned char *selected_layout = en_us;  // Default to EN_US
 
 File fsUploadFile;
+HusarnetClient husarnet;
 WebServer controlserver(80);
 WiFiServer tcpServer(12345);
 WiFiClient clientServer;
@@ -178,7 +180,7 @@ void usbEventCallback(void* arg, esp_event_base_t event_base, int32_t event_id, 
 
     if (event_id == ARDUINO_USB_HID_KEYBOARD_LED_EVENT) {
       led_response_received = true;
-      led_event_count++;
+      led_event_count = led_event_count + 1;
       led_event_time = millis();
 
       caps_status = data->capslock != 0;
@@ -320,7 +322,10 @@ void resetKeyboardLEDs() {
 
 void detectHostOS() {
   led_event_count = 0;
-  caps_status = num_status = scroll_status = 0;
+  caps_status = 0;
+  num_status = 0;
+  scroll_status = 0;
+
   caps_delay = num_delay = scroll_delay = 0;
   caps_sent_time = num_sent_time = scroll_sent_time = 0;
   led_response_received = false;
@@ -409,7 +414,7 @@ void deleteFile(fs::FS &fs, const String &path) {
   // Delete the corresponding meta file
   String metaPath = path;
   metaPath += ".meta";
-  bool metaDeleted = fs.remove(metaPath);
+  fs.remove(metaPath);
 
   if (payloadDeleted) {
     controlserver.send(200, "text/plain", "File deleted successfully");
@@ -532,7 +537,7 @@ String readPayloadMetadata(const String &filename, MetadataField field) {
 
 void handleUpdatePayload() {
     if (controlserver.hasArg("plain")) {
-        DynamicJsonDocument doc(1024);
+        JsonDocument doc;
         DeserializationError error = deserializeJson(doc, controlserver.arg("plain"));
 
         if (error) {
@@ -713,6 +718,7 @@ void handleStats() {
   json += ",\"os\":\"" + os + "\"";
   json += ",\"ssid\":\"" + WiFi.SSID() + "\"";
   json += ",\"ipaddress\":\"" + WiFi.localIP().toString() + "\"";
+  json += ",\"vpnipaddress\":\"" + String(husarnet.getIpAddress().c_str()) + "\"";
   json += "}";
   controlserver.send(200, "application/json", json);
 }
@@ -788,6 +794,35 @@ void connectToWiFi() {
   }
 }
 
+void initVPN() {
+  if (!LittleFS.exists("/vpn_config.txt")) {
+    USBSerial.println("No vpn_config.txt found, skipping VPN");
+    return;
+  }
+
+  String vpnhostname = "vpn-cable-wind";
+  String joincode;
+
+  File vpnFile = LittleFS.open("/vpn_config.txt", FILE_READ);
+  if (vpnFile) {
+    joincode = vpnFile.readString();
+    joincode.trim();
+    vpnFile.close();
+  }
+
+  if (joincode.isEmpty()) {
+    USBSerial.println("VPN joincode empty, skipping VPN");
+    return;
+  }
+
+  husarnet.join("vpn-cable-wind", joincode.c_str());
+  while (!husarnet.isJoined()) {
+    USBSerial.println("Waiting for Husarnet network...");
+    delay(1000);
+  }
+  USBSerial.println("Husarnet network joined");
+}
+
 void initMDNS() {
   String hostname = "cable-wind";
   if (LittleFS.exists("/hostname_config.txt")) {
@@ -801,7 +836,7 @@ void initMDNS() {
 
   MDNS.end();
   if (!MDNS.begin(hostname.c_str())) {
-    Serial.println("Error setting up MDNS responder!");
+    USBSerial.println("Error setting up MDNS responder!");
   }
 
   tcpServer.begin();
@@ -1395,6 +1430,36 @@ void handleDeleteWiFiConfig() {
   }
 }
 
+void handleUpdateVPN() {
+  if (controlserver.hasArg("joincode")) {
+    String newJoinCode = controlserver.arg("joincode");
+
+    File fsUploadFile = LittleFS.open("/vpn_config.txt", FILE_WRITE);
+    if (!fsUploadFile) {
+      controlserver.send(500, "application/json", "{\"status\":\"error\",\"message\":\"Failed to open file for writing\"}");
+      return;
+    }
+
+    fsUploadFile.println(newJoinCode);
+    fsUploadFile.close();
+    controlserver.send(200, "application/json", "{\"status\":\"success\",\"message\":\"VPN config applied successfully! Device will restart.\"}");
+    delay(1000);  // Give time for response to be sent
+    ESP.restart();
+  } else {
+    controlserver.send(400, "application/json", "{\"status\":\"error\",\"message\":\"Missing Join Code\"}");
+  }
+}
+
+void handleDeleteVPNConfig() {
+  if (LittleFS.remove("/vpn_config.txt")) {
+    controlserver.send(200, "application/json", "{\"status\":\"success\",\"message\":\"VPN config deleted successfully\"}");
+    delay(1000);  // Give time for response to be sent
+    ESP.restart();
+  } else {
+    controlserver.send(500, "application/json", "{\"status\":\"error\",\"message\":\"Failed to delete the file\"}");
+  }
+}
+
 void handleDeleteBackupWiFiConfig() {
   if (LittleFS.remove("/wifi_backup_config.txt")) {
     controlserver.send(200, "application/json", "{\"status\":\"success\",\"message\":\"Backup Wi-Fi config deleted successfully\"}");
@@ -1482,10 +1547,10 @@ void handleDeletePayload() {
 }
 
 void handleDeleteAllPayloads() {
-    DynamicJsonDocument doc(2048); // Increased size to hold filenames
+    JsonDocument doc;
     doc["success"] = false;
     doc["count"] = 0;
-    JsonArray deletedFiles = doc.createNestedArray("deleted_files");
+    JsonArray deletedFiles = doc["deleted_files"].to<JsonArray>();
 
     File root = LittleFS.open("/payloads");
     if (!root || !root.isDirectory()) {
@@ -1584,6 +1649,7 @@ void setup() {
   }
 
   connectToWiFi();
+  initVPN();
 
   {
     File root = LittleFS.open("/payloads/");
@@ -1591,7 +1657,7 @@ void setup() {
       File file = root.openNextFile();
       while (file) {
         String fileName = file.name();
-        size_t fileSize = file.size();
+        //size_t fileSize = file.size();
         file = root.openNextFile();
       }
     }
@@ -1791,7 +1857,7 @@ void setup() {
   });
 
   controlserver.on("/listpayloadsdata", []() {
-    DynamicJsonDocument doc(4096);
+    JsonDocument doc;
     JsonArray payloads = doc.to<JsonArray>();
 
     File root = LittleFS.open("/payloads/");
@@ -1804,7 +1870,7 @@ void setup() {
           String payloadName = readPayloadMetadata(filePath, META_NAME);
           String payloadDesc = readPayloadMetadata(filePath, META_DESCRIPTION);
 
-          JsonObject payload = payloads.createNestedObject();
+          JsonObject payload = payloads.add<JsonObject>();
           payload["path"] = filePath;
           payload["name"] = payloadName;
           payload["description"] = payloadDesc;
@@ -1821,7 +1887,7 @@ void setup() {
 
   controlserver.on("/saveautoexecplan", HTTP_POST, []() {
     String payload = controlserver.arg("plain");
-    DynamicJsonDocument doc(2048);
+    JsonDocument doc;
     deserializeJson(doc, payload);
 
     File file = LittleFS.open("/autoexec_plan.json", FILE_WRITE);
@@ -1862,7 +1928,7 @@ void setup() {
   controlserver.on("/updatepayload", HTTP_POST, []() {
     if (controlserver.hasArg("plain")) {  // Check for JSON data
       String payload = controlserver.arg("plain");
-      DynamicJsonDocument doc(2048);
+      JsonDocument doc;
       deserializeJson(doc, payload);
 
       String path = doc["path"].as<String>();
@@ -1890,10 +1956,11 @@ void setup() {
     }
   });
 
-
   controlserver.on("/updatewifi", HTTP_POST, handleUpdateWiFi);
   controlserver.on("/layout", HTTP_POST, handleLayout);
   controlserver.on("/deletewificonfig", HTTP_POST, handleDeleteWiFiConfig);
+  controlserver.on("/updatevpn", HTTP_POST, handleUpdateVPN);
+  controlserver.on("/deletevpnconfig", HTTP_POST, handleDeleteVPNConfig);
   controlserver.on("/updateusb", HTTP_POST, handleUpdateUSB);
   controlserver.on("/deleteusbconfig", HTTP_POST, handleDeleteUSBConfig);
   controlserver.on("/deletepayload", HTTP_POST, handleDeletePayload);
@@ -1916,10 +1983,10 @@ void loop() {
   vTaskDelay(1);
 
   // Check if we should auto-execute a payload
-  static bool autoExecChecked = false;
+  //static bool autoExecChecked = false;
   static unsigned long osDetectionStartTime = 0;
   static bool osDetectionInProgress = false;
-  static DynamicJsonDocument pendingAutoExecPlan(2048);
+  static JsonDocument pendingAutoExecPlan;
   static bool hasPendingPlan = false;
   static bool firstRun = true;
 
@@ -1942,7 +2009,7 @@ void loop() {
               readFile(LittleFS, osPayloadPath);
               payload_state = 1;
               payloadExecuted = false;
-              autoExecChecked = true;
+              //autoExecChecked = true;
             }
           } else {
             // If no no-detection payload, proceed with OS detection
@@ -1950,7 +2017,7 @@ void loop() {
             osDetectionStartTime = millis();
             osDetectionInProgress = true;
             hasPendingPlan = true;
-            autoExecChecked = true;
+            //autoExecChecked = true;
           }
         }
       }

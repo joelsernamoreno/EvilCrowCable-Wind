@@ -74,6 +74,7 @@ You can invite me to a coffee to further develop low-cost hacking devices. If yo
 	* Payload Viewer
 	* AutoExec Planning
 	* Config
+        * P2P VPN
 	* Debug messages
 	* HTTP Update
 4. Add a new Keyboard Layout
@@ -159,11 +160,12 @@ You can check that the flash mode is correct with the following image:
 3. Download and Install the Arduino IDE: https://www.arduino.cc/en/main/software
 4. Download Evil Crow Cable Wind repository: git clone https://github.com/joelsernamoreno/EvilCrowCable-Wind.git
 5. Copy and unzip the USB library included in this repository (EvilCrowCable-Wind/modified-libraries/) to your Arduino library directory
-6. Download the ArduinoJson library and place it in your Arduino libraries directory: git clone https://github.com/bblanchon/ArduinoJson.git
-7. Open Arduino IDE
-8. Go to File - Preferences. Locate the field "Additional Board Manager URLs:" Add "https://espressif.github.io/arduino-esp32/package_esp32_index.json" without quotes. Click "Ok"
-9. Select Tools - Board - Boards Manager. Search for "esp32". Install "esp32 by Espressif system version 3.2.0"
-10. Flash firmware.ino:
+6. Copy and unzip the husarnet-esp32-arduino library included in this repository (EvilCrowCable-Wind/modified-libraries/) to your Arduino library directory
+7. Download the ArduinoJson library and place it in your Arduino libraries directory: git clone https://github.com/bblanchon/ArduinoJson.git
+8. Open Arduino IDE
+9. Go to File - Preferences. Locate the field "Additional Board Manager URLs:" Add "https://espressif.github.io/arduino-esp32/package_esp32_index.json" without quotes. Click "Ok"
+10. Select Tools - Board - Boards Manager. Search for "esp32". Install "esp32 by Espressif system version 3.3.8"
+11. Flash firmware.ino:
 	* Connect active end of the cable with a magnet to the computer
 	* Open EvilCrowCable-Wind/firmware/firmware.ino in Arduino IDE
 	* Select Tools:
@@ -339,6 +341,12 @@ Delete Wi-Fi and Backup configuration file. Evil Crow Cable Wind will restart an
 
 ![Config](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/delete-configwifi-backup.png)
 
+* **Set P2P VPN Config:**
+
+Configure your Hursanet P2P VPN join code. Once configured, Evil Crow Cable Wind will automatically connect to your private P2P VPN network, allowing secure remote access from anywhere without opening ports on your router. VPN configuration changes are stored and the device will restart when changes are applied.
+
+![VPN](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/vpn-config.png)
+
 * **Set USB Config:**
 
 Configure Vendor ID, Product ID, Product Name y Manufacturer Name. USB Configuration changes are stored. Evil Crow Cable Wind will restart when changes are applied.
@@ -372,6 +380,41 @@ Forces reload of CSS/JS files if they were cached:
 Reboot device remotely:
 
 ![Config](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/reboot.png)
+
+## P2P VPN
+
+Evil Crow Cable Wind supports secure remote access through the Hursanet P2P VPN network.
+
+1. Access Hursanet Dashboard and create a free account: https://login.prod.husarnet.com/
+
+![VPN](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/hursanet-create-account.png)
+
+2. Once logged in, create a new group from the dashboard.
+
+![VPN](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/hursanet-create-group.png)
+
+3. After creating the group, you will obtain a Join Code.
+
+![VPN](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/hursanet-attach-device.png)
+
+This Join Code must be configured in:
+
+* Evil Crow Cable Wind using the P2P VPN Config option.
+* Your computer running the Hursanet client.
+
+P2P VPN Config option:
+
+![VPN](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/vpn-config.png)
+
+Linux client:
+
+![VPN](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/hursanet-linux-client.png)
+
+When both devices use the same Join Code, they will automatically join the same private P2P VPN network, allowing secure remote access to Evil Crow Cable Wind from anywhere without port forwarding or public IP requirements.
+
+To access the Evil Crow Cable Wind web panel through the P2P VPN, open a web browser and navigate to:
+
+* http://vpn-cable-wind/
 
 ## Debug messages
 

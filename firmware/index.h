@@ -32,13 +32,16 @@ const char Index[] PROGMEM = R"=====(
                 <strong>Connection Status: <span class="status-indicator"></span></strong>
             </div>
             <div class="stat-group">
-                <strong>Firmware:</strong> <span id="firmware">v2.2</span>
+                <strong>Firmware:</strong> <span id="firmware">v2.3</span>
             </div>
             <div class="stat-group">
                 <strong>Connected to:</strong> <span id="ssid"></span>
             </div>
             <div class="stat-group">
                 <strong>IP Address:</strong> <span id="ipaddress"></span>
+            </div>
+            <div class="stat-group">
+                <strong>VPN IP Address:</strong> <span id="vpnipaddress">NA</span>
             </div>
             <div class="stat-group">
                 <strong>Target OS:</strong> <span id="targetos" class="clickable-os" onclick="detectOS()">N/A</span>
