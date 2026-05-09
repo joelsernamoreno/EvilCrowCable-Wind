@@ -74,7 +74,7 @@ You can invite me to a coffee to further develop low-cost hacking devices. If yo
 	* Payload Viewer
 	* AutoExec Planning
 	* Config
-        * P2P VPN
+	* P2P VPN
 	* Debug messages
 	* HTTP Update
 4. Add a new Keyboard Layout
