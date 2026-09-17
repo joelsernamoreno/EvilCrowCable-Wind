@@ -1323,4 +1323,120 @@ a.pyaloadButton:hover {
         -webkit-overflow-scrolling: touch;
     }
 }
+
+/* ===================== USB Network Implant toggle ===================== */
+.implant-card {
+    border: 1px solid rgba(0, 242, 255, 0.28);
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 0 14px 14px;
+    margin: 16px 0;
+}
+
+.implant-toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    padding: 9px 10px;
+    margin: 12px 0;
+    border: 1px solid rgba(0, 242, 255, 0.18);
+    border-radius: 5px;
+    background: rgba(10, 10, 18, 0.55);
+}
+
+.implant-toggle-row.implant-unavailable {
+    opacity: 0.48;
+    cursor: not-allowed;
+}
+
+.implant-toggle-row > span:last-child {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.implant-toggle-row small {
+    color: var(--secondary);
+    opacity: 0.78;
+    font-size: 0.76em;
+}
+
+.implant-switch {
+    position: relative;
+    display: inline-block;
+    width: 52px;
+    height: 28px;
+    flex: 0 0 52px;
+}
+
+.implant-switch input {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+}
+
+.implant-slider {
+    position: absolute;
+    inset: 0;
+    border: 1px solid var(--primary);
+    border-radius: 28px;
+    background: #171722;
+    transition: 0.2s ease;
+    box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.7);
+}
+
+.implant-slider::before {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    left: 3px;
+    top: 3px;
+    border-radius: 50%;
+    background: #8d8d9b;
+    transition: 0.2s ease;
+}
+
+.implant-switch input:checked + .implant-slider {
+    background: rgba(0, 255, 136, 0.28);
+    border-color: var(--secondary);
+    box-shadow: 0 0 10px rgba(0, 255, 136, 0.38);
+}
+
+.implant-switch input:checked + .implant-slider::before {
+    transform: translateX(24px);
+    background: var(--secondary);
+}
+
+.implant-switch input:focus-visible + .implant-slider {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.implant-status {
+    color: var(--secondary);
+    font-size: 0.82em;
+    opacity: 0.9;
+}
+
+.implant-details {
+    border-left: 3px solid var(--accent);
+    padding-left: 10px;
+}
+
+.implant-command {
+    display: block;
+    background: rgba(0, 0, 0, 0.45);
+    border: 1px dashed var(--accent);
+    border-radius: 6px;
+    padding: 8px 10px;
+    margin-top: 6px;
+    color: var(--accent);
+    font-family: monospace;
+    font-size: 0.85em;
+    word-break: break-all;
+    user-select: all;
+}
 )=====";

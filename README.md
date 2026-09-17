@@ -75,17 +75,18 @@ You can invite me to a coffee to further develop low-cost hacking devices. If yo
 	* AutoExec Planning
 	* Config
 	* P2P VPN
+	* USB Network Implant
+	* AI assistant
 	* Debug messages
 	* HTTP Update
-4. Add a new Keyboard Layout
-5. Sintax
+4. Sintax
 	* Payload Syntax
 	* Keys and Modifiers Syntax
-6. Remote Shell
+5. Remote Shell
 	* Linux/iOS Server
 	* Windows Server
 	* Android Server
-7. Alternative Firmware: USB Army Knife
+6. Alternative Firmware: USB Army Knife
 
 ![Cable](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/cable.jpg)
 
@@ -159,7 +160,7 @@ You can check that the flash mode is correct with the following image:
 2. Install pyserial: sudo pip install pyserial
 3. Download and Install the Arduino IDE: https://www.arduino.cc/en/main/software
 4. Download Evil Crow Cable Wind repository: git clone https://github.com/joelsernamoreno/EvilCrowCable-Wind.git
-5. Copy and unzip the USB library included in this repository (EvilCrowCable-Wind/modified-libraries/) to your Arduino library directory
+5. Copy and unzip the EvilCrowLib library included in this repository (EvilCrowCable-Wind/modified-libraries/) to your Arduino library directory
 6. Copy and unzip the husarnet-esp32-arduino library included in this repository (EvilCrowCable-Wind/modified-libraries/) to your Arduino library directory
 7. Download the ArduinoJson library and place it in your Arduino libraries directory: git clone https://github.com/bblanchon/ArduinoJson.git
 8. Open Arduino IDE
@@ -185,7 +186,7 @@ You can check that the flash mode is correct with the following image:
     		- PSRAM - "Disabled"
     		- Upload Mode - "UART0 / Hardware CDC"
     		- Upload Speed - "921600"
-    		- USB Mode - "Hardware CDC and JTAG"
+    		- USB Mode - "USB-OTG (TinyUSB)"
     		- Zigbee Mode - "Disabled"
     	* Upload firmware
 
@@ -416,6 +417,128 @@ To access the Evil Crow Cable Wind web panel through the P2P VPN, open a web bro
 
 * http://vpn-cable-wind/
 
+## USB Network Implant
+
+The USB Network Implant turns the Evil Crow Cable Wind into a routed network implant. On top of the HID keyboard, the cable exposes a USB CDC-NCM network adapter to the target, so the operator can reach the target's stack over IP while the cable is plugged in.
+
+The target only sees a new network adapter: no gateway and no DNS are advertised, so its existing Wi-Fi/Ethernet routing is left untouched. The cable and the attacker are connected to the same Wi-Fi access point. Traffic from the attacker is routed through the cable's Wi-Fi address into the USB link.
+
+### Enabling the implant
+
+1. Open the **Config** page in the web panel.
+2. Enable the **USB Network Implant** switch.
+3. Confirm the restart. The device reboots so USB can enumerate with the new descriptor.
+
+![USBNetwork](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/usb-network1.png)
+
+![USBNetwork](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/usb-network2.png)
+
+The USB descriptor is built at enumeration time, so enabling or disabling this option always requires a reboot.
+
+![USBNetwork](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/usb-network3.png)
+
+![USBNetwork](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/usb-network4.png)
+
+### Attacker route
+
+Add a route for the USB subnet through the cable's Wi-Fi address. The panel shows the exact command with the current address already filled in.
+
+```bash
+# Linux
+sudo ip route replace 192.168.7.0/24 via <cable-wifi-ip>
+
+# macOS
+sudo route -n add -net 192.168.7.0/24 <cable-wifi-ip>
+
+# Windows
+route add 192.168.7.0 mask 255.255.255.0 <cable-wifi-ip>
+```
+![USBNetwork](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/usb-network5.png)
+
+Then reach the target directly:
+
+```bash
+ping 192.168.7.2
+curl http://192.168.7.2/
+sudo nmap -sS 192.168.7.2
+```
+![USBNetwork](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/usb-network6.png)
+
+### How return traffic works
+
+The attacker's packets arrive at the cable addressed to 192.168.7.2 with the attacker's real source address. Forwarding them unchanged would not work: the target would answer the attacker's address through its own default gateway, not through the cable, and the reply would be lost.
+
+The firmware solves this with a **stateless 1:1 source NAT** performed on the USB interface:
+
+- Outbound (Wi-Fi to USB): the attacker source address is rewritten to 192.168.7.1
+- Inbound (USB to Wi-Fi): 192.168.7.1 is rewritten back to the attacker address
+
+Because the cable and the target are a fixed pair, the translation needs no per-flow state. There is no NAT table to fill, so aggressive scans (`nmap -sS`, `-p-`, masscan) cannot exhaust it and the link keeps answering ICMP and ARP during a scan. The attacker sees replies coming from 192.168.7.2, and the target needs no route, no configuration and no agent.
+
+IP checksums are repaired incrementally (RFC 1624) for TCP, UDP, ICMP and IP fragments.
+
+### Requirements and limitations
+
+- The cable must be connected to Wi-Fi AP. The implant reports its state in the panel while waiting.
+- The access point must allow traffic between wireless clients. Client isolation blocks the attacker from reaching the cable.
+- The Wi-Fi subnet must not overlap `192.168.7.0/24`. The panel refuses to start the implant and reports the conflict.
+- One attacker at a time. The stateless translation learns the attacker address from the first forwarded packet.
+- IPv4 only.
+- **Mutually exclusive with USB Serial.** HID, CDC and NCM together need more USB IN endpoints than the ESP32-S3 can open, and the host would reject the configuration entirely. Both switches refuse the combination and explain which one to turn off.
+
+### Status endpoint
+
+`GET /usb-network-implant/status` returns the live state of the implant, including link and routing status, the ready-made route command, traffic counters and the internal state of the USB network class.
+
+| Field | Description |
+| --- | --- |
+| `enabled`, `started`, `linkUp` | Setting, interface state and USB link state |
+| `wifiConnected`, `wifiIp` | Wi-Fi station state and address |
+| `forwardingReady`, `sourceNatReady` | IPv4 forwarding and translation state |
+| `statelessSnat`, `operatorIp` | Translation mode and learned operator address |
+| `linuxRoute`, `macosRoute`, `windowsRoute` | Route command with the current address |
+| `txSent`, `txDropped`, `txStalled`, `rxFrames`, `rxDropped` | Traffic counters |
+| `ncmCompletions`, `ncmEpInBusy`, `ncmInFlight`, `ncmReadyCount`, `ncmFreeCount`, `ncmCanXmitFail`, `ncmSoftRecover`, `ncmHardRecover` | USB network class internals |
+| `error` | Reason the implant is not ready, when applicable |
+
+![USBNetwork](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/usb-network7.png)
+
+## AI Assistant
+
+The firmware integrates the [SAPSAN TERMINAL](https://sapsan-terminal.com) AI assistant so payloads can be generated from the web panel itself. You describe what you want in plain language and the generated Wind payload is placed straight into the Payload Editor, ready to review, run or save.
+
+Both free and premium SAPSAN accounts work. The account tier is resolved server side.
+
+### Logging in
+
+1. Open the **Config** page in the web panel.
+2. In the **AI ASSISTANT** section, enter the email and password of your SAPSAN account.
+3. Press **Log in**. The panel shows the account name and tier once the session is established.
+
+![AI](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/ai1.png)
+
+![AI](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/ai2.png)
+
+**The password is never written to flash.** It is used once to obtain a session token. The session survives reboots, so the login is not needed again until it expires. **Log out** deletes the stored token.
+
+### Generating a payload
+
+In the **Payload Editor**, below *Save Payload*, use the **Ask AI for help** field:
+
+1. Describe the payload you want, for example *open a browser on Windows and play a video with sound*.
+2. Optionally enable **Send current payload as context** to have the assistant modify what is already in the editor instead of starting from scratch.
+3. Press **Generate Payload** (or Enter; Shift+Enter inserts a newline).
+
+The assistant answers in markdown. The firmware extracts the Wind code block from the answer and inserts it automatically into the editor textarea, where it behaves exactly like a hand-written payload: it can be validated, run with *Run Payload* and stored with *Save Payload*. Editing payloads already stored on the cable is unaffected.
+
+Requests run in a background task, so the web panel stays responsive while the model is working, and the USB network implant keeps being serviced.
+
+Always review a generated payload before running it against a target.
+
+![AI](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/ai3.png)
+
+![AI](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/ai4.png)
+
 ## Debug messages
 
 Debug messages will be displayed for each feature in the web panel:
@@ -449,32 +572,6 @@ This will create the binaries:
 ![Update](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/update.png)
 
 **NOTE:** The compiled firmware is located in the EvilCrowCable-Wind/compiled/ folder.
-
-# Add a new Keyboard Layout
-
-If you want to add a new keyboard layout:
-
-1. Go to the Arduino libraries directory and create your layout in USB/src/layouts/
-
-**Note:** Use the other layouts for reference.
-
-![Add Layout](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/add-layout.png)
-
-2. Modify USB/src/USBHIDKeyboard.h and include your new layout.
-
-![Include Layout](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/include-layout.png)
-
-3. Modify the firmware.ino to change your layout in real time.
-
-![Firmware Layout](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/firmware-layout.png)
-
-![Firmware Layout](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/firmware-layout1.png)
-
-4. Modify config.h in firmware.ino to change to your new layout from the web panel.
-
-![Web Layout](https://github.com/joelsernamoreno/EvilCrowCable-Wind/blob/main/images/web-layout.png)
-
-5. Flash firmware.ino again.
 
 # Sintax
 

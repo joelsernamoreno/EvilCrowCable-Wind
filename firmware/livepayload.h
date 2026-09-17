@@ -69,6 +69,28 @@ const char LivePayload[] PROGMEM = R"=====(
             </div>
         </div>
 
+        <section class="implant-card" id="aiAssistant">
+            <div class="section-header">Ask AI for help</div>
+            <div class="form-group">
+                <textarea id="aiPrompt" class="terminal-style" rows="3" spellcheck="false"
+                          placeholder="Ask AI for help... e.g. write a RickRoll payload for Windows"></textarea>
+            </div>
+            <label class="implant-toggle-row" for="aiIncludeEditor">
+                <span class="implant-switch">
+                    <input type="checkbox" id="aiIncludeEditor">
+                    <span class="implant-slider"></span>
+                </span>
+                <span>
+                    <strong>Send current payload as context</strong>
+                    <small>Let the assistant modify what is in the editor instead of starting from scratch</small>
+                </span>
+            </label>
+            <div class="button-container">
+                <button type="button" id="aiAskButton" onclick="askAiForPayload()">Generate Payload</button>
+            </div>
+            <p class="implant-status" id="aiStatus">Checking SAPSAN TERMINAL session...</p>
+        </section>
+
         <div class="command-reference">
             <div class="command-reference-toggle" onclick="toggleSection(this)">
                 <span>Syntax Reference</span>
@@ -732,7 +754,128 @@ const char LivePayload[] PROGMEM = R"=====(
             .catch(error => console.error("Error checking payload status:", error));
         }
 
-        function runPayload() {
+        // ---------------- SAPSAN TERMINAL AI assistant ----------------
+        let aiPollTimer = null;
+
+        function setAiStatus(text) {
+            const el = document.getElementById('aiStatus');
+            if (el) el.textContent = text;
+        }
+
+        async function refreshAiStatus() {
+            try {
+                const r = await fetch('/sapsan/status', { cache: 'no-store' });
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                const d = await r.json();
+                if (d.loggedIn) {
+                    let who = d.name || d.email || '';
+                    setAiStatus('Ready' + (who ? ' - signed in as ' + who : '') +
+                                (d.tier ? ' (' + d.tier + ')' : '') + '.');
+                } else {
+                    setAiStatus('Not logged in. Open Config to sign in to SAPSAN TERMINAL.');
+                }
+            } catch (e) {
+                setAiStatus('Assistant status unavailable: ' + e.message);
+            }
+        }
+
+        async function askAiForPayload() {
+            const promptEl = document.getElementById('aiPrompt');
+            const prompt = promptEl.value.trim();
+            if (!prompt) {
+                showMessage('error', 'Describe the payload you want the assistant to write.');
+                promptEl.focus();
+                return;
+            }
+
+            const button = document.getElementById('aiAskButton');
+            const body = new URLSearchParams({ prompt: prompt });
+            if (document.getElementById('aiIncludeEditor').checked) {
+                body.append('editorCode', document.getElementById('livePayloadInput').value);
+            }
+
+            button.disabled = true;
+            setAiStatus('Generating payload, this can take a while...');
+            try {
+                const r = await fetch('/sapsan/ask', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: body
+                });
+                const d = await r.json().catch(() => ({}));
+                if (!r.ok || !d.ok) throw new Error(d.message || ('HTTP ' + r.status));
+                pollAiResult();
+            } catch (e) {
+                button.disabled = false;
+                setAiStatus('Error: ' + e.message);
+                showMessage('error', 'AI request failed: ' + e.message);
+            }
+        }
+
+        function pollAiResult() {
+            clearTimeout(aiPollTimer);
+            aiPollTimer = setTimeout(async function() {
+                try {
+                    const r = await fetch('/sapsan/ask/result', { cache: 'no-store' });
+                    if (!r.ok) throw new Error('HTTP ' + r.status);
+                    const d = await r.json();
+
+                    if (d.state === 'running') { pollAiResult(); return; }
+
+                    document.getElementById('aiAskButton').disabled = false;
+                    if (d.state === 'done') {
+                        applyAiPayload(d.code, d.model);
+                    } else if (d.state === 'failed') {
+                        setAiStatus('Error: ' + (d.message || 'unknown error'));
+                        showMessage('error', 'AI request failed: ' + (d.message || 'unknown error'));
+                    } else {
+                        refreshAiStatus();
+                    }
+                } catch (e) {
+                    document.getElementById('aiAskButton').disabled = false;
+                    setAiStatus('Error: ' + e.message);
+                }
+            }, 1500);
+        }
+
+        // Drop the generated code into the normal editing textarea so it can be
+        // reviewed, run and saved exactly like a hand-written payload.
+        function applyAiPayload(code, model) {
+            if (!code) {
+                setAiStatus('The assistant returned an empty payload.');
+                return;
+            }
+            const textarea = document.getElementById('livePayloadInput');
+            textarea.value = code;
+            updateLineNumbers();
+            validatePayload();
+            textarea.focus();
+            textarea.setSelectionRange(0, 0);
+            textarea.scrollTop = 0;
+            setAiStatus('Payload inserted' + (model ? ' by ' + model : '') + '. Review it before running.');
+            showMessage('success', 'AI payload inserted into the editor.');
+        }
+
+        // ShellWin/ShellNix/ShellMac/ServerConnect type nothing on the target when
+        // the TCP session to the operator fails (and ServerConnect types nothing
+        // even when it succeeds), so surface the firmware's own verdict here.
+        // Polls until the status differs from the one recorded before the run.
+        async function reportShellStatus(previous) {
+            for (let i = 0; i < 12; i++) {
+                await new Promise(r => setTimeout(r, 1500));
+                try {
+                    const r = await fetch('/shell/status', { cache: 'no-store' });
+                    if (!r.ok) continue;
+                    const d = await r.json();
+                    if (d.status !== previous) {
+                        showMessage(d.connected ? 'success' : 'error', d.status);
+                        return;
+                    }
+                } catch (e) { /* keep polling */ }
+            }
+        }
+
+        async function runPayload() {
             const validationStatus = document.getElementById('validationStatus');
             const payloadContent = document.getElementById('livePayloadInput').value;
 
@@ -748,6 +891,15 @@ const char LivePayload[] PROGMEM = R"=====(
                 return;
             }
 
+            const usesShell = /^\s*(ShellWin|ShellNix|ShellMac|ServerConnect)\s/m.test(payloadContent);
+            let previousShellStatus = null;
+            if (usesShell) {
+                try {
+                    const r = await fetch('/shell/status', { cache: 'no-store' });
+                    previousShellStatus = (await r.json()).status;
+                } catch (e) { /* report anyway */ }
+            }
+
             fetch('/runlivepayload', {
                 method: 'POST',
                 body: new URLSearchParams({ livepayload: payloadContent }),
@@ -758,6 +910,7 @@ const char LivePayload[] PROGMEM = R"=====(
             })
             .then(data => {
                 showMessage('success', 'Payload running...');
+                if (usesShell) reportShellStatus(previousShellStatus);
                 toggleIntervals['togglePayload'] = setInterval(() => {
                     checkPayloadStatus('/payloadstatuspayload', 'togglePayload');
                 }, 1000);
@@ -765,7 +918,6 @@ const char LivePayload[] PROGMEM = R"=====(
             .catch(error => {
                 showMessage('error', 'Error executing payload.');
                 console.error('Error:', error);
-                toggle.checked = false;
             });
         }
 
@@ -883,6 +1035,12 @@ const char LivePayload[] PROGMEM = R"=====(
             }, 100);
 
             validatePayload();
+            refreshAiStatus();
+
+            // Enter sends the prompt; Shift+Enter adds a newline.
+            document.getElementById('aiPrompt').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); askAiForPayload(); }
+            });
 
             // Setup text area event handlers
             const payloadInput = document.getElementById('livePayloadInput');

@@ -7,8 +7,8 @@ const char Configuration[] PROGMEM = R"=====(
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <link rel="stylesheet" href="style.css">
-    <script src="javascript.js"></script>
+    <link rel="stylesheet" href="style.css?v=usb-implant-1">
+    <script src="javascript.js?v=usb-implant-1"></script>
 </head>
 <body>
     <div id="global-toast" class="toast-container"></div>
@@ -111,6 +111,63 @@ const char Configuration[] PROGMEM = R"=====(
             <button type="button" name="deleteUSBButton" onclick="deleteUSBConfig()">Delete USB Config</button>
         </form>
 
+        <section class="implant-card" id="usbNetworkImplantSection">
+            <div class="section-header">USB Network Implant</div>
+            <label class="implant-toggle-row" id="usbNetworkImplantRow" for="usbNetworkImplantToggle">
+                <span class="implant-switch">
+                    <input type="checkbox" id="usbNetworkImplantToggle" aria-describedby="usbNetworkImplantStatus" disabled>
+                    <span class="implant-slider"></span>
+                </span>
+                <span>
+                    <strong>USB Network Implant</strong>
+                    <small>Keep the keyboard and add a routed USB CDC-NCM adapter</small>
+                </span>
+            </label>
+            <p class="implant-status" id="usbNetworkImplantStatus">Loading status...</p>
+            <div class="implant-details" id="usbNetworkImplantDetails" hidden>
+                <p class="payload-desc">USB target: <strong>192.168.7.2</strong>. Evil Crow Cable Wind: <strong>192.168.7.1</strong>.</p>
+                <p class="payload-desc">Run this on the Linux computer connected to the same Wi-Fi access point:</p>
+                <code class="implant-command" id="usbNetworkImplantRoute">Waiting for the Wi-Fi address...</code>
+            </div>
+        </section>
+
+        <section class="implant-card" id="usbSerialSection">
+            <div class="section-header">USB Serial</div>
+            <label class="implant-toggle-row" id="usbSerialRow" for="usbSerialToggle">
+                <span class="implant-switch">
+                    <input type="checkbox" id="usbSerialToggle" aria-describedby="usbSerialStatus" disabled>
+                    <span class="implant-slider"></span>
+                </span>
+                <span>
+                    <strong>USB Serial (CDC)</strong>
+                    <small>Adds a USB serial console and the serial &lt;-&gt; TCP passthrough</small>
+                </span>
+            </label>
+            <p class="implant-status" id="usbSerialStatus">Loading status...</p>
+        </section>
+
+        <section class="implant-card" id="sapsanSection">
+            <div class="section-header">AI assistant</div>
+            <p class="implant-status" id="sapsanStatus">Loading status...</p>
+
+            <div id="sapsanLoginBox">
+                <div class="form-group">
+                    <label for="sapsanEmail">Email:</label>
+                    <input type="email" id="sapsanEmail" name="sapsanEmail" placeholder="you@example.com" class="terminal-style" autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label for="sapsanPassword">Password:</label>
+                    <input type="password" id="sapsanPassword" name="sapsanPassword" placeholder="Account password" class="terminal-style" autocomplete="current-password">
+                </div>
+                <button type="button" id="sapsanLoginButton" onclick="sapsanLogin()">Log in</button>
+                <p class="payload-desc">Only the session token is stored on the cable, never the password. Once logged in, use "Ask AI for help" in the Payload Editor.</p>
+            </div>
+
+            <div id="sapsanLoggedInBox" hidden>
+                <button type="button" onclick="sapsanLogout()" style="background: linear-gradient(135deg, var(--error), #cc0022);">Log out</button>
+            </div>
+        </section>
+
         <form id="hostnameForm">
             <div class="form-group">
                 <div class="section-header">Hostname</div>
@@ -118,6 +175,7 @@ const char Configuration[] PROGMEM = R"=====(
             </div>
             <button type="button" onclick="applyHostname()">Apply Hostname</button>
         </form>
+
         <hr>
         <div class="config-buttons-container">
             <button type="button" name="clearCacheButton" onclick="clearCache()">Clear Device Cache</button>
@@ -127,6 +185,90 @@ const char Configuration[] PROGMEM = R"=====(
     </div>
 
     <script>
+        let usbNetworkImplantUpdating = false;
+
+        async function refreshUsbNetworkImplantStatus() {
+            try {
+                const response = await fetch('/usb-network-implant/status', { cache: 'no-store' });
+                if (!response.ok) throw new Error('HTTP ' + response.status);
+                const data = await response.json();
+                const toggle = document.getElementById('usbNetworkImplantToggle');
+                const row = document.getElementById('usbNetworkImplantRow');
+                const status = document.getElementById('usbNetworkImplantStatus');
+                const details = document.getElementById('usbNetworkImplantDetails');
+
+                toggle.checked = data.enabled;
+                // A stale enabled setting must remain switchable off even if a
+                // different Arduino core no longer provides the NCM driver, and
+                // it is never switchable ON while USB Serial holds the endpoints.
+                const implantBlocked = data.usbSerialEnabled && !data.enabled;
+                toggle.disabled = usbNetworkImplantUpdating ||
+                                  (!data.ncmSupported && !data.enabled) || implantBlocked;
+                row.classList.toggle('implant-unavailable',
+                                     (!data.ncmSupported && !data.enabled) || implantBlocked);
+                details.hidden = !data.enabled;
+                document.getElementById('usbNetworkImplantRoute').textContent = data.linuxRoute;
+
+                if (!data.ncmSupported) {
+                    status.textContent = 'Unavailable: this Arduino-ESP32 build has no CDC-NCM driver.';
+                } else if (implantBlocked) {
+                    status.textContent = 'Unavailable while USB Serial is enabled: the ESP32-S3 cannot enumerate HID + USB Serial + NCM together. Turn USB Serial off first.';
+                } else if (!data.enabled) {
+                    status.textContent = 'Disabled. USB exposes the keyboard only.';
+                } else if (data.error) {
+                    status.textContent = 'Enabled, but not ready: ' + data.error;
+                } else if (!data.sourceNatReady) {
+                    status.textContent = 'Enabled, but source NAT is not ready.';
+                } else if (!data.linkUp) {
+                    status.textContent = 'Enabled and routed with source NAT. Waiting for the USB host to bring the NCM link up.';
+                } else {
+                    status.textContent = 'Ready. Wi-Fi ' + data.wifiIp + ' reaches USB target ' + data.targetIp + ' through source NAT.';
+                }
+            } catch (error) {
+                document.getElementById('usbNetworkImplantStatus').textContent =
+                    'Status unavailable: ' + error.message;
+            }
+        }
+
+        async function setUsbNetworkImplant(enabled) {
+            if (usbNetworkImplantUpdating) return;
+            const toggle = document.getElementById('usbNetworkImplantToggle');
+            const action = enabled ? 'enable' : 'disable';
+            if (!confirm('Do you want to ' + action + ' USB Network Implant? The device will restart.')) {
+                toggle.checked = !enabled;
+                return;
+            }
+
+            usbNetworkImplantUpdating = true;
+            toggle.disabled = true;
+            try {
+                const response = await fetch('/usb-network-implant', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({ enabled: enabled ? '1' : '0' })
+                });
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok || !data.ok) {
+                    throw new Error(data.message || ('HTTP ' + response.status));
+                }
+
+                if (data.restarting) {
+                    showMessage('success', 'USB Network Implant updated. The device is restarting...');
+                    document.body.classList.add('page-loading');
+                    setTimeout(() => window.location.reload(true), 8000);
+                } else {
+                    usbNetworkImplantUpdating = false;
+                    await refreshUsbNetworkImplantStatus();
+                }
+            } catch (error) {
+                usbNetworkImplantUpdating = false;
+                toggle.checked = !enabled;
+                toggle.disabled = false;
+                showMessage('error', 'Error updating USB Network Implant: ' + error.message);
+                refreshUsbNetworkImplantStatus();
+            }
+        }
+
         function applyLayout() {
             const layoutSelect = document.getElementById('layout');
             const selectedLayout = layoutSelect.value;
@@ -479,7 +621,172 @@ const char Configuration[] PROGMEM = R"=====(
                         document.getElementById('hostname').value = currentHostname;
                     }
                 });
+
+            const implantToggle = document.getElementById('usbNetworkImplantToggle');
+            implantToggle.addEventListener('change', function() {
+                setUsbNetworkImplant(implantToggle.checked);
             });
+            refreshUsbNetworkImplantStatus();
+            setInterval(refreshUsbNetworkImplantStatus, 5000);
+
+            const usbSerialToggle = document.getElementById('usbSerialToggle');
+            usbSerialToggle.addEventListener('change', function() {
+                setUsbSerial(usbSerialToggle.checked);
+            });
+            refreshUsbSerialStatus();
+            setInterval(refreshUsbSerialStatus, 5000);
+
+            refreshSapsanStatus();
+            const sapsanPwd = document.getElementById('sapsanPassword');
+            sapsanPwd.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') { e.preventDefault(); sapsanLogin(); }
+            });
+
+        });
+
+        let usbSerialUpdating = false;
+
+        async function refreshUsbSerialStatus() {
+            const status = document.getElementById('usbSerialStatus');
+            try {
+                const response = await fetch('/usb-serial/status', { cache: 'no-store' });
+                if (!response.ok) throw new Error('HTTP ' + response.status);
+                const data = await response.json();
+
+                const toggle = document.getElementById('usbSerialToggle');
+                const row = document.getElementById('usbSerialRow');
+
+                toggle.checked = data.enabled;
+                const serialBlocked = data.implantEnabled && !data.enabled;
+                toggle.disabled = usbSerialUpdating ||
+                                  (!data.supported && !data.enabled) || serialBlocked;
+                row.classList.toggle('implant-unavailable',
+                                     (!data.supported && !data.enabled) || serialBlocked);
+
+                if (!data.supported) {
+                    status.textContent = 'Unavailable: this build has no USB CDC support.';
+                } else if (serialBlocked) {
+                    status.textContent = 'Unavailable while USB Network Implant is enabled: the ESP32-S3 cannot enumerate HID + USB Serial + NCM together. Turn the implant off first.';
+                } else if (data.blocked) {
+                    status.textContent = 'Enabled but suppressed because USB Network Implant is also on. Turn one of them off.';
+                } else if (!data.enabled) {
+                    status.textContent = 'Disabled. USB does not expose a serial port.';
+                } else if (!data.started) {
+                    status.textContent = 'Enabled, but the CDC interface did not start.';
+                } else if (data.hostConnected) {
+                    status.textContent = 'Ready. The USB host has the serial port open' +
+                        (data.tcpConnected ? ', TCP passthrough connected.' : '.');
+                } else {
+                    status.textContent = 'Enabled. Waiting for the USB host to open the serial port.';
+                }
+            } catch (error) {
+                status.textContent = 'Status unavailable: ' + error.message;
+            }
+        }
+
+        async function setUsbSerial(enabled) {
+            if (usbSerialUpdating) return;
+            const toggle = document.getElementById('usbSerialToggle');
+            const action = enabled ? 'enable' : 'disable';
+            if (!confirm('Do you want to ' + action + ' USB Serial? The device will restart.')) {
+                toggle.checked = !enabled;
+                return;
+            }
+
+            usbSerialUpdating = true;
+            toggle.disabled = true;
+            try {
+                const response = await fetch('/usb-serial', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({ enabled: enabled ? '1' : '0' })
+                });
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok || !data.ok) {
+                    throw new Error(data.message || ('HTTP ' + response.status));
+                }
+
+                if (data.restarting) {
+                    showMessage('success', 'USB Serial updated. The device is restarting...');
+                    document.body.classList.add('page-loading');
+                    setTimeout(() => window.location.reload(true), 8000);
+                } else {
+                    usbSerialUpdating = false;
+                    await refreshUsbSerialStatus();
+                }
+            } catch (error) {
+                usbSerialUpdating = false;
+                toggle.checked = !enabled;
+                toggle.disabled = false;
+                showMessage('error', 'Error updating USB Serial: ' + error.message);
+                refreshUsbSerialStatus();
+            }
+        }
+
+        async function refreshSapsanStatus() {
+            const status = document.getElementById('sapsanStatus');
+            try {
+                const response = await fetch('/sapsan/status', { cache: 'no-store' });
+                if (!response.ok) throw new Error('HTTP ' + response.status);
+                const data = await response.json();
+
+                document.getElementById('sapsanLoginBox').hidden = data.loggedIn;
+                document.getElementById('sapsanLoggedInBox').hidden = !data.loggedIn;
+
+                if (data.loggedIn) {
+                    let txt = 'Logged in';
+                    if (data.name) txt += ' as ' + data.name;
+                    else if (data.email) txt += ' as ' + data.email;
+                    if (data.tier) txt += ' (' + data.tier + ')';
+                    status.textContent = txt + '.';
+                } else if (!data.wifi) {
+                    status.textContent = 'Not logged in. Connect the cable to Wi-Fi first.';
+                } else {
+                    status.textContent = 'Not logged in.';
+                }
+            } catch (error) {
+                status.textContent = 'Status unavailable: ' + error.message;
+            }
+        }
+
+        async function sapsanLogin() {
+            const email = document.getElementById('sapsanEmail').value.trim();
+            const password = document.getElementById('sapsanPassword').value;
+            const button = document.getElementById('sapsanLoginButton');
+            if (!email || !password) {
+                showMessage('error', 'Enter your SAPSAN TERMINAL email and password.');
+                return;
+            }
+
+            button.disabled = true;
+            document.getElementById('sapsanStatus').textContent = 'Logging in...';
+            try {
+                const response = await fetch('/sapsan/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({ email: email, password: password })
+                });
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok || !data.ok) throw new Error(data.message || ('HTTP ' + response.status));
+                showMessage('success', 'Logged in to TERMINAL.');
+            } catch (error) {
+                showMessage('error', 'Login failed: ' + error.message);
+            } finally {
+                document.getElementById('sapsanPassword').value = '';
+                button.disabled = false;
+                refreshSapsanStatus();
+            }
+        }
+
+        async function sapsanLogout() {
+            try {
+                await fetch('/sapsan/logout', { method: 'POST' });
+                showMessage('success', 'Logged out of TERMINAL.');
+            } catch (error) {
+                showMessage('error', 'Error logging out: ' + error.message);
+            }
+            refreshSapsanStatus();
+        }
     </script>
 </body>
 </html>
